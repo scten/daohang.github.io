@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0620">
+    <meta name="app-version" content="20261025-0650">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -415,7 +415,7 @@
             touch-action: manipulation;
         }
         .simple-mode-toggle {
-            position: fixed; top: 16px; right: 18px; z-index: 1003;
+            position: fixed; top: 74px; right: 18px; z-index: 1003;
             border: 1px solid rgba(var(--primary-rgb),.65); border-radius: 18px;
             padding: 7px 12px; background: rgba(255,255,255,.88);
             color: #777; box-shadow: 0 3px 12px rgba(0,0,0,.08);
@@ -426,7 +426,7 @@
             touch-action: manipulation;
         }
         .simple-mode-hotspot {
-            position: fixed; top: 0; right: 0; width: 100px; height: 58px; z-index: 1002;
+            position: fixed; top: 0; right: 0; width: 100px; height: 124px; z-index: 1002;
             pointer-events: auto;
         }
         .simple-mode-hotspot:hover + .simple-mode-toggle,
@@ -672,6 +672,46 @@
             margin-bottom: 4px;
         }
         .menu-head h3 { margin: 0; font-size: 1.05rem; color: var(--primary-strong); }
+        .menu-gear {
+            flex: 0 0 auto;
+            width: 30px; height: 30px; margin-left: auto; margin-right: 6px;
+            border: none; border-radius: 50%;
+            background: rgba(var(--primary-rgb), .16);
+            color: var(--primary-strong); font-size: .9rem;
+            cursor: pointer;
+        }
+        .menu-gear:hover { background: rgba(var(--primary-rgb), .34); }
+        .nav-menu { display: flex; flex-direction: column; overflow: hidden; }
+        .menu-main { display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+        .menu-main[hidden] { display: none; }
+        .menu-cat {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 12px;
+            border: 1px solid rgba(var(--primary-rgb), .28);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .72);
+            color: var(--text-main);
+            font-size: .88rem; text-align: left;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .menu-cat span { font-size: 1.05rem; }
+        .menu-cat:hover { background: rgba(var(--primary-rgb), .14); }
+        .menu-sub { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+        .menu-sub[hidden] { display: none; }
+        .menu-sub-head { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; flex: 0 0 auto; }
+        .menu-back {
+            width: 32px; height: 32px;
+            border: none; border-radius: 50%;
+            background: rgba(var(--primary-rgb), .16);
+            color: var(--primary-strong); font-size: .95rem;
+            cursor: pointer;
+        }
+        .menu-sub-head h3 { margin: 0; font-size: 1rem; color: var(--primary-strong); }
+        .menu-sub-body { flex: 1; min-height: 0; overflow-y: auto; padding-right: 2px; }
+        .menu-sub-body > .menu-section { margin-top: 0; padding-top: 0; border-top: none; }
+        .menu-sub-body > .menu-section > h4 { display: none; }
         .menu-close {
             flex: 0 0 auto;
             width: 30px; height: 30px;
@@ -808,7 +848,7 @@
         }
         /* --- 桌面歌词挂件 --- */
         .lyrics-fab {
-            position: fixed; right: 88px; bottom: 20px; z-index: 1004;
+            position: fixed; top: 16px; right: 18px; z-index: 1004;
             width: 48px; height: 48px;
             display: flex; align-items: center; justify-content: center;
             border: 2px solid var(--primary-color);
@@ -860,6 +900,37 @@
         }
         .lw-tools button:hover { background: #fff; color: var(--primary-strong); }
         .lw-tools button.on { background: var(--primary-color); color: var(--primary-contrast); }
+        .lw-player { padding: 10px 12px 2px; }
+        .lw-track {
+            margin-bottom: 8px;
+            font-size: .8rem; font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .lw-progress {
+            height: 6px; border-radius: 3px;
+            background: #eee; overflow: hidden;
+            cursor: pointer;
+        }
+        .lw-progress > div {
+            height: 100%; width: 0;
+            background: var(--primary-color);
+        }
+        .lw-times {
+            display: flex; justify-content: space-between;
+            margin-top: 4px;
+            font-size: .66rem; color: #a99b9b;
+        }
+        .lw-controls { display: flex; justify-content: center; gap: 16px; padding: 4px 0 0; }
+        .lw-controls button {
+            border: none; background: none;
+            color: var(--text-main); font-size: 1rem;
+            cursor: pointer; padding: 4px 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lw-controls button:hover { color: var(--primary-strong); }
+        .lw-controls button.on { color: var(--primary-strong); font-weight: 700; }
+
         .lw-body {
             padding: 12px 14px;
             max-height: 220px; overflow-y: auto;
@@ -909,6 +980,20 @@
         .card-desc {
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+        .card-icon-img {
+            width: 56px; height: 56px;
+            margin: 0 auto 12px;
+            display: block;
+            border-radius: 14px;
+            object-fit: cover;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .1);
+        }
+        .size-md .card-icon-img { width: 64px; height: 64px; }
+        .size-lg .card-icon-img { width: 84px; height: 84px; border-radius: 20px; }
+        @media (max-width: 480px) {
+            .card-icon-img { width: 44px; height: 44px; border-radius: 12px; margin-bottom: 8px; }
         }
 
         .card-tools {
@@ -1063,7 +1148,24 @@
     <nav class="nav-menu" id="navMenu" aria-label="侧边菜单">
         <div class="menu-head">
             <h3>✨ 导航菜单</h3>
+            <button type="button" class="menu-gear" onclick="openMenuPanel('settings')" aria-label="设置">⚙️</button>
             <button type="button" class="menu-close" onclick="closeMenu()" aria-label="关闭菜单">✕</button>
+        </div>
+
+        <div class="menu-main" id="menuMain">
+            <button type="button" class="menu-cat" data-target="links"><span>🔗</span>快捷链接</button>
+            <button type="button" class="menu-cat" data-target="theme"><span>🎨</span>主题</button>
+            <button type="button" class="menu-cat" data-target="background"><span>🖼️</span>背景</button>
+            <button type="button" class="menu-cat" data-target="cards"><span>🧩</span>卡片</button>
+            <button type="button" class="menu-cat" data-target="music"><span>🎵</span>音乐</button>
+            <button type="button" class="menu-cat" data-target="settings"><span>⚙️</span>设置</button>
+        </div>
+        <div class="menu-sub" id="menuSub" hidden>
+            <div class="menu-sub-head">
+                <button type="button" class="menu-back" id="menuBack" aria-label="返回主菜单">←</button>
+                <h3 id="subTitle">设置</h3>
+            </div>
+            <div class="menu-sub-body" id="subBody"></div>
         </div>
 
         <ul class="quick-links" id="quickLinks">
@@ -1074,13 +1176,13 @@
             <li><a href="https://pinterest.com" target="_blank" rel="noopener"><span>🎨</span> Pinterest</a></li>
         </ul>
 
-        <section class="menu-section">
+        <section class="menu-section" data-panel="theme">
             <h4>🎨 主题</h4>
             <div class="theme-row" id="themeRow" role="radiogroup" aria-label="主题颜色"></div>
             <p class="menu-hint" id="themeHint">马卡龙配色，选了会记住。</p>
         </section>
 
-        <section class="menu-section">
+        <section class="menu-section" data-panel="background">
             <h4>🖼️ 背景</h4>
             <label class="file-pick" for="bgFileInput" id="bgFileLabel">
                 <span id="bgFileName">选择图片或视频</span>
@@ -1100,7 +1202,7 @@
             <p class="menu-hint" id="bgHint">不选图片也能直接应用底色。</p>
         </section>
 
-        <section class="menu-section">
+        <section class="menu-section" data-panel="cards">
             <h4>🧩 卡片</h4>
             <div class="btn-row">
                 <button type="button" class="apply-btn edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">编辑模式</button>
@@ -1111,6 +1213,7 @@
                 <input type="text" id="cardTitle" placeholder="名称，例如 豆瓣" maxlength="20">
                 <input type="text" id="cardUrl" placeholder="网址，例如 https://www.douban.com/" maxlength="300">
                 <input type="text" id="cardIcon" placeholder="图标 emoji，例如 🌿" maxlength="8">
+                <input type="text" id="cardIconImage" placeholder="图标图片 URL（可选，方形图标）" maxlength="500">
                 <input type="text" id="cardDesc" placeholder="一句话描述（可选）" maxlength="30">
                 <div class="btn-row">
                     <button type="button" class="apply-btn" onclick="saveCardForm()">保存</button>
@@ -1123,7 +1226,7 @@
             <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="resetCards()">恢复默认卡片</button>
         </section>
 
-        <section class="menu-section">
+        <section class="menu-section" data-panel="music">
             <h4>🎵 音乐</h4>
             <div class="music-player">
                 <div class="music-info" id="musicName">暂无音乐</div>
@@ -1174,8 +1277,8 @@
             </div>
         </section>
 
-        <section class="menu-section">
-            <h4>👀 显示</h4>
+        <section class="menu-section" data-panel="settings">
+            <h4>⚙️ 设置</h4>
             <div class="switch-row">
                 <span>简洁模式（隐藏卡片）</span>
                 <button type="button" class="switch-btn" id="simpleModeBtn" role="switch" aria-checked="false"
@@ -1272,11 +1375,11 @@
     </div>
 
     <button type="button" class="lyrics-fab" id="lyricsFab" onclick="toggleLyricsWidget()"
-            aria-expanded="false" aria-controls="lyricsWidget" title="桌面歌词" aria-label="显示桌面歌词">♪</button>
+            aria-expanded="false" aria-controls="lyricsWidget" title="音乐播放器" aria-label="显示音乐播放器">🎵</button>
 
-    <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="桌面歌词">
+    <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="音乐播放器">
         <header class="lyrics-widget-head" id="lwHead">
-            <span class="lw-title">♪ 歌词</span>
+            <span class="lw-title">🎵 播放器</span>
             <div class="lw-tools">
                 <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">📌</button>
                 <button type="button" data-lw="font-dec" title="字号减小">A−</button>
@@ -1284,7 +1387,20 @@
                 <button type="button" data-lw="close" title="关闭">✕</button>
             </div>
         </header>
-        <div class="lw-body" id="lwBody">选好音乐并载入歌词后，这里会同步滚动。</div>
+        <div class="lw-player">
+            <div class="lw-track" id="lwTrack">暂无音乐</div>
+            <div class="lw-progress" id="lwProgress" role="slider" tabindex="0" aria-label="播放进度">
+                <div id="lwProgressBar"></div>
+            </div>
+            <div class="lw-times"><span id="lwCurrent">00:00</span><span id="lwDuration">00:00</span></div>
+            <div class="lw-controls">
+                <button type="button" onclick="prevTrack()" aria-label="上一首">⏮</button>
+                <button type="button" id="lwPlayBtn" onclick="togglePlay()" aria-label="播放或暂停">▶️</button>
+                <button type="button" onclick="nextTrack()" aria-label="下一首">⏭</button>
+                <button type="button" id="lwLyricsBtn" onclick="toggleWidgetLyrics()" aria-label="显示歌词">词</button>
+            </div>
+        </div>
+        <div class="lw-body" id="lwBody" hidden>选好音乐并载入歌词后，这里会同步滚动。</div>
         <div class="lw-settings">
             <label>透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
             <label>字体
@@ -1409,10 +1525,72 @@
             menu.classList.toggle('active', open);
             menuBtn.setAttribute('aria-expanded', String(open));
             menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+            if (open) backToMainMenu();
         }
 
         function closeMenu() {
             toggleMenu(false);
+        }
+
+        /** 侧栏主菜单 / 子菜单 **/
+        const MENU_PANELS = {
+            links: '🔗 快捷链接',
+            theme: '🎨 主题',
+            background: '🖼️ 背景',
+            cards: '🧩 卡片',
+            music: '🎵 音乐',
+            settings: '⚙️ 设置'
+        };
+
+        function backToMainMenu() {
+            const main = document.getElementById('menuMain');
+            const sub = document.getElementById('menuSub');
+            if (!main || !sub) return;
+            sub.hidden = true;
+            main.hidden = false;
+        }
+
+        function openMenuPanel(name) {
+            const main = document.getElementById('menuMain');
+            const sub = document.getElementById('menuSub');
+            if (!main || !sub || !MENU_PANELS[name]) return;
+            main.hidden = true;
+            sub.hidden = false;
+            document.getElementById('subTitle').textContent = MENU_PANELS[name];
+            document.querySelectorAll('#subBody > [data-panel]').forEach(section => {
+                section.hidden = section.dataset.panel !== name;
+            });
+            document.getElementById('subBody').scrollTop = 0;
+        }
+
+        function initMenuPanels() {
+            const subBody = document.getElementById('subBody');
+            if (!subBody) return;
+
+            const links = document.getElementById('quickLinks');
+            if (links) {
+                const section = document.createElement('section');
+                section.className = 'menu-section';
+                section.dataset.panel = 'links';
+                const title = document.createElement('h4');
+                title.textContent = '🔗 快捷链接';
+                links.parentNode.insertBefore(section, links);
+                section.appendChild(title);
+                section.appendChild(links);
+            }
+
+            Array.from(document.querySelectorAll('#navMenu > [data-panel], #navMenu > .menu-section')).forEach(section => {
+                subBody.appendChild(section);
+                section.hidden = true;
+            });
+
+            document.getElementById('menuMain').addEventListener('click', (event) => {
+                const button = event.target.closest('.menu-cat');
+                if (!button) return;
+                openMenuPanel(button.dataset.target);
+            });
+            document.getElementById('menuBack').addEventListener('click', backToMainMenu);
+            backToMainMenu();
         }
 
         // 点到菜单和汉堡按钮以外的地方就收起
@@ -1658,6 +1836,7 @@
                         title: String(item.title),
                         url: /^https?:\/\//i.test(String(item.url)) ? String(item.url) : `https://${String(item.url)}`,
                         icon: String(item.icon || '🔗'),
+                        iconImage: String(item.iconImage || ''),
                         desc: String(item.desc || ''),
                         size: CARD_SIZES.includes(item.size) ? item.size : 'sm',
                         hidden: Boolean(item.hidden)
@@ -1708,9 +1887,18 @@
             link.target = '_blank';
             link.rel = 'noopener';
 
-            const icon = document.createElement('div');
-            icon.className = 'card-icon';
-            icon.textContent = card.icon;
+            let icon;
+            if (card.iconImage) {
+                icon = document.createElement('img');
+                icon.className = 'card-icon card-icon-img';
+                icon.src = card.iconImage;
+                icon.alt = '';
+                icon.loading = 'lazy';
+            } else {
+                icon = document.createElement('div');
+                icon.className = 'card-icon';
+                icon.textContent = card.icon;
+            }
             const title = document.createElement('div');
             title.className = 'card-title';
             title.textContent = card.title;
@@ -1832,6 +2020,13 @@
             document.addEventListener('pointercancel', end);
         }
 
+        function normalizeCardIconUrl(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^(data:image\/|https?:\/\/|\/|\.\/|\.\.\/)/i.test(raw)) return raw;
+            return `https://${raw}`;
+        }
+
         function normalizeCardUrl(value) {
             const raw = String(value || '').trim();
             if (!raw) return '';
@@ -1847,6 +2042,7 @@
             document.getElementById('cardTitle').value = card ? card.title : '';
             document.getElementById('cardUrl').value = card ? card.url : '';
             document.getElementById('cardIcon').value = card ? card.icon : '';
+            document.getElementById('cardIconImage').value = card ? (card.iconImage || '') : '';
             document.getElementById('cardDesc').value = card ? card.desc : '';
             document.getElementById('deleteCardBtn').hidden = !card;
             document.getElementById('cardForm').hidden = false;
@@ -1866,6 +2062,7 @@
             const title = document.getElementById('cardTitle').value.trim();
             const url = normalizeCardUrl(document.getElementById('cardUrl').value);
             const icon = document.getElementById('cardIcon').value.trim() || '🔗';
+            const iconImage = normalizeCardIconUrl(document.getElementById('cardIconImage').value);
             const desc = document.getElementById('cardDesc').value.trim();
             if (!title || !url) {
                 setCardHint('名称和网址都要填哦。');
@@ -1873,11 +2070,11 @@
             }
             if (editingCardId) {
                 const card = cards.find(item => item.id === editingCardId);
-                if (card) Object.assign(card, { title, url, icon, desc });
+                if (card) Object.assign(card, { title, url, icon, iconImage, desc });
             } else {
                 cards.push({
                     id: `c${Date.now().toString(36)}`,
-                    title, url, icon, desc, size: 'sm', hidden: false
+                    title, url, icon, iconImage, desc, size: 'sm', hidden: false
                 });
             }
             saveCards();
@@ -1997,6 +2194,7 @@
             if (visible) {
                 applyLyricsWidget();
                 renderFloatingLyrics();
+                updateWidgetPlayer();
             }
         }
 
@@ -2612,6 +2810,9 @@
             currentTrackIndex = index;
             audio.src = playlist[index].url;
             musicName.textContent = playlist[index].name;
+            const widgetTrack = document.getElementById('lwTrack');
+            if (widgetTrack) widgetTrack.textContent = playlist[index].name;
+            updateWidgetPlayer();
             renderPlaylist();
             lyrics = [];
             activeLyricIndex = -1;
@@ -2636,6 +2837,32 @@
 
         function updatePlayBtn(isPlaying) {
             document.getElementById('playBtn').textContent = isPlaying ? '⏸️' : '▶️';
+            const widgetPlay = document.getElementById('lwPlayBtn');
+            if (widgetPlay) widgetPlay.textContent = isPlaying ? '⏸️' : '▶️';
+        }
+
+        function updateWidgetPlayer() {
+            const bar = document.getElementById('lwProgressBar');
+            if (!bar) return;
+            const ratio = Number.isFinite(audio.duration) && audio.duration > 0
+                ? audio.currentTime / audio.duration
+                : 0;
+            bar.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+            const current = document.getElementById('lwCurrent');
+            if (current) current.textContent = formatTime(audio.currentTime);
+            const duration = document.getElementById('lwDuration');
+            if (duration) duration.textContent = formatTime(audio.duration);
+            const play = document.getElementById('lwPlayBtn');
+            if (play) play.textContent = audio.paused ? '▶️' : '⏸️';
+        }
+
+        function toggleWidgetLyrics() {
+            const body = document.getElementById('lwBody');
+            const button = document.getElementById('lwLyricsBtn');
+            if (!body) return;
+            body.hidden = !body.hidden;
+            if (button) button.classList.toggle('on', !body.hidden);
+            if (!body.hidden) renderFloatingLyrics();
         }
 
         function nextTrack() {
@@ -2707,6 +2934,17 @@
             isSeeking = false;
         });
         progressContainer.addEventListener('pointercancel', () => { isSeeking = false; });
+        const lwProgress = document.getElementById('lwProgress');
+        if (lwProgress) {
+            lwProgress.addEventListener('pointerdown', (event) => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                const rect = lwProgress.getBoundingClientRect();
+                const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+                audio.currentTime = ratio * audio.duration;
+                updateWidgetPlayer();
+            });
+        }
+
         progressContainer.addEventListener('keydown', event => {
             if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
             if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
@@ -2728,10 +2966,12 @@
             }
             currentTimeEl.textContent = formatTime(audio.currentTime);
             if (Number.isFinite(audio.duration)) durationTimeEl.textContent = formatTime(audio.duration);
+            updateWidgetPlayer();
             updateLyricLine();
         });
         audio.addEventListener('loadedmetadata', () => {
             durationTimeEl.textContent = formatTime(audio.duration);
+            updateWidgetPlayer();
         });
         audio.addEventListener('play', () => updatePlayBtn(true));
         audio.addEventListener('pause', () => updatePlayBtn(false));
@@ -2907,6 +3147,7 @@
         initLyricsWidget();
         initMascot();
         initUpdateChecker();
+        initMenuPanels();
     </script>
 </body>
 </html>
