@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0740">
+    <meta name="app-version" content="20261025-0800">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -953,14 +953,15 @@
             font-size: var(--lw-font-size, 22px);
             font-weight: 800;
             line-height: 1.35;
-            color: #b9a9a9;
+            color: var(--lw-lyrics-color, #b9a9a9);
             text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
         }
+        .qq-base { opacity: .45; }
         .qq-text { white-space: nowrap; }
         .qq-fill {
             position: absolute; left: 0; top: 0;
             width: 0%; overflow: hidden;
-            color: var(--primary-strong);
+            color: var(--lw-lyrics-color, var(--primary-strong));
             text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
             pointer-events: none;
         }
@@ -968,7 +969,8 @@
         .qq-next {
             font-size: calc(var(--lw-font-size, 22px) * .72);
             line-height: 1.4;
-            color: #c4b6b6;
+            color: var(--lw-lyrics-color, #c4b6b6);
+            opacity: .55;
             text-shadow: 0 1px 2px rgba(255, 255, 255, .85);
         }
         @keyframes qqPop {
@@ -1001,7 +1003,7 @@
         .lyrics-widget.clean-mode .lw-settings,
         .lyrics-widget.clean-mode .lw-resize { display: none; }
         .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; }
-        .lyrics-widget.clean-mode .qq-base { color: rgba(120, 100, 100, .55); }
+        .lyrics-widget.clean-mode .qq-base { opacity: .5; }
         .lyrics-widget.clean-mode .qq-base,
         .lyrics-widget.clean-mode .qq-next {
             text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 3px rgba(90, 60, 60, .35);
@@ -1028,6 +1030,11 @@
         }
         .lw-settings label { display: flex; align-items: center; gap: 4px; }
         .lw-settings input[type="range"] { width: 74px; }
+        .lw-settings input[type="color"] {
+            width: 36px; height: 24px; padding: 0;
+            border: 1px solid #eee; border-radius: 6px;
+            background: #fff; cursor: pointer;
+        }
         .lw-settings select {
             border: 1px solid #eee; border-radius: 8px;
             background: #fff; font-size: .66rem; padding: 2px 4px;
@@ -1154,6 +1161,13 @@
         .hug-stage[hidden] { display: none; }
         .hug-stage img { display: block; max-width: none; max-height: none; }
         .ghost-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+        body.anti-crawl { user-select: none; -webkit-user-select: none; }
+        body.anti-crawl input,
+        body.anti-crawl textarea,
+        body.anti-crawl select,
+        body.anti-crawl [contenteditable="true"] { user-select: text; -webkit-user-select: text; }
+        body.anti-crawl img { -webkit-user-drag: none; user-drag: none; }
 
         .mascot-switch-row { margin-top: 10px; }
         .mascot-row {
@@ -1365,6 +1379,8 @@
             </div>
             <p class="menu-hint">隐藏卡片与页脚，只留搜索框和背景。</p>
 
+            <p class="menu-hint">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
+
             <div class="switch-row mascot-switch-row">
                 <span>桌面宠物</span>
                 <button type="button" class="switch-btn" id="mascotSwitch" role="switch" aria-checked="false"
@@ -1483,6 +1499,7 @@
         <div class="lw-settings">
             <label id="lwAlphaRow">透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
             <label id="lwBgRow" hidden>词底 <input type="range" id="lwLyricsAlpha" min="0" max="1" step="0.05" value="0.35"></label>
+            <label id="lwColorRow" hidden>字色 <input type="color" id="lwLyricsColor" value="#ff8c94"></label>
             <label>字体
                 <select id="lwFont">
                     <option value="system">默认</option>
@@ -1645,6 +1662,47 @@
             document.getElementById('subBody').scrollTop = 0;
         }
 
+        function initAntiCrawl() {
+            document.body.classList.add('anti-crawl');
+
+            const isEditable = (target) => Boolean(
+                target && typeof target.closest === 'function'
+                && target.closest('input, textarea, select, [contenteditable="true"]')
+            );
+
+            document.addEventListener('contextmenu', (event) => {
+                if (isEditable(event.target)) return;
+                event.preventDefault();
+            });
+
+            document.addEventListener('copy', (event) => {
+                if (isEditable(event.target)) return;
+                event.preventDefault();
+            });
+
+            document.addEventListener('selectstart', (event) => {
+                if (isEditable(event.target)) return;
+                event.preventDefault();
+            });
+
+            document.addEventListener('dragstart', (event) => {
+                if (event.target.closest('img, a')) event.preventDefault();
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (isEditable(event.target)) return;
+                const key = event.key;
+                const mod = event.ctrlKey || event.metaKey;
+                const shift = event.shiftKey;
+                const blocked = key === 'F12'
+                    || (mod && shift && ['I', 'i', 'J', 'j', 'C', 'c', 'K', 'k'].includes(key))
+                    || (mod && ['U', 'u', 'S', 's', 'P', 'p', 'A', 'a'].includes(key));
+                if (blocked) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
+        }
         function initMenuPanels() {
             const subBody = document.getElementById('subBody');
             if (!subBody) return;
@@ -2226,7 +2284,8 @@
             top: null,
             width: null,
             height: null,
-            lyricsAlpha: 0.35
+            lyricsAlpha: 0.35,
+            lyricsColor: null
         };
 
         function loadLyricsWidgetState() {
@@ -2242,6 +2301,9 @@
                 if (Number.isFinite(saved.width)) lwState.width = Math.max(260, saved.width);
                 if (Number.isFinite(saved.height)) lwState.height = Math.max(180, saved.height);
                 if (Number.isFinite(saved.lyricsAlpha)) lwState.lyricsAlpha = Math.min(1, Math.max(0, saved.lyricsAlpha));
+                if (typeof saved.lyricsColor === 'string' && /^#[0-9a-f]{6}$/i.test(saved.lyricsColor)) {
+                    lwState.lyricsColor = saved.lyricsColor;
+                }
             } catch (error) {}
         }
 
@@ -2273,13 +2335,38 @@
             if (Number.isFinite(lwState.width)) widget.style.width = `${lwState.width}px`;
             if (Number.isFinite(lwState.height)) widget.style.height = `${lwState.height}px`;
             widget.style.setProperty('--lw-lyrics-alpha', String(lwState.lyricsAlpha));
+            if (lwState.lyricsColor) {
+                widget.style.setProperty('--lw-lyrics-color', lwState.lyricsColor);
+            } else {
+                widget.style.removeProperty('--lw-lyrics-color');
+            }
             const bgSlider = document.getElementById('lwLyricsAlpha');
             if (bgSlider) bgSlider.value = String(lwState.lyricsAlpha);
+            const colorInput = document.getElementById('lwLyricsColor');
+            if (colorInput) {
+                colorInput.value = lwState.lyricsColor
+                    || getComputedStyle(widget).getPropertyValue('--primary-strong').trim()
+                    || '#ff8c94';
+            }
         }
 
         function toggleLyricsWidget(force) {
             const widget = document.getElementById('lyricsWidget');
-            const visible = typeof force === 'boolean' ? force : widget.hidden;
+
+            // 点主页按钮：关着 -> 打开播放器；在歌词模式 -> 回到播放器；在播放器 -> 收起
+            if (typeof force !== 'boolean') {
+                if (widget.hidden) {
+                    toggleLyricsWidget(true);
+                    toggleWidgetLyrics(false);
+                } else if (widget.classList.contains('lyrics-mode')) {
+                    toggleWidgetLyrics(false);
+                } else {
+                    toggleLyricsWidget(false);
+                }
+                return;
+            }
+
+            const visible = force;
             widget.hidden = !visible;
             const fab = document.getElementById('lyricsFab');
             fab.classList.toggle('on', visible);
@@ -2466,6 +2553,12 @@
 
             document.getElementById('lwLyricsAlpha').addEventListener('input', function () {
                 lwState.lyricsAlpha = Number(this.value);
+                applyLyricsWidget();
+                saveLyricsWidgetState();
+            });
+
+            document.getElementById('lwLyricsColor').addEventListener('input', function () {
+                lwState.lyricsColor = this.value;
                 applyLyricsWidget();
                 saveLyricsWidgetState();
             });
@@ -3072,8 +3165,10 @@
             if (title) title.textContent = on ? '🎵 桌面歌词' : '🎵 播放器';
             const alphaRow = document.getElementById('lwAlphaRow');
             const bgRow = document.getElementById('lwBgRow');
+            const colorRow = document.getElementById('lwColorRow');
             if (alphaRow) alphaRow.hidden = on;
             if (bgRow) bgRow.hidden = !on;
+            if (colorRow) colorRow.hidden = !on;
             const hideBtn = document.getElementById('lwHideBtn');
             if (hideBtn) hideBtn.hidden = !on;
             if (!on) toggleCleanLyrics(false);
@@ -3379,6 +3474,7 @@
         initMascot();
         initUpdateChecker();
         initMenuPanels();
+        initAntiCrawl();
     </script>
 </body>
 </html>
