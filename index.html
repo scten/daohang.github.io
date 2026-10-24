@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0720">
+    <meta name="app-version" content="20261025-0740">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -976,8 +976,37 @@
             to { opacity: 1; transform: none; }
         }
         .qq-cur.qq-pop { animation: qqPop .28s ease; }
-        .lyrics-widget.lyrics-mode { background: rgba(255, 255, 255, calc(var(--lw-alpha) * .5)); }
+        .lyrics-widget.lyrics-mode { background: rgba(255, 255, 255, var(--lw-lyrics-alpha, .35)); }
         .lyrics-widget.lyrics-mode .lw-player { display: none; }
+
+        .lw-clean-exit {
+            position: absolute; top: 2px; right: 2px; z-index: 3;
+            width: 22px; height: 22px;
+            border: none; border-radius: 50%;
+            background: rgba(255, 255, 255, .6);
+            color: var(--primary-strong); font-size: .7rem;
+            cursor: pointer; opacity: 0;
+            transition: opacity .2s;
+        }
+        .lyrics-widget:hover .lw-clean-exit { opacity: .55; }
+        .lw-clean-exit:hover { opacity: 1; }
+        .lyrics-widget.clean-mode {
+            background: transparent !important;
+            border-color: transparent;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .lyrics-widget.clean-mode .lyrics-widget-head,
+        .lyrics-widget.clean-mode .lw-settings,
+        .lyrics-widget.clean-mode .lw-resize { display: none; }
+        .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; }
+        .lyrics-widget.clean-mode .qq-base { color: rgba(120, 100, 100, .55); }
+        .lyrics-widget.clean-mode .qq-base,
+        .lyrics-widget.clean-mode .qq-next {
+            text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 3px rgba(90, 60, 60, .35);
+        }
+        .lw-settings label[hidden] { display: none; }
 
         .lw-body {
             padding: 12px 14px;
@@ -1430,6 +1459,7 @@
             <span class="lw-title">🎵 播放器</span>
             <div class="lw-tools">
                 <button type="button" id="lwBackBtn" hidden title="返回播放器" onclick="toggleWidgetLyrics()">▣</button>
+                <button type="button" id="lwHideBtn" hidden title="隐藏界面，只显示歌词" onclick="toggleCleanLyrics()">隐</button>
                 <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">📌</button>
                 <button type="button" data-lw="font-dec" title="字号减小">A−</button>
                 <button type="button" data-lw="font-inc" title="字号增大">A+</button>
@@ -1451,7 +1481,8 @@
         </div>
         <div class="lw-body" id="lwBody" hidden>选好音乐并载入歌词后，这里会同步滚动。</div>
         <div class="lw-settings">
-            <label>透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
+            <label id="lwAlphaRow">透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
+            <label id="lwBgRow" hidden>词底 <input type="range" id="lwLyricsAlpha" min="0" max="1" step="0.05" value="0.35"></label>
             <label>字体
                 <select id="lwFont">
                     <option value="system">默认</option>
@@ -1463,6 +1494,7 @@
             </label>
         </div>
         <div class="lw-resize" id="lwResize" title="拖动调整大小"></div>
+        <button type="button" class="lw-clean-exit" id="lwCleanExit" hidden onclick="toggleCleanLyrics(false)" title="显示界面">▣</button>
     </section>
 
     <button type="button" class="opacity-ctrl-btn" id="opacityBtn" onclick="toggleSlider()" aria-label="调节背景透明度">☀️</button>
@@ -2193,7 +2225,8 @@
             left: null,
             top: null,
             width: null,
-            height: null
+            height: null,
+            lyricsAlpha: 0.35
         };
 
         function loadLyricsWidgetState() {
@@ -2208,6 +2241,7 @@
                 if (Number.isFinite(saved.top)) lwState.top = saved.top;
                 if (Number.isFinite(saved.width)) lwState.width = Math.max(260, saved.width);
                 if (Number.isFinite(saved.height)) lwState.height = Math.max(180, saved.height);
+                if (Number.isFinite(saved.lyricsAlpha)) lwState.lyricsAlpha = Math.min(1, Math.max(0, saved.lyricsAlpha));
             } catch (error) {}
         }
 
@@ -2238,6 +2272,9 @@
             }
             if (Number.isFinite(lwState.width)) widget.style.width = `${lwState.width}px`;
             if (Number.isFinite(lwState.height)) widget.style.height = `${lwState.height}px`;
+            widget.style.setProperty('--lw-lyrics-alpha', String(lwState.lyricsAlpha));
+            const bgSlider = document.getElementById('lwLyricsAlpha');
+            if (bgSlider) bgSlider.value = String(lwState.lyricsAlpha);
         }
 
         function toggleLyricsWidget(force) {
@@ -2426,6 +2463,24 @@
             document.getElementById('lwHead').addEventListener('pointerdown', startLyricsWidgetDrag);
             const resizeHandle = document.getElementById('lwResize');
             if (resizeHandle) resizeHandle.addEventListener('pointerdown', startLyricsWidgetResize);
+
+            document.getElementById('lwLyricsAlpha').addEventListener('input', function () {
+                lwState.lyricsAlpha = Number(this.value);
+                applyLyricsWidget();
+                saveLyricsWidgetState();
+            });
+
+            const body = document.getElementById('lwBody');
+            body.addEventListener('pointerdown', (event) => {
+                const widget = document.getElementById('lyricsWidget');
+                if (!widget.classList.contains('clean-mode')) return;
+                if (event.target.closest('button')) return;
+                startLyricsWidgetDrag(event);
+            });
+            body.addEventListener('dblclick', () => {
+                const widget = document.getElementById('lyricsWidget');
+                if (widget.classList.contains('clean-mode')) toggleCleanLyrics(false);
+            });
         }
 
         /** 4.8 桌面宠物（web-mascot，按需加载） **/
@@ -3015,10 +3070,29 @@
             if (back) back.hidden = !on;
             const title = widget.querySelector('.lw-title');
             if (title) title.textContent = on ? '🎵 桌面歌词' : '🎵 播放器';
+            const alphaRow = document.getElementById('lwAlphaRow');
+            const bgRow = document.getElementById('lwBgRow');
+            if (alphaRow) alphaRow.hidden = on;
+            if (bgRow) bgRow.hidden = !on;
+            const hideBtn = document.getElementById('lwHideBtn');
+            if (hideBtn) hideBtn.hidden = !on;
+            if (!on) toggleCleanLyrics(false);
             if (on) {
                 renderFloatingLyrics();
                 syncFloatingLyric();
             }
+        }
+
+        function toggleCleanLyrics(force) {
+            const widget = document.getElementById('lyricsWidget');
+            if (!widget) return;
+            if (!widget.classList.contains('lyrics-mode') && force !== false) return;
+            const on = typeof force === 'boolean' ? force : !widget.classList.contains('clean-mode');
+            widget.classList.toggle('clean-mode', on);
+            const exit = document.getElementById('lwCleanExit');
+            if (exit) exit.hidden = !on;
+            const hideBtn = document.getElementById('lwHideBtn');
+            if (hideBtn) hideBtn.classList.toggle('on', on);
         }
 
         function nextTrack() {
