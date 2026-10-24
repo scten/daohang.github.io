@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="app-version" content="20261025-0620">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -958,6 +959,40 @@
         }
         .edit-done[hidden] { display: none; }
 
+        .update-banner {
+            position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+            z-index: 1007;
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 10px 8px 14px;
+            border: 1px solid rgba(var(--primary-rgb), .5);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, .97);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+            font-size: .78rem; color: var(--text-main);
+            white-space: nowrap;
+        }
+        .update-banner[hidden] { display: none; }
+        .update-banner .update-go {
+            border: none; border-radius: 999px;
+            padding: 5px 12px;
+            background: var(--primary-color);
+            color: var(--primary-contrast);
+            font-size: .72rem; font-weight: 600; cursor: pointer;
+        }
+        .update-banner .update-close {
+            border: none; background: none;
+            color: #b3a5a5; font-size: .8rem;
+            cursor: pointer; padding: 0 4px;
+        }
+        .hug-stage {
+            position: fixed; left: 0; top: 0;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .hug-stage[hidden] { display: none; }
+        .hug-stage img { display: block; max-width: none; max-height: none; }
+        .ghost-btn:disabled { opacity: .5; cursor: not-allowed; }
+
         .mascot-switch-row { margin-top: 10px; }
         .mascot-row {
             display: flex; align-items: center; gap: 8px;
@@ -1164,7 +1199,21 @@
                     <option value="Eviling">Eviling</option>
                 </select>
             </div>
-            <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动，首次加载约 3MB 素材。</p>
+            <div class="switch-row mascot-switch-row">
+                <span>再加一只（双宠互动）</span>
+                <button type="button" class="switch-btn" id="mascot2Switch" role="switch" aria-checked="false"
+                        aria-label="第二只桌宠" onclick="toggleSecondMascot()">
+                    <span class="knob"></span>
+                </button>
+            </div>
+            <p class="menu-hint" id="mascot2Hint">两只同时在场时，会按几率自己抱抱（随机一边发起）。</p>
+            <button type="button" class="ghost-btn" id="hugNowBtn" style="width:100%; margin-top:8px;"
+                    onclick="playHug(true)" disabled>🫂 让它们抱一下</button>
+
+            <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动；本地没有 mascot/ 时会自动从 CDN 加载（约 3MB）。</p>
+
+            <button type="button" class="ghost-btn" style="width:100%; margin-top:12px;" onclick="hardReload()">🔄 强制更新</button>
+            <p class="menu-hint">绕过浏览器和 CDN 缓存，拉取最新版本。</p>
         </section>
     </nav>
 
@@ -1211,6 +1260,17 @@
     <button type="button" class="edit-done" id="editDoneBtn" hidden onclick="toggleEditMode()">✓ 完成编辑</button>
 
     <!-- 桌面歌词 -->
+    <div class="hug-stage" id="hugStage" hidden aria-hidden="true">
+        <img id="hugImage" alt="">
+    </div>
+
+    <div class="update-banner" id="updateBanner" hidden role="status" aria-live="polite">
+        <span>发现新版本</span>
+        <button type="button" class="update-go" onclick="hardReload()">立即刷新</button>
+        <button type="button" class="update-close" aria-label="关闭"
+                onclick="document.getElementById('updateBanner').hidden = true">✕</button>
+    </div>
+
     <button type="button" class="lyrics-fab" id="lyricsFab" onclick="toggleLyricsWidget()"
             aria-expanded="false" aria-controls="lyricsWidget" title="桌面歌词" aria-label="显示桌面歌词">♪</button>
 
@@ -2050,10 +2110,44 @@
 
         /** 4.8 桌面宠物（web-mascot，按需加载） **/
         const MASCOT_KEY = 'mascotState';
-        const mascotState = { enabled: false, pack: 'Neuron' };
-        let mascotModule = null;
-        let mascotInstance = null;
+        const MASCOT_CDN_ENTRY = 'https://cdn.jsdelivr.net/npm/web-mascot@0.0.3/dist/index.js';
+        const MASCOT_CDN_PACK = 'https://cdn.jsdelivr.net/npm/web-mascot@0.0.3/dist/mascot_pack';
+        const HUG_FRAME_MS = 40;
+        const HUG_SEQUENCES = {
+            Neuron: {
+                size: [175, 127],
+                anchor: [80, 128],
+                frames: [
+                    ['hug01', 7], ['hug02', 6], ['hug03', 6], ['hug04', 6],
+                    ['hug06', 8], ['hug07', 6], ['hug08', 6], ['hug09', 6],
+                    ['hug10', 6], ['hug11', 6], ['hug12', 40]
+                ]
+            },
+            Eviling: {
+                size: [160, 128],
+                anchor: [80, 128],
+                frames: [
+                    ['hug01', 3], ['hug02', 3], ['hug03', 3], ['hug04', 4],
+                    ['hug06', 5], ['hug07', 23], ['hug08', 6], ['hug09', 6],
+                    ['hug10', 40]
+                ]
+            }
+        };
+
+        const mascotState = { enabled: false, pack: 'Neuron', second: false };
+        const mascotModules = { local: null, cdn: null };
+        let mascotInstances = [];
         let mascotBusy = false;
+        let hugPlaying = false;
+        let hugTimer = 0;
+
+        function otherPack(pack) {
+            return pack === 'Neuron' ? 'Eviling' : 'Neuron';
+        }
+
+        function packBaseFor(source) {
+            return source === 'cdn' ? MASCOT_CDN_PACK : './mascot/mascot_pack';
+        }
 
         function loadMascotState() {
             try {
@@ -2061,6 +2155,7 @@
                 if (!saved) return;
                 mascotState.enabled = Boolean(saved.enabled);
                 if (saved.pack === 'Neuron' || saved.pack === 'Eviling') mascotState.pack = saved.pack;
+                mascotState.second = Boolean(saved.second);
             } catch (error) {}
         }
 
@@ -2068,12 +2163,24 @@
             try { localStorage.setItem(MASCOT_KEY, JSON.stringify(mascotState)); } catch (error) {}
         }
 
-        function setMascotUI(on) {
+        function setMascotUI() {
             const sw = document.getElementById('mascotSwitch');
-            sw.setAttribute('aria-checked', String(on));
-            sw.classList.toggle('on', on);
-            document.getElementById('mascotRow').hidden = !on;
+            sw.setAttribute('aria-checked', String(mascotState.enabled));
+            sw.classList.toggle('on', mascotState.enabled);
+            document.getElementById('mascotRow').hidden = !mascotState.enabled;
             document.getElementById('mascotPack').value = mascotState.pack;
+
+            const sw2 = document.getElementById('mascot2Switch');
+            sw2.setAttribute('aria-checked', String(mascotState.second));
+            sw2.classList.toggle('on', mascotState.second);
+            const hint2 = document.getElementById('mascot2Hint');
+            if (hint2) {
+                hint2.textContent = mascotState.second
+                    ? `两只都在：${mascotState.pack} + ${otherPack(mascotState.pack)}，靠近时会随机抱抱。`
+                    : '两只同时在场时，会按几率自己抱抱（随机一边发起）。';
+            }
+            const hugBtn = document.getElementById('hugNowBtn');
+            if (hugBtn) hugBtn.disabled = !mascotState.second;
         }
 
         function setMascotHint(text) {
@@ -2081,64 +2188,239 @@
             if (hint) hint.textContent = text;
         }
 
-        async function mountMascot() {
-            if (mascotInstance || mascotBusy) return;
+        async function loadMascotModule(source) {
+            if (mascotModules[source]) return mascotModules[source];
+            if (source === 'local') {
+                const mod = await import('./mascot/index.js');
+                mod.configure({ assets: './mascot/mascot_pack' });
+                mascotModules.local = mod;
+                return mod;
+            }
+            const mod = await import(MASCOT_CDN_ENTRY);
+            mascotModules.cdn = mod;
+            return mod;
+        }
+
+        async function createMascotByPack(pack) {
+            const errors = [];
+            for (const source of ['local', 'cdn']) {
+                try {
+                    const mod = await loadMascotModule(source);
+                    const instance = await mod.createMascot({ container: document.body, pack });
+                    return { instance, pack, source };
+                } catch (error) {
+                    errors.push(`${source}: ${error && error.message ? error.message : error}`);
+                }
+            }
+            throw new Error(errors.join(' | '));
+        }
+
+        async function mountMascots() {
+            if (mascotBusy) return;
             mascotBusy = true;
             setMascotHint('正在把桌宠抱过来…');
             try {
-                if (!mascotModule) {
-                    mascotModule = await import('./mascot/index.js');
-                    mascotModule.configure({ assets: './mascot/mascot_pack' });
+                const created = [];
+                if (mascotState.enabled) created.push(await createMascotByPack(mascotState.pack));
+                if (mascotState.second) created.push(await createMascotByPack(otherPack(mascotState.pack)));
+                mascotInstances = created;
+                const viaCdn = created.some(item => item.source === 'cdn');
+                if (created.length > 1) {
+                    setMascotHint(viaCdn
+                        ? '两只都来啦（素材走 CDN），过一会儿可能会抱抱。'
+                        : '两只都来啦，过一会儿可能会抱抱。');
+                    scheduleRandomHug();
+                } else if (created.length === 1) {
+                    setMascotHint(viaCdn
+                        ? '小宠物来啦（这次从 CDN 加载）。'
+                        : '小宠物来啦，切页或点开关都能让它休息。');
                 }
-                mascotInstance = await mascotModule.createMascot({
-                    container: document.body,
-                    pack: mascotState.pack
-                });
-                setMascotHint('小宠物来啦，切页或点开关都能让它休息。');
             } catch (error) {
                 console.warn('[mascot]', error);
+                destroyMascots();
                 mascotState.enabled = false;
-                setMascotUI(false);
+                mascotState.second = false;
+                setMascotUI();
                 saveMascotState();
-                setMascotHint('桌宠没加载出来：确认 mascot/ 目录和页面一起上传了。');
+                setMascotHint('桌宠没加载出来：本地 mascot/ 缺失时会走 CDN，请检查网络后重试。');
             } finally {
                 mascotBusy = false;
             }
         }
 
-        function destroyMascot() {
-            if (!mascotInstance) return;
-            try { mascotInstance.destroy(); } catch (error) {}
-            mascotInstance = null;
+        function destroyMascots() {
+            window.clearTimeout(hugTimer);
+            hugTimer = 0;
+            mascotInstances.forEach(item => {
+                try { item.instance.destroy(); } catch (error) {}
+            });
+            mascotInstances = [];
+        }
+
+        async function remountMascots() {
+            destroyMascots();
+            if (mascotState.enabled || mascotState.second) await mountMascots();
         }
 
         async function toggleMascot() {
             mascotState.enabled = !mascotState.enabled;
-            setMascotUI(mascotState.enabled);
+            if (!mascotState.enabled) mascotState.second = false;
+            setMascotUI();
             saveMascotState();
-            if (mascotState.enabled) {
-                await mountMascot();
-            } else {
-                destroyMascot();
-                setMascotHint('桌宠已收回，再打开会重新出现。');
-            }
+            await remountMascots();
+            if (!mascotState.enabled) setMascotHint('桌宠已收回，再打开会重新出现。');
+        }
+
+        async function toggleSecondMascot() {
+            mascotState.second = !mascotState.second;
+            if (mascotState.second) mascotState.enabled = true;
+            setMascotUI();
+            saveMascotState();
+            await remountMascots();
         }
 
         async function switchMascotPack(pack) {
             if (pack !== 'Neuron' && pack !== 'Eviling') return;
             mascotState.pack = pack;
             saveMascotState();
-            if (!mascotState.enabled) return;
-            destroyMascot();
-            await mountMascot();
+            setMascotUI();
+            await remountMascots();
         }
 
+        function scheduleRandomHug() {
+            window.clearTimeout(hugTimer);
+            if (mascotInstances.length < 2 || hugPlaying) return;
+            const delay = 20000 + Math.random() * 25000;
+            hugTimer = window.setTimeout(async () => {
+                if (mascotInstances.length >= 2 && !hugPlaying && Math.random() < 0.55) {
+                    await playHug(false);
+                } else {
+                    scheduleRandomHug();
+                }
+            }, delay);
+        }
+
+        async function playHug(manual) {
+            if (hugPlaying || mascotInstances.length < 2) return;
+            hugPlaying = true;
+            window.clearTimeout(hugTimer);
+            hugTimer = 0;
+
+            const stage = document.getElementById('hugStage');
+            const image = document.getElementById('hugImage');
+            const roots = mascotInstances
+                .map(item => item.instance.engine && item.instance.engine.elRoot)
+                .filter(Boolean);
+
+            try {
+                const pick = mascotInstances[Math.floor(Math.random() * mascotInstances.length)];
+                const sequence = HUG_SEQUENCES[pick.pack];
+                if (!sequence) return;
+
+                const base = packBaseFor(pick.source);
+                const frameUrl = (name) => `${base}/${pick.pack}/img/${name}.png`;
+
+                sequence.frames.forEach(([name]) => {
+                    const preload = new Image();
+                    preload.src = frameUrl(name);
+                });
+
+                const first = mascotInstances[0].instance.engine.position();
+                const last = mascotInstances[mascotInstances.length - 1].instance.engine.position();
+                const anchorX = (first.x + last.x) / 2;
+                const anchorY = (first.y + last.y) / 2;
+
+                image.width = sequence.size[0];
+                image.height = sequence.size[1];
+                stage.style.left = `${Math.round(anchorX - sequence.anchor[0])}px`;
+                stage.style.top = `${Math.round(anchorY - sequence.anchor[1])}px`;
+                stage.hidden = false;
+
+                roots.forEach(root => {
+                    root.dataset.hugOpacity = root.style.opacity || '';
+                    root.dataset.hugPointer = root.style.pointerEvents || '';
+                    root.style.opacity = '0';
+                    root.style.pointerEvents = 'none';
+                });
+
+                for (const [name, ticks] of sequence.frames) {
+                    image.src = frameUrl(name);
+                    await new Promise(resolve => window.setTimeout(resolve, ticks * HUG_FRAME_MS));
+                }
+            } catch (error) {
+                console.warn('[hug]', error);
+            } finally {
+                stage.hidden = true;
+                roots.forEach(root => {
+                    root.style.opacity = root.dataset.hugOpacity || '';
+                    root.style.pointerEvents = root.dataset.hugPointer || '';
+                    delete root.dataset.hugOpacity;
+                    delete root.dataset.hugPointer;
+                });
+                hugPlaying = false;
+                if (mascotInstances.length >= 2) scheduleRandomHug();
+            }
+        }
         function initMascot() {
             loadMascotState();
-            setMascotUI(mascotState.enabled);
+            setMascotUI();
             window.addEventListener('load', () => {
-                if (mascotState.enabled) mountMascot();
+                if (mascotState.enabled || mascotState.second) mountMascots();
             });
+        }
+        /** 4.9 强制更新：版本检测 + 绕过缓存刷新 **/
+        const APP_VERSION = (document.querySelector('meta[name="app-version"]') || {}).content || '';
+        let lastUpdateCheck = 0;
+        let updateFound = false;
+
+        function hardReload() {
+            if (location.protocol === 'file:') {
+                location.reload();
+                return;
+            }
+            const url = new URL(location.href);
+            url.searchParams.set('v', Date.now().toString(36));
+            location.replace(url.toString());
+        }
+
+        function showUpdateBanner() {
+            updateFound = true;
+            const banner = document.getElementById('updateBanner');
+            if (banner) banner.hidden = false;
+        }
+
+        async function checkForUpdate(force) {
+            if (location.protocol === 'file:' || updateFound) return;
+            const now = Date.now();
+            if (!force && now - lastUpdateCheck < 60 * 1000) return;
+            lastUpdateCheck = now;
+            try {
+                const url = new URL(location.href);
+                url.searchParams.set('_', now.toString(36));
+                const response = await fetch(url.toString(), { cache: 'no-store' });
+                if (!response.ok) return;
+                const html = await response.text();
+                const match = html.match(/<meta name="app-version" content="([^"]+)"/);
+                if (match && APP_VERSION && match[1] !== APP_VERSION) showUpdateBanner();
+            } catch (error) {}
+        }
+
+        function initUpdateChecker() {
+            if (location.protocol === 'file:') return;
+            // 用 v= 参数打开过的话，把参数从地址栏清掉，链接保持干净
+            try {
+                const clean = new URL(location.href);
+                if (clean.searchParams.has('v')) {
+                    clean.searchParams.delete('v');
+                    history.replaceState(null, '', clean.pathname + (clean.search || '') + clean.hash);
+                }
+            } catch (error) {}
+
+            window.addEventListener('load', () => window.setTimeout(() => checkForUpdate(true), 2500));
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') checkForUpdate(false);
+            });
+            window.setInterval(() => checkForUpdate(false), 5 * 60 * 1000);
         }
 
         /** 5. 透明度调节（修复移动端不生效问题） **/
@@ -2624,6 +2906,7 @@
         initCards();
         initLyricsWidget();
         initMascot();
+        initUpdateChecker();
     </script>
 </body>
 </html>
