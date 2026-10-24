@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0650">
+    <meta name="app-version" content="20261025-0700">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -2571,14 +2571,32 @@
         let lastUpdateCheck = 0;
         let updateFound = false;
 
+        const CACHE_BUST_KEY = 'cacheBustCounter';
+        const CACHE_CHECK_KEY = 'cacheBustCheck';
+
+        function nextBustSlashes(kind) {
+            const isCheck = kind === 'check';
+            const key = isCheck ? CACHE_CHECK_KEY : CACHE_BUST_KEY;
+            const min = isCheck ? 22 : 3;
+            const max = isCheck ? 40 : 21;
+            let value = min - 1;
+            try { value = Number(localStorage.getItem(key) || String(min - 1)); } catch (error) {}
+            if (!Number.isFinite(value) || value < min - 1 || value >= max) value = min - 1;
+            value += 1;
+            try { localStorage.setItem(key, String(value)); } catch (error) {}
+            return value;
+        }
+
+        function bustUrl(kind) {
+            return `${location.origin}${'/'.repeat(nextBustSlashes(kind))}`;
+        }
+
         function hardReload() {
             if (location.protocol === 'file:') {
                 location.reload();
                 return;
             }
-            const url = new URL(location.href);
-            url.searchParams.set('v', Date.now().toString(36));
-            location.replace(url.toString());
+            location.replace(bustUrl('reload'));
         }
 
         function showUpdateBanner() {
@@ -2593,9 +2611,7 @@
             if (!force && now - lastUpdateCheck < 60 * 1000) return;
             lastUpdateCheck = now;
             try {
-                const url = new URL(location.href);
-                url.searchParams.set('_', now.toString(36));
-                const response = await fetch(url.toString(), { cache: 'no-store' });
+                const response = await fetch(bustUrl('check'), { cache: 'no-store' });
                 if (!response.ok) return;
                 const html = await response.text();
                 const match = html.match(/<meta name="app-version" content="([^"]+)"/);
@@ -2608,8 +2624,16 @@
             // 用 v= 参数打开过的话，把参数从地址栏清掉，链接保持干净
             try {
                 const clean = new URL(location.href);
+                let changed = false;
                 if (clean.searchParams.has('v')) {
                     clean.searchParams.delete('v');
+                    changed = true;
+                }
+                if (/^\/+$/.test(clean.pathname) && clean.pathname !== '/') {
+                    clean.pathname = '/';
+                    changed = true;
+                }
+                if (changed) {
                     history.replaceState(null, '', clean.pathname + (clean.search || '') + clean.hash);
                 }
             } catch (error) {}
