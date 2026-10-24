@@ -2,14 +2,19 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
         :root {
-            --bg-overlay-color: rgba(253, 246, 240, 0.8);
-            --card-bg: rgba(255, 255, 255, 0.85);
             --primary-color: #ffb7b2;
+            --primary-strong: #ff8c94;
+            --primary-rgb: 255, 183, 178;
+            --primary-contrast: #ffffff;
+            --bg-color: #fdf6f0;
+            --bg-rgb: 253, 246, 240;
+            --bg-overlay-color: rgba(var(--bg-rgb), 0.8);
+            --card-bg: rgba(255, 255, 255, 0.85);
             --text-main: #5d5d5d;
             --text-sub: #888;
             --shadow: 0 8px 20px rgba(0,0,0,0.1);
@@ -18,6 +23,11 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
             color: var(--text-main);
@@ -25,12 +35,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #fdf6f0;
+            background-color: var(--bg-color);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         #bg-video {
@@ -45,6 +56,7 @@
             background: var(--bg-overlay-color);
             z-index: -1;
             transition: background 0.3s ease;
+            pointer-events: none;
         }
 
         .container {
@@ -57,17 +69,17 @@
 
         header h1 {
             font-size: clamp(2rem, 8vw, 3.5rem);
-            color: #ff8c94;
+            color: var(--primary-strong);
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(255,255,255,0.5);
         }
 
-        /* --- 汉堡菜单修复 --- */
+        /* --- 汉堡菜单（移动端优化） --- */
         .menu-btn {
             position: fixed;
             top: 20px;
             left: 20px;
-            z-index: 1002; /* 最高层级 */
+            z-index: 1002;
             background: white;
             border: none;
             padding: 12px;
@@ -79,15 +91,22 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 5px; /* 控制横杠间距 */
+            gap: 5px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-width: 48px;
+            min-height: 48px;
+            pointer-events: auto;
         }
         .menu-btn:hover { transform: scale(1.1); }
+        .menu-btn:active { transform: scale(0.95); }
         .menu-btn span {
             display: block;
             width: 24px;
             height: 3px;
             background: var(--primary-color);
             border-radius: 10px;
+            pointer-events: none;
         }
 
         /* --- 侧边菜单 --- */
@@ -95,10 +114,12 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 280px;
+            width: 300px;
             height: 100vh;
+            height: 100dvh;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 80px 25px;
             box-shadow: 10px 0 30px rgba(0,0,0,0.05);
             transform: translateX(-100%);
@@ -106,6 +127,7 @@
             z-index: 1001;
             border-radius: 0 20px 20px 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .nav-menu.active { transform: translateX(0); }
         .nav-menu ul { list-style: none; }
@@ -117,13 +139,12 @@
         }
         .nav-menu a:hover { color: var(--primary-color); transform: translateX(5px); }
 
-        /* --- 简洁模式 & 配置面板 --- */
         .menu-section {
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #eee;
         }
-        .menu-section h4 { font-size: 0.9rem; color: #ff8c94; margin-bottom: 10px; }
+        .menu-section h4 { font-size: 0.9rem; color: var(--primary-strong); margin-bottom: 10px; }
         .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
         .input-group input {
@@ -134,48 +155,290 @@
             width: 100%; padding: 10px; background: var(--primary-color);
             border: none; border-radius: 8px; color: white; cursor: pointer;
             font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .apply-btn:active { opacity: 0.8; }
+
+        /* --- 增强版音乐播放器 --- */
+        .music-player {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: var(--shadow);
+        }
+        .music-info {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .music-controls-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .playback-btns { display: flex; gap: 15px; align-items: center; }
+        .playback-btns button {
+            background: none; border: none; cursor: pointer; font-size: 1.2rem;
+            transition: transform 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            min-width: 44px;
+            min-height: 44px;
+        }
+        .playback-btns button:hover { transform: scale(1.2); }
+        .playback-btns button:active { transform: scale(0.9); }
+
+        /* 进度条样式 */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        #progress-bar {
+            height: 100%;
+            background: var(--primary-color);
+            width: 0%;
+        }
+        .time-display {
+            font-size: 0.7rem;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
         }
 
-        /* --- 音乐播放器 --- */
-        .music-player {
-            margin-top: 20px; padding: 15px; background: #f9f9f9;
-            border-radius: 15px; text-align: center;
+        /* 音量和模式 */
+        .music-extra-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
         }
-        .music-info { font-size: 0.7rem; color: #999; margin-bottom: 5px; overflow: hidden; text-overflow:
-ellipsis; white-space: nowrap; }
-        .music-controls { display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .volume-ctrl { display: flex; align-items: center; gap: 5px; }
+        .volume-ctrl input { width: 60px; }
+        .mode-btns { display: flex; gap: 10px; }
+        .mode-btns button {
+            background: #eee; border: none; padding: 2px 8px;
+            border-radius: 10px; cursor: pointer; font-size: 0.7rem;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .mode-btns button.active { background: var(--primary-color); color: white; }
+
+        /* 播放列表 */
+        .playlist-container {
+            margin-top: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.5);
+            padding: 5px;
+            font-size: 0.75rem;
+        }
+        .playlist-item {
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .playlist-item:hover { background: var(--primary-color); }
+        .playlist-item.active { color: white; background: var(--primary-color); }
 
         /* --- 搜索框修复 --- */
         .search-box {
-            position: relative; /* 必须是相对定位 */
+            position: relative;
             max-width: 500px;
             margin: 20px auto;
             width: 100%;
         }
         .search-input {
             width: 100%;
-            padding: 15px 120px 15px 20px; /* 右侧留出空间给下拉框 */
+            padding: 15px 66px 15px 20px;
             border-radius: 30px;
-            border: 2px solid #ffb7b2;
+            border: 2px solid var(--primary-color);
             outline: none;
             font-size: 1rem;
             background: white;
             box-shadow: var(--shadow);
+            -webkit-appearance: none;
         }
-        .search-engine-select {
+        /* --- 搜索引擎图标切换 --- */
+        .engine-picker {
             position: absolute;
-            right: 10px;
+            right: 8px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 10;
-            padding: 6px 12px;
-            border-radius: 15px;
-            border: 1px solid #ddd;
-            background: #fcfcfc;
-            font-size: 0.8rem;
-            cursor: pointer;
-            outline: none;
         }
+        .engine-trigger {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(var(--primary-rgb), 0.45);
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .engine-trigger:hover { box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3); transform: scale(1.05); }
+        .engine-trigger:active { transform: scale(0.94); }
+        .engine-trigger img { width: 22px; height: 22px; display: block; pointer-events: none; }
+        .engine-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid rgba(var(--primary-rgb), 0.35);
+            border-radius: 16px;
+            box-shadow: 0 10px 24px rgba(90, 60, 60, 0.16);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-6px) scale(0.96);
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+        }
+        .engine-menu.open { opacity: 1; visibility: visible; transform: none; }
+        .engine-option {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            border-radius: 50%;
+            background: none;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .engine-option:hover, .engine-option:focus-visible { background: rgba(var(--primary-rgb), 0.22); outline: none; }
+        .engine-option[aria-selected="true"] { background: rgba(var(--primary-rgb), 0.30); }
+        .engine-option img { width: 22px; height: 22px; display: block; pointer-events: none; }
+
+        /* 可拖动、平滑的播放进度条 */
+        .progress-container {
+            height: 8px;
+            overflow: visible;
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #progress-bar {
+            width: 0%;
+            border-radius: 8px;
+            pointer-events: none;
+            will-change: width;
+        }
+        .progress-container::after {
+            content: "";
+            position: absolute;
+            inset: -8px 0;
+        }
+        .volume-ctrl { gap: 6px; }
+        #volumePercent { min-width: 32px; text-align: right; color: #777; }
+        .mode-btns { align-items: center; }
+        .mode-btns button {
+            min-height: 28px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            background: #fcfcfc;
+            color: var(--text-main);
+            font-size: 0.72rem;
+            line-height: 1;
+            white-space: nowrap;
+            transition: background .2s, border-color .2s;
+        }
+        .mode-btns button.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        .lyrics-panel {
+            display: none;
+            max-height: 110px;
+            overflow-y: auto;
+            margin-top: 9px;
+            padding: 10px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,.55);
+            font-size: .78rem;
+            line-height: 1.8;
+            color: #888;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .lyrics-panel.show { display: block; }
+        .lyrics-panel .lyric-line { min-height: 1.5em; }
+        .lyrics-panel .lyrics-source {
+            margin-bottom: 6px;
+            font-size: 0.68rem;
+            color: #c2b3b3;
+            letter-spacing: 0.02em;
+        }
+        .lyrics-panel .lyric-line.active { color: var(--primary-strong); font-weight: 700; transform: scale(1.02); }
+        .lyrics-tools { display: flex; gap: 6px; margin-top: 6px; }
+        .lyrics-tools button {
+            flex: 1; border: 1px solid #eee; border-radius: 8px;
+            padding: 5px; background: rgba(255,255,255,.75);
+            color: #777; font-size: .7rem; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .simple-mode-toggle {
+            position: fixed; top: 16px; right: 18px; z-index: 1003;
+            border: 1px solid rgba(var(--primary-rgb),.65); border-radius: 18px;
+            padding: 7px 12px; background: rgba(255,255,255,.88);
+            color: #777; box-shadow: 0 3px 12px rgba(0,0,0,.08);
+            cursor: pointer; opacity: 0; visibility: hidden;
+            transform: translateY(-4px); transition: opacity .2s, transform .2s, visibility .2s;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: .78rem;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .simple-mode-hotspot {
+            position: fixed; top: 0; right: 0; width: 100px; height: 58px; z-index: 1002;
+            pointer-events: auto;
+        }
+        .simple-mode-hotspot:hover + .simple-mode-toggle,
+        .simple-mode-toggle:hover,
+        .simple-mode-toggle:focus-visible {
+            opacity: 1; visibility: visible; transform: translateY(0);
+        }
+        body.simple-mode .simple-mode-toggle { opacity: .55; }
+        .opacity-ctrl-btn {
+            width: 40px !important; height: 40px !important;
+            font-size: 1.15rem !important; border-width: 1px !important;
+        }
+        .slider-container { padding: 14px !important; border-radius: 16px !important; }
 
         /* --- 网格布局 --- */
         .nav-grid {
@@ -200,7 +463,7 @@ ellipsis; white-space: nowrap; }
         .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; }
         .card-desc { font-size: 0.85rem; color: var(--text-sub); }
 
-        /* --- 透明度控制 --- */
+        /* --- 透明度控制（移动端修复） --- */
         .opacity-ctrl-btn {
             position: fixed; bottom: 20px; right: 20px;
             width: 55px; height: 55px; background: white;
@@ -208,17 +471,65 @@ ellipsis; white-space: nowrap; }
             justify-content: center; font-size: 1.8rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             cursor: pointer; z-index: 1000; border: 2px solid var(--primary-color);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            pointer-events: auto;
+            min-width: 44px;
+            min-height: 44px;
+            user-select: none;
+            -webkit-user-select: none;
         }
+        .opacity-ctrl-btn:active { transform: scale(0.92); }
         .slider-container {
             position: fixed; bottom: 90px; right: 20px;
             background: white; padding: 20px; border-radius: 24px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             display: none; flex-direction: column; align-items: center;
             gap: 12px; z-index: 1000;
+            -webkit-tap-highlight-color: transparent;
+            pointer-events: auto;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .slider-container.show { display: flex; }
 
+        /* 自定义滑块样式，移动端友好 */
+        .slider-container input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 160px;
+            height: 8px;
+            background: #eee;
+            border-radius: 6px;
+            outline: none;
+            margin: 0;
+            touch-action: none;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            touch-action: none;
+        }
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            cursor: pointer;
+            touch-action: none;
+        }
+
         .hidden-grid { display: none !important; }
+        #footer { transition: opacity 0.3s; }
 
         @media (max-width: 768px) {
             .nav-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
@@ -227,6 +538,463 @@ ellipsis; white-space: nowrap; }
         @media (max-width: 480px) {
             .nav-grid { grid-template-columns: 1fr; }
         }
+
+        /* 第二轮：收紧侧栏布局，避免循环按钮溢出 */
+        .nav-menu {
+            width: min(310px, 88vw);
+            padding: 68px 16px 22px;
+            border-radius: 0 18px 18px 0;
+            background: rgba(255,255,255,.92);
+            box-shadow: 8px 0 28px rgba(70,45,45,.09);
+        }
+        .nav-menu > h3 {
+            font-size: 1.05rem;
+            margin-bottom: 12px !important;
+        }
+        .nav-menu li { margin: 10px 0; }
+        .nav-menu a { font-size: .92rem; }
+        .menu-section {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(var(--primary-rgb),.25);
+        }
+        .menu-section h4 { margin-bottom: 8px; }
+        .input-group { margin-bottom: 9px; }
+        .music-player {
+            padding: 11px;
+            margin-top: 12px;
+            border-radius: 16px;
+            background: rgba(255,248,248,.82);
+            border-color: rgba(var(--primary-rgb),.25);
+            box-shadow: 0 5px 16px rgba(90,60,60,.06);
+            min-width: 0;
+            width: 100%;
+        }
+        .music-info { font-size: .8rem; margin-bottom: 8px; }
+        .music-controls-main {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            margin: 8px 0;
+            min-width: 0;
+        }
+        .playback-btns {
+            justify-content: center;
+            gap: 22px;
+        }
+        .music-extra-controls {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .volume-ctrl {
+            flex: 1 1 125px;
+            min-width: 0;
+            gap: 5px;
+        }
+        .volume-ctrl input {
+            width: auto;
+            min-width: 35px;
+            flex: 1 1 auto;
+            -webkit-appearance: none;
+        }
+        #volumePercent { min-width: 30px; font-size: .68rem; }
+        .mode-btns {
+            display: flex;
+            flex: 0 0 auto;
+            gap: 4px;
+            max-width: 100%;
+        }
+        .mode-btns button {
+            padding: 5px 7px;
+            min-height: 26px;
+            font-size: .66rem;
+            border-radius: 13px;
+            max-width: 100%;
+        }
+        .playlist-container {
+            max-height: 92px;
+            margin-top: 8px;
+            background: rgba(255,255,255,.65);
+        }
+        .lyrics-tools { gap: 5px; }
+        .lyrics-tools button { font-size: .66rem; padding: 6px 4px; }
+        .apply-btn {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .opacity-ctrl-btn {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 1rem !important;
+        }
+        @media (max-width: 360px) {
+            .nav-menu { padding-left: 12px; padding-right: 12px; }
+            .music-extra-controls { justify-content: center; }
+            .volume-ctrl { flex-basis: 100%; }
+            .mode-btns { justify-content: center; }
+        }
+
+        /* 移动端菜单按钮和透明度按钮增强可点击性 */
+        @media (hover: none) and (pointer: coarse) {
+            .menu-btn {
+                min-width: 52px;
+                min-height: 52px;
+                padding: 14px;
+            }
+            .opacity-ctrl-btn {
+                width: 52px !important;
+                height: 52px !important;
+                font-size: 1.4rem !important;
+            }
+            .slider-container input[type="range"] {
+                width: 180px;
+                height: 10px;
+            }
+            .slider-container input[type="range"]::-webkit-slider-thumb {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* --- 侧栏整理 --- */
+        .menu-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .menu-head h3 { margin: 0; font-size: 1.05rem; color: var(--primary-strong); }
+        .menu-close {
+            flex: 0 0 auto;
+            width: 30px; height: 30px;
+            display: flex; align-items: center; justify-content: center;
+            border: none; border-radius: 50%;
+            background: rgba(var(--primary-rgb), 0.16);
+            color: var(--primary-strong); font-size: 0.95rem; line-height: 1; cursor: pointer;
+            transition: background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .menu-close:hover { background: rgba(var(--primary-rgb), 0.34); }
+
+        .quick-links { list-style: none; margin: 8px 0 0; padding: 0; }
+        .quick-links li { margin: 2px 0; }
+        .quick-links a {
+            display: flex; align-items: center; gap: 9px;
+            padding: 7px 10px; border-radius: 10px;
+            color: var(--text-main); text-decoration: none;
+            font-size: 0.9rem; transition: background 0.2s, transform 0.2s;
+        }
+        .quick-links a:hover { background: rgba(var(--primary-rgb), 0.18); transform: translateX(2px); }
+
+        .file-pick {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 11px;
+            border: 1px dashed rgba(var(--primary-rgb), 0.7);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.65);
+            color: #9a8a8a; font-size: 0.78rem; cursor: pointer;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .file-pick::before { content: "🖼️"; }
+        .file-pick:hover { border-color: var(--primary-color); background: #fff; }
+        #bgFileInput {
+            position: absolute; width: 1px; height: 1px;
+            opacity: 0; pointer-events: none;
+        }
+
+        .color-row { display: flex; align-items: center; gap: 9px; margin: 10px 0; }
+        .color-row > label { font-size: 0.75rem; color: #999; }
+        .color-row input[type="color"] {
+            width: 44px; height: 30px; padding: 0;
+            border: 1px solid #eee; border-radius: 8px;
+            background: #fff; cursor: pointer;
+        }
+        .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding: 3px; }
+        .color-row input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+        #bgColorValue { font-size: 0.72rem; color: #b0a3a3; letter-spacing: 0.04em; }
+
+        .btn-row { display: flex; gap: 8px; }
+        .btn-row .apply-btn { flex: 1; width: auto; padding: 9px; font-size: 0.8rem; border-radius: 10px; min-height: 36px; }
+        .ghost-btn {
+            flex: 1;
+            padding: 9px;
+            min-height: 36px;
+            border: 1px solid rgba(var(--primary-rgb), 0.6);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--primary-strong); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .ghost-btn:hover { background: rgba(var(--primary-rgb), 0.16); }
+        .ghost-btn:active { transform: scale(0.97); }
+        .music-player .ghost-btn { width: 100%; margin-top: 8px; flex: none; }
+
+        .menu-hint { margin-top: 9px; font-size: 0.7rem; line-height: 1.6; color: #b3a5a5; }
+
+        .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .switch-row > span { font-size: 0.85rem; color: var(--text-main); }
+        .switch-btn {
+            position: relative;
+            flex: 0 0 auto;
+            width: 46px; height: 26px;
+            padding: 0; border: none; border-radius: 13px;
+            background: #eee; cursor: pointer;
+            transition: background 0.25s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .switch-btn .knob {
+            position: absolute; top: 3px; left: 3px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+            transition: transform 0.25s;
+        }
+        .switch-btn.on { background: var(--primary-color); }
+        .switch-btn.on .knob { transform: translateX(20px); }
+
+        .menu-section h4 { letter-spacing: 0.02em; }
+
+        /* --- 主题配色 --- */
+        .theme-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+        .theme-dot {
+            width: 30px; height: 30px; padding: 0;
+            border: 2px solid var(--dot-strong);
+            border-radius: 50%;
+            background: var(--dot);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .theme-dot:hover { transform: scale(1.12); }
+        .theme-dot:focus-visible { outline: 2px solid var(--dot-strong); outline-offset: 2px; }
+        .theme-dot[aria-checked="true"] {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 2px var(--dot-strong);
+            transform: scale(1.06);
+        }
+        input[type="range"] { accent-color: var(--primary-color); }
+        img[src$="yandex.svg"] {
+            filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(3374%) hue-rotate(352deg) brightness(98%) contrast(96%);
+        }
+        .apply-btn, .mode-btns button.active, .playlist-item.active, .playlist-item:hover {
+            color: var(--primary-contrast);
+        }
+
+        /* 站点多了以后，手机上两列紧凑卡片，避免一屏只放一个 */
+        @media (max-width: 480px) {
+            .nav-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+            .nav-card { padding: 18px 10px; border-radius: 18px; }
+            .card-icon { font-size: 30px; margin-bottom: 8px; }
+            .card-title { font-size: 0.98rem; margin-bottom: 4px; }
+            .card-desc { font-size: 0.72rem; line-height: 1.35; }
+        }
+        @media (max-width: 360px) {
+            .btn-row { flex-direction: column; }
+        }
+        /* --- 桌面歌词挂件 --- */
+        .lyrics-fab {
+            position: fixed; right: 88px; bottom: 20px; z-index: 1004;
+            width: 48px; height: 48px;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .92);
+            color: var(--primary-strong);
+            font-size: 1.15rem; font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .15);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .lyrics-fab.on { background: var(--primary-color); color: var(--primary-contrast); }
+
+        .lyrics-widget {
+            position: fixed; right: 20px; bottom: 92px; z-index: 1005;
+            width: 320px; max-width: calc(100vw - 24px);
+            display: flex; flex-direction: column;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, var(--lw-alpha, .85));
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(var(--primary-rgb), .4);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .16);
+            overflow: hidden;
+            color: var(--text-main);
+            font-family: var(--lw-font, 'Segoe UI', 'Microsoft YaHei', sans-serif);
+        }
+        .lyrics-widget[hidden] { display: none; }
+        .lyrics-widget-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 6px; padding: 8px 10px;
+            background: rgba(var(--primary-rgb), .16);
+            cursor: grab;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .lyrics-widget.pinned .lyrics-widget-head { cursor: default; }
+        .lw-title { font-size: .78rem; font-weight: 700; color: var(--primary-strong); }
+        .lw-tools { display: flex; align-items: center; gap: 4px; }
+        .lw-tools button {
+            min-width: 26px; height: 26px; padding: 0 6px;
+            border: none; border-radius: 8px;
+            background: rgba(255, 255, 255, .8);
+            color: var(--text-sub);
+            font-size: .72rem; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lw-tools button:hover { background: #fff; color: var(--primary-strong); }
+        .lw-tools button.on { background: var(--primary-color); color: var(--primary-contrast); }
+        .lw-body {
+            padding: 12px 14px;
+            max-height: 220px; overflow-y: auto;
+            font-size: var(--lw-font-size, 22px);
+            line-height: 1.9;
+            text-align: center;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            color: #7a6f6f;
+        }
+        .lw-line { min-height: 1.4em; transition: color .2s; }
+        .lw-line.active { color: var(--primary-strong); font-weight: 700; }
+        .lw-settings {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            padding: 7px 10px;
+            border-top: 1px solid rgba(var(--primary-rgb), .25);
+            font-size: .66rem; color: #a99b9b;
+        }
+        .lw-settings label { display: flex; align-items: center; gap: 4px; }
+        .lw-settings input[type="range"] { width: 74px; }
+        .lw-settings select {
+            border: 1px solid #eee; border-radius: 8px;
+            background: #fff; font-size: .66rem; padding: 2px 4px;
+            color: var(--text-main);
+        }
+        @media (max-width: 480px) {
+            .lyrics-widget { width: calc(100vw - 24px); right: 12px; bottom: 84px; }
+            .lw-body { max-height: 26vh; }
+        }
+
+        /* --- 卡片系统：尺寸 / 编辑 / 拖拽 --- */
+        .nav-grid { grid-auto-rows: 180px; }
+        .nav-card { padding: 0; height: 100%; position: relative; overflow: hidden; }
+        .card-link {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100%; padding: 22px 16px;
+            text-decoration: none; color: inherit;
+        }
+        .nav-card.size-md { grid-column: span 2; }
+        .nav-card.size-lg { grid-column: span 2; grid-row: span 2; }
+        .size-md .card-icon { font-size: 48px; }
+        .size-lg .card-icon { font-size: 62px; margin-bottom: 16px; }
+        .size-md .card-title { font-size: 1.35rem; }
+        .size-lg .card-title { font-size: 1.5rem; }
+        .size-lg .card-desc { font-size: .95rem; }
+        .card-desc {
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-tools {
+            position: absolute; top: 8px; right: 8px;
+            display: flex; gap: 4px;
+            opacity: 0; pointer-events: none;
+            transition: opacity .15s;
+        }
+        body.editing-cards .card-tools { opacity: 1; pointer-events: auto; }
+        .nav-grid.no-anim .nav-card { animation: none; }
+        body.editing-cards .nav-card { border: 1px dashed rgba(var(--primary-rgb), .55); }
+        body.editing-cards .nav-card:hover { transform: none; }
+        body.editing-cards .card-link { pointer-events: none; }
+        .card-tool {
+            width: 26px; height: 26px; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(var(--primary-rgb), .5);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .95);
+            color: var(--text-sub);
+            font-size: .78rem; line-height: 1;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .card-tool:hover { background: var(--primary-color); color: var(--primary-contrast); }
+        .card-tool.drag-handle { cursor: grab; touch-action: none; }
+        .nav-card.dragging {
+            opacity: .7;
+            transform: scale(.98) !important;
+            border-style: solid;
+            pointer-events: none;
+            z-index: 3;
+        }
+        body.card-dragging { user-select: none; -webkit-user-select: none; }
+        .edit-mode-btn.on { background: var(--primary-color); color: var(--primary-contrast); }
+        .edit-done {
+            position: fixed; left: 20px; bottom: 20px; z-index: 1003;
+            padding: 9px 16px;
+            border: none; border-radius: 20px;
+            background: var(--primary-color);
+            color: var(--primary-contrast);
+            font-size: .8rem; font-weight: 600;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .14);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .edit-done[hidden] { display: none; }
+
+        .card-form { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+        .card-form[hidden] { display: none; }
+        .card-form input {
+            width: 100%; padding: 8px 10px;
+            border: 1px solid #eee; border-radius: 9px;
+            background: #fff; color: var(--text-main);
+            font-size: .8rem; font-family: inherit;
+        }
+        .card-form input:focus { outline: none; border-color: var(--primary-color); }
+
+        .hidden-list {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+            margin-top: 8px; font-size: .72rem; color: #b3a5a5;
+        }
+        .hidden-list[hidden] { display: none; }
+        .hidden-chip {
+            padding: 4px 10px;
+            border: 1px dashed rgba(var(--primary-rgb), .6);
+            border-radius: 20px;
+            background: #fff;
+            color: var(--primary-strong);
+            font-size: .7rem; cursor: pointer;
+        }
+        .hidden-chip:hover { background: rgba(var(--primary-rgb), .14); }
+
+        @media (max-width: 768px) {
+            .nav-grid { grid-auto-rows: 160px; }
+        }
+        @media (max-width: 480px) {
+            .nav-grid { grid-auto-rows: 150px; }
+            .card-link { padding: 16px 10px; }
+            .card-icon { font-size: 28px; margin-bottom: 8px; }
+            .card-title { font-size: .98rem; }
+            .size-lg .card-icon { font-size: 46px; }
+            .card-tools { top: 6px; right: 6px; gap: 3px; }
+            .card-tool { width: 26px; height: 26px; font-size: .74rem; }
+        }
     </style>
 </head>
 <body id="bg-body">
@@ -234,58 +1002,141 @@ ellipsis; white-space: nowrap; }
     <video id="bg-video" autoplay muted loop playsinline></video>
     <div class="overlay" id="overlay"></div>
 
-    <button class="menu-btn" onclick="toggleMenu()">
+    <div class="simple-mode-hotspot" aria-hidden="true"></div>
+    <button class="simple-mode-toggle" id="simpleModeToggle" onclick="toggleSimpleMode()" aria-label="切换简洁模式">简洁模式</button>
+
+    <!-- 汉堡菜单按钮 -->
+    <button type="button" class="menu-btn" id="menuBtn" onclick="toggleMenu()" aria-label="打开菜单" aria-expanded="false" aria-controls="navMenu">
         <span></span>
         <span></span>
         <span></span>
     </button>
 
-    <nav class="nav-menu" id="navMenu">
-        <h3 style="color: #ff8c94; margin-bottom: 20px;">✨ 导航菜单</h3>
-        <ul id="quickLinks">
-            <li><a href="https://github.com" target="_blank"><span>💻</span> Github</a></li>
-            <li><a href="https://bilibili.com" target="_blank"><span>📺</span> Bilibili</a></li>
-            <li><a href="https://zhihu.com" target="_blank"><span>📚</span> 知乎</a></li>
-            <li><a href="https://notion.so" target="_blank"><span>📝</span> Notion</a></li>
-            <li><a href="https://pinterest.com" target="_blank"><span>🎨</span> Pinterest</a></li>
+    <nav class="nav-menu" id="navMenu" aria-label="侧边菜单">
+        <div class="menu-head">
+            <h3>✨ 导航菜单</h3>
+            <button type="button" class="menu-close" onclick="closeMenu()" aria-label="关闭菜单">✕</button>
+        </div>
+
+        <ul class="quick-links" id="quickLinks">
+            <li><a href="https://github.com" target="_blank" rel="noopener"><span>💻</span> GitHub</a></li>
+            <li><a href="https://bilibili.com" target="_blank" rel="noopener"><span>📺</span> Bilibili</a></li>
+            <li><a href="https://zhihu.com" target="_blank" rel="noopener"><span>📚</span> 知乎</a></li>
+            <li><a href="https://notion.so" target="_blank" rel="noopener"><span>📝</span> Notion</a></li>
+            <li><a href="https://pinterest.com" target="_blank" rel="noopener"><span>🎨</span> Pinterest</a></li>
         </ul>
 
-        <div class="menu-section">
-            <h4>💡 功能设置</h4>
-            <div class="input-group">
-                <label>简洁模式 (隐藏卡片)</label>
-                <button class="apply-btn" style="background: #eee; color: #333; font-size: 0.8rem;"
-onclick="toggleSimpleMode()">
-                    <span id="simpleModeText">开启简洁模式</span>
-                </button>
+        <section class="menu-section">
+            <h4>🎨 主题</h4>
+            <div class="theme-row" id="themeRow" role="radiogroup" aria-label="主题颜色"></div>
+            <p class="menu-hint" id="themeHint">马卡龙配色，选了会记住。</p>
+        </section>
+
+        <section class="menu-section">
+            <h4>🖼️ 背景</h4>
+            <label class="file-pick" for="bgFileInput" id="bgFileLabel">
+                <span id="bgFileName">选择图片或视频</span>
+            </label>
+            <input type="file" id="bgFileInput" accept="image/*,video/*" onchange="handleBgFileChange(this)">
+
+            <div class="color-row">
+                <label for="bgColorPicker">底色</label>
+                <input type="color" id="bgColorPicker" value="#fdf6f0">
+                <span id="bgColorValue">#fdf6f0</span>
             </div>
 
-            <div class="menu-section" id="bgConfig">
-                <h4>🎨 自定义背景</h4>
-                <div class="input-group">
-                    <label>选择图片或视频文件</label>
-                    <input type="file" id="bgFileInput" accept="image/*,video/*">
-                </div>
-                <div class="input-group">
-                    <label>背景底色</label>
-                    <input type="color" id="bgColorPicker" value="#fdf6f0" style="height: 30px; padding: 2px;">
-                </div>
-                <button class="apply-btn" onclick="applyFileBackground()">应用背景</button>
+            <div class="btn-row">
+                <button type="button" class="apply-btn" onclick="applyFileBackground()">应用背景</button>
+                <button type="button" class="ghost-btn" onclick="restoreRandomBackground()">恢复随机</button>
             </div>
+            <p class="menu-hint" id="bgHint">不选图片也能直接应用底色。</p>
+        </section>
 
+        <section class="menu-section">
+            <h4>🧩 卡片</h4>
+            <div class="btn-row">
+                <button type="button" class="apply-btn edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">编辑模式</button>
+                <button type="button" class="ghost-btn" onclick="openCardForm()">＋ 添加</button>
+            </div>
+            <div class="card-form" id="cardForm" hidden>
+                <strong id="cardFormTitle" style="font-size:.8rem; color:var(--primary-strong);">添加卡片</strong>
+                <input type="text" id="cardTitle" placeholder="名称，例如 豆瓣" maxlength="20">
+                <input type="text" id="cardUrl" placeholder="网址，例如 https://www.douban.com/" maxlength="300">
+                <input type="text" id="cardIcon" placeholder="图标 emoji，例如 🌿" maxlength="8">
+                <input type="text" id="cardDesc" placeholder="一句话描述（可选）" maxlength="30">
+                <div class="btn-row">
+                    <button type="button" class="apply-btn" onclick="saveCardForm()">保存</button>
+                    <button type="button" class="ghost-btn" id="deleteCardBtn" onclick="deleteCard()" hidden>删除</button>
+                    <button type="button" class="ghost-btn" onclick="closeCardForm()">取消</button>
+                </div>
+            </div>
+            <div class="hidden-list" id="hiddenCards" hidden></div>
+            <p class="menu-hint" id="cardHint">编辑模式里可拖动排序、换尺寸、隐藏卡片。</p>
+            <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="resetCards()">恢复默认卡片</button>
+        </section>
+
+        <section class="menu-section">
+            <h4>🎵 音乐</h4>
             <div class="music-player">
                 <div class="music-info" id="musicName">暂无音乐</div>
-                <div class="music-controls">
-                    <input type="file" id="musicFile" accept="audio/*" style="display:none"
-onchange="loadMusic(this)">
-                    <button onclick="document.getElementById('musicFile').click()" style="font-size: 0.8rem;
-cursor:pointer;">🎵 选择音乐</button>
-                    <button id="playBtn" onclick="togglePlay()" style="font-size: 1.2rem; cursor:pointer;
-border:none; background:none;">▶️</button>
+
+                <div class="progress-container" id="progressContainer" role="slider" tabindex="0"
+                     aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="progress-bar"></div>
                 </div>
-                <audio id="audioPlayer"></audio>
+                <div class="time-display">
+                    <span id="currentTime">00:00</span>
+                    <span id="durationTime">00:00</span>
+                </div>
+
+                <div class="music-controls-main">
+                    <div class="playback-btns">
+                        <button onclick="prevTrack()"><<</button>
+                        <button id="playBtn" onclick="togglePlay()">▶️</button>
+                        <button onclick="nextTrack()">>></button>
+                    </div>
+                    <div class="music-extra-controls">
+                        <div class="volume-ctrl">
+                            <span>🔊</span>
+                            <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8"
+                                   oninput="updateVolume(this.value)">
+                            <span id="volumePercent">80%</span>
+                        </div>
+                        <div class="mode-btns">
+                            <button id="shuffleBtn" onclick="toggleShuffle()" aria-label="随机播放">🔀 随机</button>
+                            <button id="loopBtn" onclick="toggleLoop()" aria-label="切换循环模式" title="当前：单曲循环">🔂 单曲</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lyrics-panel" id="lyricsPanel" aria-live="polite">选择音乐文件夹后，会自动匹配同目录下的同名 .lrc / .txt 歌词。</div>
+                <div class="lyrics-tools">
+                    <button type="button" onclick="document.getElementById('lyricsFile').click()">载入 LRC 歌词</button>
+                    <button type="button" onclick="toggleLyrics()">显示 / 隐藏歌词</button>
+                </div>
+                <input type="file" id="lyricsFile" accept=".lrc,.txt" style="display:none" onchange="handleLyricsFile(this)">
+                <div class="playlist-container" id="playlist">
+                    <!-- 动态加载列表 -->
+                </div>
+
+                <input type="file" id="musicFolder" webkitdirectory multiple
+                       style="display:none; margin-top:10px;" onchange="handleFolderSelect(this)">
+                <button type="button" class="ghost-btn"
+                        onclick="document.getElementById('musicFolder').click()">📁 选择音乐文件夹</button>
             </div>
-        </div>
+        </section>
+
+        <section class="menu-section">
+            <h4>👀 显示</h4>
+            <div class="switch-row">
+                <span>简洁模式（隐藏卡片）</span>
+                <button type="button" class="switch-btn" id="simpleModeBtn" role="switch" aria-checked="false"
+                        aria-label="简洁模式" onclick="toggleSimpleMode()">
+                    <span class="knob"></span>
+                </button>
+            </div>
+            <p class="menu-hint">隐藏卡片与页脚，只留搜索框和背景。</p>
+        </section>
     </nav>
 
     <div class="container">
@@ -297,125 +1148,878 @@ border:none; background:none;">▶️</button>
         <div class="search-box">
             <input type="text" id="searchInput" class="search-input"
                    placeholder="输入关键词并按回车..." onkeydown="handleSearch(event)">
-            <select id="engineSelect" class="search-engine-select">
-                <option value="bing">Bing</option>
-                <option value="google">Google</option>
-            </select>
+            <div class="engine-picker" id="enginePicker">
+                <button type="button" class="engine-trigger" id="engineTrigger"
+                        aria-haspopup="listbox" aria-expanded="false"
+                        aria-label="搜索引擎：Bing，点击切换" title="切换搜索引擎">
+                    <img src="C/bing-color.svg" alt="" id="engineIcon" width="22" height="22">
+                </button>
+                <div class="engine-menu" id="engineMenu" role="listbox" aria-label="选择搜索引擎">
+                    <button type="button" class="engine-option" role="option" data-engine="bing"
+                            aria-selected="true" aria-label="Bing" title="Bing">
+                        <img src="C/bing-color.svg" alt="" width="22" height="22">
+                    </button>
+                    <button type="button" class="engine-option" role="option" data-engine="google"
+                            aria-selected="false" aria-label="Google" title="Google">
+                        <img src="C/google-color.svg" alt="" width="22" height="22">
+                    </button>
+                    <button type="button" class="engine-option" role="option" data-engine="yandex"
+                            aria-selected="false" aria-label="Yandex" title="Yandex">
+                        <img src="C/yandex.svg" alt="" width="22" height="22">
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <main class="nav-grid" id="mainGrid">
-            <a href="https://github.com" target="_blank" class="nav-card">
-                <div class="card-icon">💻</div>
-                <div class="card-title">GitHub</div>
-                <div class="card-desc">代码托管平台</div>
-            </a>
-            <a href="https://bilibili.com" target="_blank" class="nav-card">
-                <div class="card-icon">📺</div>
-                <div class="card-title">Bilibili</div>
-                <div class="card-desc">有趣的视频内容</div>
-            </a>
-            <a href="https://zhihu.com" target="_blank" class="nav-card">
-                <div class="card-icon">📚</div>
-                <div class="card-title">知乎</div>
-                <div class="card-desc">深度知识分享</div>
-            </a>
-            <a href="https://notion.so" target="_blank" class="nav-card">
-                <div class="card-icon">📝</div>
-                <div class="card-title">Notion</div>
-                <div class="card-desc">高效笔记神器</div>
-            </a>
-            <a href="https://pinterest.com" target="_blank" class="nav-card">
-                <div class="card-icon">🎨</div>
-                <div class="card-title">Pinterest</div>
-                <div class="card-desc">视觉灵感收藏</div>
-            </a>
-            <a href="https://youtube.com" target="_blank" class="nav-card">
-                <div class="card-icon">🎥</div>
-                <div class="card-title">YouTube</div>
-                <div class="card-desc">全球视听盛宴</div>
-            </a>
-        </main>
+        <main class="nav-grid" id="mainGrid" aria-label="站点卡片"></main>
 
-        <footer style="margin-top: 60px; color: #888;">
+        <footer id="footer" style="margin-top: 60px; color: #888;">
             <p>Made with ❤️ | 灵感导航站</p>
         </footer>
     </div>
 
-    <div class="opacity-ctrl-btn" onclick="toggleSlider()">☀️</div>
+    <!-- 透明度控制按钮 -->
+    <button type="button" class="edit-done" id="editDoneBtn" hidden onclick="toggleEditMode()">✓ 完成编辑</button>
+
+    <!-- 桌面歌词 -->
+    <button type="button" class="lyrics-fab" id="lyricsFab" onclick="toggleLyricsWidget()"
+            aria-expanded="false" aria-controls="lyricsWidget" title="桌面歌词" aria-label="显示桌面歌词">♪</button>
+
+    <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="桌面歌词">
+        <header class="lyrics-widget-head" id="lwHead">
+            <span class="lw-title">♪ 歌词</span>
+            <div class="lw-tools">
+                <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">📌</button>
+                <button type="button" data-lw="font-dec" title="字号减小">A−</button>
+                <button type="button" data-lw="font-inc" title="字号增大">A+</button>
+                <button type="button" data-lw="close" title="关闭">✕</button>
+            </div>
+        </header>
+        <div class="lw-body" id="lwBody">选好音乐并载入歌词后，这里会同步滚动。</div>
+        <div class="lw-settings">
+            <label>透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
+            <label>字体
+                <select id="lwFont">
+                    <option value="system">默认</option>
+                    <option value="yahei">雅黑</option>
+                    <option value="kai">楷体</option>
+                    <option value="song">宋体</option>
+                    <option value="mono">等宽</option>
+                </select>
+            </label>
+        </div>
+    </section>
+
+    <button type="button" class="opacity-ctrl-btn" id="opacityBtn" onclick="toggleSlider()" aria-label="调节背景透明度">☀️</button>
     <div class="slider-container" id="sliderContainer">
-        <label style="font-size: 0.8rem; color: #666;">背景亮度</label>
+        <label style="font-size: 0.8rem; color: #666;">背景透明度</label>
         <input type="range" id="opacitySlider" min="0" max="0.9" step="0.05" value="0.8">
     </div>
 
     <script>
-        /** 1. 随机背景逻辑 **/
-        const folderA = ['A/1.jpg', 'A/2.jpg', 'A/3.jpg', 'A/photo_01.png', 'A/skyline.jpg'];
-        const folderB = ['B/1.jpg', 'B/2.jpg', 'B/3.jpg'];
+        document.getElementById('volumePercent').textContent =
+            `${Math.round(Number(document.getElementById('volumeSlider').value) * 100)}%`;
+        document.getElementById('loopBtn').classList.add('active');
+
+        /** 1. 背景：随机图 / 自定义底色 / 图片视频 **/
+        const folderA = ['A/1.jpg', 'A/2.jpg', 'A/3.jpg', 'A/4.jpg', 'A/5.jpg'];
+        const folderB = [];   // 竖屏图还没加，空数组时自动回退到 folderA
+
+        const BG_MODE_KEY = 'bgMode';
+        const BG_COLOR_KEY = 'bgColor';
+        const BG_IMAGE_KEY = 'bgImage';
+        const THEME_KEY = 'themeId';
+
+        function hideBackgroundVideo() {
+            const video = document.getElementById('bg-video');
+            video.pause();
+            video.removeAttribute('src');
+            video.style.display = 'none';
+        }
+
+        function updateBgColorValue(color) {
+            document.getElementById('bgColorValue').textContent = color;
+            document.getElementById('bgColorPicker').value = color;
+        }
+
+        function setPageBaseColor(color) {
+            document.body.style.backgroundColor = color || '';
+            document.documentElement.style.setProperty('--bg-rgb', hexToRgb(color || currentTheme.bg));
+            const opacitySlider = document.getElementById('opacitySlider');
+            if (opacitySlider) applyOpacity(opacitySlider.value);
+        }
 
         function setRandomBackground() {
-            const savedBg = localStorage.getItem('customBgUrl');
-            const savedColor = localStorage.getItem('customBgColor');
+            const isMobile = window.innerWidth < 768;
+            const preferred = isMobile ? folderB : folderA;
+            const sourceFolder = preferred.length ? preferred : folderA;
+            if (!sourceFolder.length) return;
+            hideBackgroundVideo();
+            setPageBaseColor(null);
+            const selectedImg = sourceFolder[Math.floor(Math.random() * sourceFolder.length)];
+            document.body.style.backgroundImage = `url('${selectedImg}')`;
+        }
 
-            if (savedBg) {
-                applyCustomBackgroundFromStorage(savedBg, savedColor);
+        function applySolidBackground(color) {
+            hideBackgroundVideo();
+            document.body.style.backgroundImage = 'none';
+            setPageBaseColor(color);
+        }
+
+        function applyCustomBackground(source, color, isVideo) {
+            setPageBaseColor(color);
+            const video = document.getElementById('bg-video');
+            if (isVideo) {
+                document.body.style.backgroundImage = 'none';
+                video.style.display = 'block';
+                video.src = source;
+                video.play().catch(() => {});
             } else {
-                const isMobile = window.innerWidth < 768;
-                const sourceFolder = isMobile ? folderB : folderA;
-
-                if (sourceFolder.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * sourceFolder.length);
-                    const selectedImg = sourceFolder[randomIndex];
-                    document.body.style.backgroundImage = `url('${selectedImg}')`;
-                }
+                hideBackgroundVideo();
+                document.body.style.backgroundImage = `url('${source}')`;
             }
         }
 
-        window.onload = setRandomBackground;
-
-        /** 2. 菜单与交互修复 **/
-        function toggleMenu() {
-            document.getElementById('navMenu').classList.toggle('active');
+        function saveBackgroundState(state) {
+            try {
+                if (!state) {
+                    [BG_MODE_KEY, BG_COLOR_KEY, BG_IMAGE_KEY, 'customBgUrl', 'customBgColor']
+                        .forEach(key => localStorage.removeItem(key));
+                    return;
+                }
+                localStorage.setItem(BG_MODE_KEY, 'custom');
+                localStorage.setItem(BG_COLOR_KEY, state.color);
+                if (state.image) localStorage.setItem(BG_IMAGE_KEY, state.image);
+                else localStorage.removeItem(BG_IMAGE_KEY);
+            } catch (error) {
+                // 存储写满时降级为“只记底色”
+                try { localStorage.removeItem(BG_IMAGE_KEY); } catch (ignored) {}
+            }
         }
 
-        // 点击页面任何地方关闭菜单和滑块
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('navMenu');
-            const slider = document.getElementById('sliderContainer');
-            const btn = document.querySelector('.opacity-ctrl-btn');
-            const menuBtn = document.querySelector('.menu-btn');
+        function restoreSavedBackground() {
+            const mode = localStorage.getItem(BG_MODE_KEY);
+            const color = localStorage.getItem(BG_COLOR_KEY) || currentTheme.bg;
+            const image = localStorage.getItem(BG_IMAGE_KEY);
+            updateBgColorValue(color);
+            if (mode !== 'custom') return false;
+            if (image) applyCustomBackground(image, color, false);
+            else applySolidBackground(color);
+            return true;
+        }
 
-            // 如果点击的对象不是菜单、不是滑块按钮、也不是汉堡按钮本身，则关闭
-            if (!menu.contains(e.target) && !slider.contains(e.target) && !btn.contains(e.target) &&
-!menuBtn.contains(e.target)) {
-                menu.classList.remove('active');
+        window.addEventListener('load', () => {
+            if (!restoreSavedBackground()) setRandomBackground();
+        });
+
+        /** 2. 菜单与交互 **/
+        function toggleMenu(force) {
+            const menu = document.getElementById('navMenu');
+            const menuBtn = document.getElementById('menuBtn');
+            const open = typeof force === 'boolean' ? force : !menu.classList.contains('active');
+            menu.classList.toggle('active', open);
+            menuBtn.setAttribute('aria-expanded', String(open));
+            menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
+        }
+
+        function closeMenu() {
+            toggleMenu(false);
+        }
+
+        // 点到菜单和汉堡按钮以外的地方就收起
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('navMenu');
+            const menuBtn = document.getElementById('menuBtn');
+            if (!menu.classList.contains('active')) return;
+            if (menu.contains(event.target) || menuBtn.contains(event.target)) return;
+            closeMenu();
+        });
+
+        // 点击空白区域关闭透明度面板
+        document.addEventListener('click', (e) => {
+            const slider = document.getElementById('sliderContainer');
+            const opacityBtn = document.getElementById('opacityBtn');
+            if (slider.classList.contains('show') && !slider.contains(e.target) && opacityBtn && !opacityBtn.contains(e.target)) {
                 slider.classList.remove('show');
             }
-        });
+        }, { passive: true });
+
+        // 移动端触摸优化：为滑块按钮增加触摸反馈
+        const opacityBtn = document.getElementById('opacityBtn');
+        if (opacityBtn) {
+            opacityBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                toggleSlider();
+            }, { passive: false });
+        }
 
         /** 3. 简洁模式 **/
         function toggleSimpleMode() {
             const grid = document.getElementById('mainGrid');
-            const btnText = document.getElementById('simpleModeText');
-            grid.classList.toggle('hidden-grid');
-            btnText.innerText = grid.classList.contains('hidden-grid') ? "显示卡片" : "隐藏卡片";
+            const footer = document.getElementById('footer');
+            const enabled = grid.classList.toggle('hidden-grid');
+            document.body.classList.toggle('simple-mode', enabled);
+            footer.style.opacity = enabled ? "0" : "1";
+            footer.style.visibility = enabled ? "hidden" : "visible";
+            const switchBtn = document.getElementById('simpleModeBtn');
+            switchBtn.setAttribute('aria-checked', String(enabled));
+            switchBtn.classList.toggle('on', enabled);
+            document.getElementById('simpleModeToggle').innerText = enabled ? "退出简洁模式" : "简洁模式";
         }
 
-        /** 4. 搜索引擎 **/
+        /** 4. 搜索引擎（C 文件夹图标切换） **/
+        const ENGINE_ICONS = {
+            bing: 'C/bing-color.svg',
+            google: 'C/google-color.svg',
+            yandex: 'C/yandex.svg'
+        };
+        const ENGINE_NAMES = { bing: 'Bing', google: 'Google', yandex: 'Yandex' };
+        const ENGINE_URLS = {
+            bing: query => `https://www.bing.com/search?q=${encodeURIComponent(query)}`,
+            google: query => `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+            yandex: query => `https://yandex.com/search/?text=${encodeURIComponent(query)}`
+        };
+        let currentEngine = 'bing';
+
+        const enginePicker = document.getElementById('enginePicker');
+        const engineTrigger = document.getElementById('engineTrigger');
+        const engineMenu = document.getElementById('engineMenu');
+        const engineIcon = document.getElementById('engineIcon');
+
+        function setEngine(engine, moveFocus) {
+            if (!ENGINE_ICONS[engine]) return;
+            currentEngine = engine;
+            engineIcon.src = ENGINE_ICONS[engine];
+            engineTrigger.setAttribute('aria-label', `搜索引擎：${ENGINE_NAMES[engine]}，点击切换`);
+            engineMenu.querySelectorAll('.engine-option').forEach(option => {
+                const selected = option.dataset.engine === engine;
+                option.setAttribute('aria-selected', String(selected));
+                if (selected && moveFocus) option.focus();
+            });
+        }
+
+        function toggleEngineMenu(force) {
+            const open = typeof force === 'boolean' ? force : !engineMenu.classList.contains('open');
+            engineMenu.classList.toggle('open', open);
+            engineTrigger.setAttribute('aria-expanded', String(open));
+            if (open) {
+                const selected = engineMenu.querySelector('.engine-option[aria-selected="true"]')
+                    || engineMenu.querySelector('.engine-option');
+                if (selected) selected.focus();
+            }
+        }
+
+        engineTrigger.addEventListener('click', (event) => {
+            event.stopPropagation();
+            toggleEngineMenu();
+        });
+
+        engineMenu.addEventListener('click', (event) => {
+            const option = event.target.closest('.engine-option');
+            if (!option) return;
+            setEngine(option.dataset.engine);
+            toggleEngineMenu(false);
+            engineTrigger.focus();
+        });
+
+        engineMenu.addEventListener('keydown', (event) => {
+            const options = Array.from(engineMenu.querySelectorAll('.engine-option'));
+            const index = options.indexOf(document.activeElement);
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault();
+                const next = event.key === 'ArrowDown'
+                    ? (index + 1) % options.length
+                    : (index - 1 + options.length) % options.length;
+                options[next].focus();
+            } else if (event.key === 'Escape') {
+                event.preventDefault();
+                toggleEngineMenu(false);
+                engineTrigger.focus();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!enginePicker.contains(event.target)) toggleEngineMenu(false);
+        });
+
+        setEngine('bing');
+
         function handleSearch(event) {
             if (event.key === 'Enter') {
                 const query = document.getElementById('searchInput').value.trim();
-                const engine = document.getElementById('engineSelect').value;
                 if (query !== "") {
-                    let searchUrl = engine === "bing"
-                        ? `https://www.bing.com/search?q=${encodeURIComponent(query)}`
-                        : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-                    window.open(searchUrl, '_blank');
+                    const buildUrl = ENGINE_URLS[currentEngine] || ENGINE_URLS.bing;
+                    window.open(buildUrl(query), '_blank');
                 }
             }
         }
 
-        /** 5. 透明度调节 **/
-        const sliderBtn = document.querySelector('.opacity-ctrl-btn');
+        /** 4.5 主题配色（马卡龙预设） **/
+        const THEMES = [
+            { id: 'sakura', name: '樱花粉', primary: '#ffb7b2', strong: '#ff8c94', bg: '#fdf6f0', contrast: '#ffffff' },
+            { id: 'mint',   name: '薄荷绿', primary: '#a8e6cf', strong: '#3f9c78', bg: '#f2fbf7', contrast: '#2f6b53' },
+            { id: 'lemon',  name: '柠檬奶', primary: '#ffe3a3', strong: '#c9962f', bg: '#fffcf1', contrast: '#7a5a1e' },
+            { id: 'sky',    name: '天空蓝', primary: '#a9d6f5', strong: '#4d93c9', bg: '#f2f9fe', contrast: '#2c5f86' },
+            { id: 'taro',   name: '香芋紫', primary: '#d8c4f0', strong: '#9779cf', bg: '#f9f5fe', contrast: '#5b4585' },
+            { id: 'peach',  name: '蜜桃橙', primary: '#ffc9b0', strong: '#e8784f', bg: '#fff6f1', contrast: '#8a4a33' }
+        ];
+        let currentTheme = THEMES[0];
+
+        function hexToRgb(hex) {
+            const value = String(hex).replace('#', '');
+            const full = value.length === 3 ? value.split('').map(c => c + c).join('') : value;
+            const num = parseInt(full, 16);
+            return `${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}`;
+        }
+
+        function renderThemeSwatches() {
+            const row = document.getElementById('themeRow');
+            row.innerHTML = '';
+            THEMES.forEach(theme => {
+                const dot = document.createElement('button');
+                dot.type = 'button';
+                dot.className = 'theme-dot';
+                dot.dataset.theme = theme.id;
+                dot.title = theme.name;
+                dot.setAttribute('role', 'radio');
+                dot.setAttribute('aria-label', theme.name);
+                dot.style.setProperty('--dot', theme.primary);
+                dot.style.setProperty('--dot-strong', theme.strong);
+                dot.addEventListener('click', () => setTheme(theme.id));
+                row.appendChild(dot);
+            });
+        }
+
+        function setTheme(id, persist) {
+            const theme = THEMES.find(item => item.id === id) || THEMES[0];
+            currentTheme = theme;
+            const root = document.documentElement.style;
+            root.setProperty('--primary-color', theme.primary);
+            root.setProperty('--primary-strong', theme.strong);
+            root.setProperty('--primary-rgb', hexToRgb(theme.primary));
+            root.setProperty('--primary-contrast', theme.contrast);
+            root.setProperty('--bg-color', theme.bg);
+
+            // 用户自定义过底色时，别被主题覆盖
+            const customColor = localStorage.getItem(BG_MODE_KEY) === 'custom'
+                ? localStorage.getItem(BG_COLOR_KEY)
+                : null;
+            root.setProperty('--bg-rgb', hexToRgb(customColor || theme.bg));
+
+            if (!customColor) {
+                document.body.style.backgroundColor = '';
+                updateBgColorValue(theme.bg);
+            }
+
+            document.querySelectorAll('.theme-dot').forEach(dot => {
+                dot.setAttribute('aria-checked', String(dot.dataset.theme === theme.id));
+            });
+            const hint = document.getElementById('themeHint');
+            if (hint) hint.textContent = `当前：${theme.name}`;
+            applyOpacity(document.getElementById('opacitySlider').value);
+            if (persist !== false) {
+                try { localStorage.setItem(THEME_KEY, theme.id); } catch (error) {}
+            }
+        }
+
+        function initTheme() {
+            renderThemeSwatches();
+            let saved = null;
+            try { saved = localStorage.getItem(THEME_KEY); } catch (error) {}
+            setTheme(saved || 'sakura', false);
+        }
+
+        /** 4.6 卡片系统：拖拽排序 / 尺寸 / 隐藏 / 自定义 **/
+        const CARD_STORAGE_KEY = 'navCards';
+        const CARD_SIZES = ['sm', 'md', 'lg'];
+        const CARD_SIZE_NAMES = { sm: '标准', md: '宽', lg: '大' };
+        const DEFAULT_CARDS = [
+            { id: 'github', title: 'GitHub', url: 'https://github.com/', icon: '💻', desc: '代码托管平台', size: 'sm' },
+            { id: 'bilibili', title: 'Bilibili', url: 'https://www.bilibili.com/', icon: '📺', desc: '弹幕视频社区', size: 'sm' },
+            { id: 'zhihu', title: '知乎', url: 'https://www.zhihu.com/', icon: '📚', desc: '问答与深度内容', size: 'sm' },
+            { id: 'google', title: 'Google', url: 'https://www.google.com/', icon: '🌐', desc: '全球搜索', size: 'sm' },
+            { id: 'weibo', title: '微博', url: 'https://weibo.com/', icon: '🔥', desc: '热搜与动态', size: 'sm' },
+            { id: 'xiaohongshu', title: '小红书', url: 'https://www.xiaohongshu.com/', icon: '📔', desc: '生活灵感笔记', size: 'sm' },
+            { id: 'douban', title: '豆瓣', url: 'https://www.douban.com/', icon: '🌿', desc: '书影音标记', size: 'sm' },
+            { id: 'qqvideo', title: '腾讯视频', url: 'https://v.qq.com/', icon: '🎬', desc: '剧集与综艺', size: 'sm' },
+            { id: 'iqiyi', title: '爱奇艺', url: 'https://www.iqiyi.com/', icon: '🍿', desc: '影视与动漫', size: 'sm' },
+            { id: 'douyin', title: '抖音', url: 'https://www.douyin.com/', icon: '🎶', desc: '短视频', size: 'sm' },
+            { id: 'youtube', title: 'YouTube', url: 'https://www.youtube.com/', icon: '🎥', desc: '全球视频', size: 'sm' },
+            { id: 'netease', title: '网易云音乐', url: 'https://music.163.com/', icon: '🎧', desc: '歌单与乐评', size: 'sm' },
+            { id: 'taobao', title: '淘宝', url: 'https://www.taobao.com/', icon: '🛍️', desc: '淘点好物', size: 'sm' },
+            { id: 'jd', title: '京东', url: 'https://www.jd.com/', icon: '📦', desc: '自营与物流', size: 'sm' },
+            { id: 'notion', title: 'Notion', url: 'https://www.notion.so/', icon: '📝', desc: '笔记与协作', size: 'sm' },
+            { id: 'sspai', title: '少数派', url: 'https://sspai.com/', icon: '✍️', desc: '效率与数码', size: 'sm' },
+            { id: 'pinterest', title: 'Pinterest', url: 'https://www.pinterest.com/', icon: '🎨', desc: '视觉灵感收藏', size: 'sm' },
+            { id: 'wikipedia', title: '维基百科', url: 'https://zh.wikipedia.org/', icon: '📖', desc: '自由百科全书', size: 'sm' }
+        ];
+
+        let cards = [];
+        let editMode = false;
+        let editingCardId = null;
+
+        function loadCards() {
+            let stored = null;
+            try { stored = JSON.parse(localStorage.getItem(CARD_STORAGE_KEY) || 'null'); } catch (error) { stored = null; }
+            if (Array.isArray(stored)) {
+                cards = stored
+                    .filter(item => item && item.title && item.url)
+                    .map(item => ({
+                        id: String(item.id || `c${Math.random().toString(36).slice(2, 8)}`),
+                        title: String(item.title),
+                        url: /^https?:\/\//i.test(String(item.url)) ? String(item.url) : `https://${String(item.url)}`,
+                        icon: String(item.icon || '🔗'),
+                        desc: String(item.desc || ''),
+                        size: CARD_SIZES.includes(item.size) ? item.size : 'sm',
+                        hidden: Boolean(item.hidden)
+                    }));
+            }
+            if (!cards.length) cards = DEFAULT_CARDS.map(item => ({ ...item }));
+        }
+
+        function saveCards() {
+            try { localStorage.setItem(CARD_STORAGE_KEY, JSON.stringify(cards)); } catch (error) {}
+        }
+
+        function setCardHint(text) {
+            const hint = document.getElementById('cardHint');
+            if (hint) hint.textContent = text;
+        }
+
+        function buildCardTools(card) {
+            const tools = document.createElement('div');
+            tools.className = 'card-tools';
+            const buttons = [
+                ['drag', '⠿', '拖动排序'],
+                ['size', '⤢', `尺寸：${CARD_SIZE_NAMES[card.size]}，点击切换`],
+                ['edit', '✎', '编辑卡片'],
+                ['hide', '🙈', '隐藏卡片']
+            ];
+            buttons.forEach(([action, label, title]) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `card-tool${action === 'drag' ? ' drag-handle' : ''}`;
+                btn.dataset.action = action;
+                btn.title = title;
+                btn.setAttribute('aria-label', title);
+                btn.textContent = label;
+                tools.appendChild(btn);
+            });
+            return tools;
+        }
+
+        function buildCard(card) {
+            const el = document.createElement('div');
+            el.className = `nav-card size-${card.size}`;
+            el.dataset.id = card.id;
+
+            const link = document.createElement('a');
+            link.className = 'card-link';
+            link.href = card.url;
+            link.target = '_blank';
+            link.rel = 'noopener';
+
+            const icon = document.createElement('div');
+            icon.className = 'card-icon';
+            icon.textContent = card.icon;
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = card.title;
+            const desc = document.createElement('div');
+            desc.className = 'card-desc';
+            desc.textContent = card.desc || '';
+
+            link.append(icon, title, desc);
+            el.appendChild(link);
+            if (editMode) el.appendChild(buildCardTools(card));
+            return el;
+        }
+
+        function renderCards() {
+            const grid = document.getElementById('mainGrid');
+            const animate = !grid.dataset.rendered;
+            grid.classList.toggle('no-anim', !animate);
+            grid.innerHTML = '';
+            cards.filter(card => !card.hidden).forEach(card => grid.appendChild(buildCard(card)));
+            grid.dataset.rendered = '1';
+            renderHiddenCards();
+        }
+
+        function renderHiddenCards() {
+            const box = document.getElementById('hiddenCards');
+            const hidden = cards.filter(card => card.hidden);
+            box.innerHTML = '';
+            if (!hidden.length) { box.hidden = true; return; }
+            box.hidden = false;
+            const label = document.createElement('span');
+            label.textContent = '已隐藏：';
+            box.appendChild(label);
+            hidden.forEach(card => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'hidden-chip';
+                chip.textContent = `${card.icon} ${card.title}`;
+                chip.title = '点击恢复';
+                chip.addEventListener('click', () => {
+                    card.hidden = false;
+                    saveCards();
+                    renderCards();
+                    setCardHint(`已恢复「${card.title}」。`);
+                });
+                box.appendChild(chip);
+            });
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.body.classList.toggle('editing-cards', editMode);
+            const btn = document.getElementById('editModeBtn');
+            btn.classList.toggle('on', editMode);
+            btn.textContent = editMode ? '完成' : '编辑模式';
+            document.getElementById('editDoneBtn').hidden = !editMode;
+            renderCards();
+            setCardHint(editMode ? '拖动 ⠿ 排序，⤢ 换尺寸，✎ 编辑，🙈 隐藏。' : '编辑模式已关闭。');
+            if (editMode) closeMenu();
+        }
+
+        function cycleCardSize(id) {
+            const card = cards.find(item => item.id === id);
+            if (!card) return;
+            const index = CARD_SIZES.indexOf(card.size);
+            card.size = CARD_SIZES[(index + 1) % CARD_SIZES.length];
+            saveCards();
+            renderCards();
+            setCardHint(`「${card.title}」现在是${CARD_SIZE_NAMES[card.size]}尺寸。`);
+        }
+
+        function hideCard(id) {
+            const card = cards.find(item => item.id === id);
+            if (!card) return;
+            card.hidden = true;
+            saveCards();
+            renderCards();
+            setCardHint(`已隐藏「${card.title}」，可在下方点回来。`);
+        }
+
+        function commitCardOrder() {
+            const grid = document.getElementById('mainGrid');
+            const visibleIds = Array.from(grid.querySelectorAll('.nav-card')).map(el => el.dataset.id);
+            const byId = new Map(cards.map(card => [card.id, card]));
+            const reordered = visibleIds.map(id => byId.get(id)).filter(Boolean);
+            cards = [...reordered, ...cards.filter(card => card.hidden)];
+            saveCards();
+        }
+
+        function startCardDrag(event, cardEl) {
+            if (!editMode || !cardEl) return;
+            event.preventDefault();
+            const grid = document.getElementById('mainGrid');
+            cardEl.classList.add('dragging');
+            document.body.classList.add('card-dragging');
+
+            const move = (e) => {
+                if (e.pointerId !== event.pointerId) return;
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                const targetCard = target && target.closest ? target.closest('.nav-card') : null;
+                if (targetCard && targetCard !== cardEl && grid.contains(targetCard)) {
+                    const rect = targetCard.getBoundingClientRect();
+                    const insertAfter = e.clientY > rect.top + rect.height / 2;
+                    grid.insertBefore(cardEl, insertAfter ? targetCard.nextSibling : targetCard);
+                }
+                if (e.clientY < 90) window.scrollBy(0, -12);
+                else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 12);
+            };
+            const end = (e) => {
+                if (e.pointerId !== event.pointerId) return;
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', end);
+                document.removeEventListener('pointercancel', end);
+                cardEl.classList.remove('dragging');
+                document.body.classList.remove('card-dragging');
+                commitCardOrder();
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', end);
+            document.addEventListener('pointercancel', end);
+        }
+
+        function normalizeCardUrl(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+        }
+
+        function openCardForm(id) {
+            editingCardId = id || null;
+            const menu = document.getElementById('navMenu');
+            if (!menu.classList.contains('active')) toggleMenu(true);
+            const card = id ? cards.find(item => item.id === id) : null;
+            document.getElementById('cardFormTitle').textContent = card ? '编辑卡片' : '添加卡片';
+            document.getElementById('cardTitle').value = card ? card.title : '';
+            document.getElementById('cardUrl').value = card ? card.url : '';
+            document.getElementById('cardIcon').value = card ? card.icon : '';
+            document.getElementById('cardDesc').value = card ? card.desc : '';
+            document.getElementById('deleteCardBtn').hidden = !card;
+            document.getElementById('cardForm').hidden = false;
+            document.getElementById('cardTitle').focus();
+            setTimeout(() => {
+                const form = document.getElementById('cardForm');
+                if (form && !form.hidden) form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }, 80);
+        }
+
+        function closeCardForm() {
+            editingCardId = null;
+            document.getElementById('cardForm').hidden = true;
+        }
+
+        function saveCardForm() {
+            const title = document.getElementById('cardTitle').value.trim();
+            const url = normalizeCardUrl(document.getElementById('cardUrl').value);
+            const icon = document.getElementById('cardIcon').value.trim() || '🔗';
+            const desc = document.getElementById('cardDesc').value.trim();
+            if (!title || !url) {
+                setCardHint('名称和网址都要填哦。');
+                return;
+            }
+            if (editingCardId) {
+                const card = cards.find(item => item.id === editingCardId);
+                if (card) Object.assign(card, { title, url, icon, desc });
+            } else {
+                cards.push({
+                    id: `c${Date.now().toString(36)}`,
+                    title, url, icon, desc, size: 'sm', hidden: false
+                });
+            }
+            saveCards();
+            renderCards();
+            closeCardForm();
+            setCardHint(`已保存「${title}」。`);
+        }
+
+        function deleteCard() {
+            if (!editingCardId) return;
+            const index = cards.findIndex(item => item.id === editingCardId);
+            if (index === -1) return;
+            const [removed] = cards.splice(index, 1);
+            saveCards();
+            renderCards();
+            closeCardForm();
+            setCardHint(`已删除「${removed.title}」。`);
+        }
+
+        function resetCards() {
+            if (!window.confirm('恢复默认卡片？自定义内容和排序会被清空。')) return;
+            cards = DEFAULT_CARDS.map(item => ({ ...item }));
+            saveCards();
+            renderCards();
+            closeCardForm();
+            setCardHint('已恢复默认卡片。');
+        }
+
+        function initCards() {
+            loadCards();
+            renderCards();
+            const grid = document.getElementById('mainGrid');
+            grid.addEventListener('click', (event) => {
+                const tool = event.target.closest('.card-tool');
+                if (!tool || !editMode) return;
+                event.preventDefault();
+                event.stopPropagation();
+                const cardEl = tool.closest('.nav-card');
+                const id = cardEl && cardEl.dataset.id;
+                if (!id) return;
+                if (tool.dataset.action === 'size') cycleCardSize(id);
+                else if (tool.dataset.action === 'edit') openCardForm(id);
+                else if (tool.dataset.action === 'hide') hideCard(id);
+            });
+            grid.addEventListener('pointerdown', (event) => {
+                const handle = event.target.closest('.drag-handle');
+                if (!handle || !editMode) return;
+                startCardDrag(event, handle.closest('.nav-card'));
+            });
+        }
+
+        /** 4.7 桌面歌词挂件：拖动 / 固定 / 透明 / 字体字号 **/
+        const LW_KEY = 'lyricsWidget';
+        const LW_FONTS = {
+            system: "'Segoe UI', 'Microsoft YaHei', sans-serif",
+            yahei: "'Microsoft YaHei', 'PingFang SC', sans-serif",
+            kai: "'KaiTi', 'STKaiti', serif",
+            song: "'SimSun', 'Songti SC', serif",
+            mono: "'Consolas', 'Courier New', monospace"
+        };
+        const lwState = {
+            pinned: false,
+            alpha: 0.85,
+            fontSize: 22,
+            font: 'system',
+            left: null,
+            top: null
+        };
+
+        function loadLyricsWidgetState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LW_KEY) || 'null');
+                if (!saved) return;
+                if (typeof saved.pinned === 'boolean') lwState.pinned = saved.pinned;
+                if (Number.isFinite(saved.alpha)) lwState.alpha = Math.min(1, Math.max(0.2, saved.alpha));
+                if (Number.isFinite(saved.fontSize)) lwState.fontSize = Math.min(36, Math.max(14, saved.fontSize));
+                if (LW_FONTS[saved.font]) lwState.font = saved.font;
+                if (Number.isFinite(saved.left)) lwState.left = saved.left;
+                if (Number.isFinite(saved.top)) lwState.top = saved.top;
+            } catch (error) {}
+        }
+
+        function saveLyricsWidgetState() {
+            try { localStorage.setItem(LW_KEY, JSON.stringify(lwState)); } catch (error) {}
+        }
+
+        function applyLyricsWidget() {
+            const widget = document.getElementById('lyricsWidget');
+            widget.style.setProperty('--lw-font-size', `${lwState.fontSize}px`);
+            widget.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
+            widget.style.setProperty('--lw-alpha', String(lwState.alpha));
+            document.getElementById('lwOpacity').value = String(lwState.alpha);
+            document.getElementById('lwFont').value = LW_FONTS[lwState.font] ? lwState.font : 'system';
+            const pin = document.getElementById('lwPin');
+            pin.setAttribute('aria-pressed', String(lwState.pinned));
+            pin.classList.toggle('on', lwState.pinned);
+            widget.classList.toggle('pinned', lwState.pinned);
+
+            if (lwState.left != null && lwState.top != null) {
+                const width = Math.min(320, window.innerWidth - 24);
+                const maxLeft = Math.max(4, window.innerWidth - width - 4);
+                const maxTop = Math.max(4, window.innerHeight - 80);
+                widget.style.left = `${Math.min(Math.max(4, lwState.left), maxLeft)}px`;
+                widget.style.top = `${Math.min(Math.max(4, lwState.top), maxTop)}px`;
+                widget.style.right = 'auto';
+                widget.style.bottom = 'auto';
+            }
+        }
+
+        function toggleLyricsWidget(force) {
+            const widget = document.getElementById('lyricsWidget');
+            const visible = typeof force === 'boolean' ? force : widget.hidden;
+            widget.hidden = !visible;
+            const fab = document.getElementById('lyricsFab');
+            fab.classList.toggle('on', visible);
+            fab.setAttribute('aria-expanded', String(visible));
+            if (visible) {
+                applyLyricsWidget();
+                renderFloatingLyrics();
+            }
+        }
+
+        function renderFloatingLyrics() {
+            const body = document.getElementById('lwBody');
+            body.innerHTML = '';
+            if (!lyrics.length) {
+                body.textContent = '选好音乐并载入歌词后，这里会同步滚动。';
+                return;
+            }
+            lyrics.forEach((item, index) => {
+                const line = document.createElement('div');
+                line.className = 'lw-line';
+                line.dataset.index = String(index);
+                line.textContent = item.text || '♪';
+                body.appendChild(line);
+            });
+            syncFloatingLyric();
+        }
+
+        function syncFloatingLyric() {
+            const body = document.getElementById('lwBody');
+            if (!body || !lyrics.length) return;
+            const widget = document.getElementById('lyricsWidget');
+            const lines = body.querySelectorAll('.lw-line');
+            if (!lines.length) return;
+            lines.forEach((line, index) => line.classList.toggle('active', index === activeLyricIndex));
+            if (activeLyricIndex >= 0 && lines[activeLyricIndex] && !widget.hidden) {
+                scrollFloatingLine(lines[activeLyricIndex]);
+            }
+        }
+
+        function scrollFloatingLine(node) {
+            const body = document.getElementById('lwBody');
+            const bodyRect = body.getBoundingClientRect();
+            const nodeRect = node.getBoundingClientRect();
+            if (nodeRect.top >= bodyRect.top + 4 && nodeRect.bottom <= bodyRect.bottom - 4) return;
+            const target = body.scrollTop + (nodeRect.top - bodyRect.top)
+                - (body.clientHeight - nodeRect.height) / 2;
+            body.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        }
+
+        function startLyricsWidgetDrag(event) {
+            if (lwState.pinned) return;
+            if (event.target.closest('button, input, select')) return;
+            const widget = document.getElementById('lyricsWidget');
+            const rect = widget.getBoundingClientRect();
+            const offsetX = event.clientX - rect.left;
+            const offsetY = event.clientY - rect.top;
+            event.preventDefault();
+
+            const move = (e) => {
+                const maxLeft = Math.max(4, window.innerWidth - widget.offsetWidth - 4);
+                const maxTop = Math.max(4, window.innerHeight - widget.offsetHeight - 4);
+                const left = Math.min(Math.max(4, e.clientX - offsetX), maxLeft);
+                const top = Math.min(Math.max(4, e.clientY - offsetY), maxTop);
+                widget.style.left = `${left}px`;
+                widget.style.top = `${top}px`;
+                widget.style.right = 'auto';
+                widget.style.bottom = 'auto';
+            };
+            const end = () => {
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', end);
+                document.removeEventListener('pointercancel', end);
+                const box = widget.getBoundingClientRect();
+                lwState.left = Math.round(box.left);
+                lwState.top = Math.round(box.top);
+                saveLyricsWidgetState();
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', end);
+            document.addEventListener('pointercancel', end);
+        }
+
+        function initLyricsWidget() {
+            loadLyricsWidgetState();
+            applyLyricsWidget();
+
+            document.getElementById('lwOpacity').addEventListener('input', function () {
+                lwState.alpha = Number(this.value);
+                applyLyricsWidget();
+                saveLyricsWidgetState();
+            });
+
+            document.getElementById('lwFont').addEventListener('change', function () {
+                lwState.font = LW_FONTS[this.value] ? this.value : 'system';
+                applyLyricsWidget();
+                saveLyricsWidgetState();
+            });
+
+            document.getElementById('lyricsWidget').addEventListener('click', (event) => {
+                const btn = event.target.closest('.lw-tools button');
+                if (!btn) return;
+                if (btn.id === 'lwPin') {
+                    lwState.pinned = !lwState.pinned;
+                } else if (btn.dataset.lw === 'font-dec') {
+                    lwState.fontSize = Math.max(14, lwState.fontSize - 2);
+                } else if (btn.dataset.lw === 'font-inc') {
+                    lwState.fontSize = Math.min(36, lwState.fontSize + 2);
+                } else if (btn.dataset.lw === 'close') {
+                    toggleLyricsWidget(false);
+                    return;
+                }
+                applyLyricsWidget();
+                saveLyricsWidgetState();
+            });
+
+            document.getElementById('lwHead').addEventListener('pointerdown', startLyricsWidgetDrag);
+        }
+
+        /** 5. 透明度调节（修复移动端不生效问题） **/
         const sliderContainer = document.getElementById('sliderContainer');
         const slider = document.getElementById('opacitySlider');
         const overlay = document.getElementById('overlay');
@@ -424,66 +2028,479 @@ border:none; background:none;">▶️</button>
             sliderContainer.classList.toggle('show');
         }
 
-        slider.oninput = function() {
-            overlay.style.backgroundColor = `rgba(253, 246, 240, ${this.value})`;
-        };
+        // 核心修复：同时监听 input 和 change 事件，确保移动端拖动实时生效
+        function applyOpacity(value) {
+            const alpha = Math.max(0, Math.min(0.9, Number(value)));
+            const rgb = getComputedStyle(document.documentElement).getPropertyValue('--bg-rgb').trim() || '253, 246, 240';
+            overlay.style.backgroundColor = `rgba(${rgb}, ${alpha})`;
+        }
 
-        /** 6. 本地文件背景处理 **/
-        function applyFileBackground() {
+        slider.addEventListener('input', function() {
+            applyOpacity(this.value);
+        });
+
+        slider.addEventListener('change', function() {
+            applyOpacity(this.value);
+        });
+
+        // 移动端触摸事件兼容
+        slider.addEventListener('touchmove', function(e) {
+            applyOpacity(this.value);
+        }, { passive: true });
+
+        slider.addEventListener('touchend', function() {
+            applyOpacity(this.value);
+        }, { passive: true });
+
+        // 初始化透明度
+        applyOpacity(slider.value);
+
+        /** 6. 背景面板：底色可单独应用，图片视频是可选项 **/
+        function setBgHint(text) {
+            document.getElementById('bgHint').textContent = text;
+        }
+
+        function handleBgFileChange(input) {
+            const file = input.files && input.files[0];
+            document.getElementById('bgFileName').textContent = file ? file.name : '选择图片或视频';
+            setBgHint(file
+                ? '点「应用背景」生效；1MB 以内的图片会连底色一起记住。'
+                : '不选图片也能直接应用底色。');
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function applyFileBackground() {
             const fileInput = document.getElementById('bgFileInput');
             const color = document.getElementById('bgColorPicker').value;
+            const file = fileInput.files && fileInput.files[0];
 
-            if (fileInput.files && fileInput.files[0]) {
-                const file = fileInput.files[0];
-                const url = URL.createObjectURL(file);
-                localStorage.setItem('customBgUrl', url);
-                localStorage.setItem('customBgColor', color);
-                applyCustomBackgroundFromStorage(url, color);
-            } else {
-                alert("请先选择一个本地文件");
+            // 没有选文件：只应用底色，并且不再显示随机图
+            if (!file) {
+                applySolidBackground(color);
+                saveBackgroundState({ color });
+                setBgHint('已应用底色，随机背景已停用。');
+                return;
             }
+
+            const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|ogv|mov|m4v)$/i.test(file.name);
+            const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(file.name);
+            applyCustomBackground(URL.createObjectURL(file), color, isVideo);
+
+            let savedImage = null;
+            if (isImage && file.size <= 1024 * 1024) {
+                try {
+                    const dataUrl = await readFileAsDataUrl(file);
+                    if (dataUrl.length <= 2 * 1024 * 1024) savedImage = dataUrl;
+                } catch (error) {
+                    savedImage = null;
+                }
+            }
+            saveBackgroundState({ color, image: savedImage });
+            setBgHint(savedImage
+                ? '已应用并记住，刷新后仍是这张图。'
+                : '已应用；图片较大或是视频，刷新后会回到这个底色。');
         }
 
-        function applyCustomBackgroundFromStorage(url, color) {
-            const video = document.getElementById('bg-video');
+        function restoreRandomBackground() {
+            saveBackgroundState(null);
             document.body.style.backgroundImage = 'none';
-            document.body.style.backgroundColor = color;
-
-            if (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm') ||
-url.toLowerCase().endsWith('.ogg')) {
-                video.style.display = 'block';
-                video.src = url;
-                video.play().catch(() => console.log("视频准备就绪，等待用户交互播放"));
-            } else {
-                video.style.display = 'none';
-                document.body.style.backgroundImage = `url('${url}')`;
-            }
+            document.getElementById('bgFileInput').value = '';
+            document.getElementById('bgFileName').textContent = '选择图片或视频';
+            updateBgColorValue(currentTheme.bg);
+            setRandomBackground();
+            setBgHint('已恢复随机背景，刷新后继续随机。');
         }
 
-        /** 7. 本地音乐播放器 **/
-        const audio = document.getElementById('audioPlayer');
-        const playBtn = document.getElementById('playBtn');
-        const musicName = document.getElementById('musicName');
+        document.getElementById('bgColorPicker').addEventListener('input', function() {
+            document.getElementById('bgColorValue').textContent = this.value;
+        });
 
-        function loadMusic(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const url = URL.createObjectURL(file);
-                audio.src = url;
-                musicName.innerText = file.name;
-                audio.load();
-            }
+        /** 7. 音乐播放器：播放列表、顺滑拖动、音量百分比、LRC 歌词 **/
+        const audio = new Audio();
+        let playlist = [];
+        let currentTrackIndex = 0;
+        let isShuffle = false;
+        let isLoop = true;
+        let isSeeking = false;
+        let lyrics = [];
+        let activeLyricIndex = -1;
+        let lyricFiles = [];          // 和音乐一起选中的 .lrc / .txt
+        let lyricsHiddenByUser = false;
+
+        const musicName = document.getElementById('musicName');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progressContainer');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationTimeEl = document.getElementById('durationTime');
+        const playlistEl = document.getElementById('playlist');
+        const lyricsPanel = document.getElementById('lyricsPanel');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumePercent = document.getElementById('volumePercent');
+        audio.volume = Number(volumeSlider.value);
+
+        const AUDIO_FILE_RE = /\.(mp3|wav|m4a|aac|ogg|flac|opus)$/i;
+        const LYRIC_FILE_RE = /\.(lrc|txt)$/i;
+
+        function pathDir(path) {
+            const index = path.lastIndexOf('/');
+            return index === -1 ? '' : path.slice(0, index);
+        }
+
+        function baseName(name) {
+            return name.replace(/\.[^.]+$/, '');
+        }
+
+        function handleFolderSelect(input) {
+            const files = Array.from(input.files);
+            const audioFiles = files.filter(file =>
+                file.type.startsWith('audio/') || AUDIO_FILE_RE.test(file.name)
+            );
+            if (!audioFiles.length) return;
+
+            // 歌词文件先收好，切歌时按「同目录 + 同名」自动匹配
+            lyricFiles = files.filter(file => LYRIC_FILE_RE.test(file.name)).map(file => {
+                const path = file.webkitRelativePath || file.name;
+                return {
+                    name: file.name,
+                    lowerName: file.name.toLowerCase(),
+                    base: baseName(file.name).toLowerCase(),
+                    dir: pathDir(path),
+                    file
+                };
+            });
+
+            playlist.forEach(track => URL.revokeObjectURL(track.url));
+            playlist = audioFiles.map((file, index) => {
+                const path = file.webkitRelativePath || file.name;
+                return {
+                    name: file.name,
+                    base: baseName(file.name).toLowerCase(),
+                    dir: pathDir(path),
+                    url: URL.createObjectURL(file),
+                    id: index
+                };
+            });
+            renderPlaylist();
+            loadTrack(0);
+        }
+
+        function renderPlaylist() {
+            playlistEl.innerHTML = '';
+            playlist.forEach((track, index) => {
+                const div = document.createElement('div');
+                div.className = `playlist-item ${index === currentTrackIndex ? 'active' : ''}`;
+                div.textContent = track.name;
+                div.onclick = () => loadTrack(index);
+                playlistEl.appendChild(div);
+            });
+        }
+
+        function loadTrack(index) {
+            if (!playlist.length) return;
+            currentTrackIndex = index;
+            audio.src = playlist[index].url;
+            musicName.textContent = playlist[index].name;
+            renderPlaylist();
+            lyrics = [];
+            activeLyricIndex = -1;
+            lyricsPanel.textContent = '正在查找同名歌词…';
+            document.getElementById('lyricsFile').value = '';
+            progressBar.style.width = '0%';
+            currentTimeEl.textContent = '00:00';
+            durationTimeEl.textContent = '00:00';
+            renderFloatingLyrics();
+            audio.play().then(() => updatePlayBtn(true)).catch(() => updatePlayBtn(false));
+            autoLoadTrackLyrics(playlist[index]);
         }
 
         function togglePlay() {
             if (audio.paused) {
-                audio.play();
-                playBtn.innerText = "⏸️";
+                audio.play().then(() => updatePlayBtn(true)).catch(() => updatePlayBtn(false));
             } else {
                 audio.pause();
-                playBtn.innerText = "▶️";
+                updatePlayBtn(false);
             }
         }
+
+        function updatePlayBtn(isPlaying) {
+            document.getElementById('playBtn').textContent = isPlaying ? '⏸️' : '▶️';
+        }
+
+        function nextTrack() {
+            if (!playlist.length) return;
+            let nextIndex;
+            if (isShuffle && playlist.length > 1) {
+                do { nextIndex = Math.floor(Math.random() * playlist.length); }
+                while (nextIndex === currentTrackIndex);
+            } else {
+                nextIndex = (currentTrackIndex + 1) % playlist.length;
+            }
+            loadTrack(nextIndex);
+        }
+
+        function prevTrack() {
+            if (!playlist.length) return;
+            loadTrack((currentTrackIndex - 1 + playlist.length) % playlist.length);
+        }
+
+        function updateVolume(val) {
+            const volume = Math.max(0, Math.min(1, Number(val)));
+            audio.volume = volume;
+            volumePercent.textContent = `${Math.round(volume * 100)}%`;
+        }
+
+        function toggleShuffle() {
+            isShuffle = !isShuffle;
+            const btn = document.getElementById('shuffleBtn');
+            btn.classList.toggle('active', isShuffle);
+            btn.textContent = isShuffle ? '🔀 随机开' : '🔀 随机';
+        }
+
+        function toggleLoop() {
+            isLoop = !isLoop;
+            const btn = document.getElementById('loopBtn');
+            btn.classList.toggle('active', isLoop);
+            btn.textContent = isLoop ? '🔂 单曲' : '🔁 列表';
+            btn.title = isLoop ? '当前：单曲循环，点击切换为列表循环' : '当前：列表循环，点击切换为单曲循环';
+        }
+
+        function formatTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function seekFromPointer(event) {
+            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+            const rect = progressContainer.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+            audio.currentTime = ratio * audio.duration;
+            progressBar.style.width = `${ratio * 100}%`;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+            progressContainer.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
+        }
+
+        progressContainer.addEventListener('pointerdown', event => {
+            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+            isSeeking = true;
+            progressContainer.setPointerCapture?.(event.pointerId);
+            seekFromPointer(event);
+        });
+        progressContainer.addEventListener('pointermove', event => {
+            if (isSeeking) seekFromPointer(event);
+        });
+        progressContainer.addEventListener('pointerup', event => {
+            if (isSeeking) seekFromPointer(event);
+            isSeeking = false;
+        });
+        progressContainer.addEventListener('pointercancel', () => { isSeeking = false; });
+        progressContainer.addEventListener('keydown', event => {
+            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                event.preventDefault();
+                audio.currentTime = Math.max(0, Math.min(audio.duration,
+                    audio.currentTime + (event.key === 'ArrowRight' ? 5 : -5)));
+            } else if (event.key === 'Home') {
+                audio.currentTime = 0;
+            } else if (event.key === 'End') {
+                audio.currentTime = audio.duration;
+            }
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (!isSeeking && Number.isFinite(audio.duration) && audio.duration > 0) {
+                const progress = audio.currentTime / audio.duration * 100;
+                progressBar.style.width = `${progress}%`;
+                progressContainer.setAttribute('aria-valuenow', String(Math.round(progress)));
+            }
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+            if (Number.isFinite(audio.duration)) durationTimeEl.textContent = formatTime(audio.duration);
+            updateLyricLine();
+        });
+        audio.addEventListener('loadedmetadata', () => {
+            durationTimeEl.textContent = formatTime(audio.duration);
+        });
+        audio.addEventListener('play', () => updatePlayBtn(true));
+        audio.addEventListener('pause', () => updatePlayBtn(false));
+        audio.addEventListener('ended', () => {
+            if (isLoop) {
+                audio.currentTime = 0;
+                audio.play().catch(() => updatePlayBtn(false));
+            } else {
+                nextTrack();
+            }
+        });
+
+        function toggleLyrics() {
+            lyricsPanel.classList.toggle('show');
+            lyricsHiddenByUser = !lyricsPanel.classList.contains('show');
+            if (lyricsPanel.classList.contains('show')) updateLyricLine(true);
+        }
+
+        function handleLyricsFile(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                lyricsHiddenByUser = false;
+                showLyricsFromText(decodeLyricsText(reader.result), file.name);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        /**
+         * 自动匹配歌词：歌曲所在目录下找 song.lrc、song.mp3.lrc、song.txt，
+         * 同目录没有就退一步在整个文件夹（含子目录）里找同名文件。
+         */
+        function findLyricFile(track) {
+            const wanted = [
+                `${track.base}.lrc`,
+                `${track.name.toLowerCase()}.lrc`,
+                `${track.base}.txt`
+            ];
+            const sameDir = lyricFiles.filter(item => item.dir === track.dir);
+            for (const name of wanted) {
+                const hit = sameDir.find(item => item.lowerName === name);
+                if (hit) return hit;
+            }
+            for (const name of wanted) {
+                const hit = lyricFiles.find(item => item.lowerName === name);
+                if (hit) return hit;
+            }
+            return null;
+        }
+
+        function autoLoadTrackLyrics(track) {
+            if (!track) return;
+            const hit = findLyricFile(track);
+            if (!hit) {
+                lyricsPanel.textContent = '没有找到同名歌词（.lrc / .txt），可用下方按钮手动载入。';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (playlist[currentTrackIndex] !== track) return;   // 读完之前已经切歌
+                showLyricsFromText(decodeLyricsText(reader.result), hit.name);
+            };
+            reader.readAsArrayBuffer(hit.file);
+        }
+
+        function showLyricsFromText(text, sourceName) {
+            lyrics = parseLrc(text);
+            activeLyricIndex = -1;
+            lyricsPanel.innerHTML = '';
+            if (!lyrics.length) {
+                lyricsPanel.textContent = sourceName
+                    ? `「${sourceName}」里没有识别到时间标签，无法逐句滚动。`
+                    : '没有识别到带时间标签的 LRC 歌词。';
+                lyricsPanel.classList.toggle('show', !lyricsHiddenByUser);
+                return;
+            }
+            if (sourceName) {
+                const source = document.createElement('div');
+                source.className = 'lyrics-source';
+                source.textContent = `🎵 ${sourceName}`;
+                lyricsPanel.appendChild(source);
+            }
+            lyrics.forEach((item, index) => {
+                const line = document.createElement('div');
+                line.className = 'lyric-line';
+                line.dataset.index = String(index);
+                line.textContent = item.text || '♪';
+                lyricsPanel.appendChild(line);
+            });
+            lyricsPanel.classList.toggle('show', !lyricsHiddenByUser);
+            updateLyricLine(true);
+            renderFloatingLyrics();
+        }
+
+        /**
+         * 解码歌词文件。LRC 常见 UTF-8 / GBK / GB18030 / UTF-16 编码，
+         * 原来一律按 UTF-8 读取，中文歌词会变成乱码。
+         * 这里先看 BOM，再用严格模式试 UTF-8，失败则回退到 GB18030（兼容 GBK / GB2312）。
+         */
+        function decodeLyricsText(buffer) {
+            if (!buffer || !buffer.byteLength) return '';
+            const bytes = new Uint8Array(buffer);
+            const startsWith = (...signature) =>
+                signature.every((byte, index) => bytes[index] === byte);
+            try {
+                if (startsWith(0xFF, 0xFE)) return new TextDecoder('utf-16le').decode(buffer);
+                if (startsWith(0xFE, 0xFF)) return new TextDecoder('utf-16be').decode(buffer);
+                if (startsWith(0xEF, 0xBB, 0xBF)) return new TextDecoder('utf-8').decode(buffer);
+                return new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+            } catch (error) {
+                try {
+                    return new TextDecoder('gb18030').decode(buffer);
+                } catch (fallbackError) {
+                    return new TextDecoder('utf-8').decode(buffer);
+                }
+            }
+        }
+
+        function parseLrc(text) {
+            const result = [];
+            const lines = text.split(/\r?\n/);
+            const timePattern = /\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+            for (const line of lines) {
+                const times = [...line.matchAll(timePattern)];
+                const lyricText = line.replace(timePattern, '').trim();
+                if (!times.length) continue;
+                for (const match of times) {
+                    const fraction = match[3] ? Number(`0.${match[3]}`) : 0;
+                    result.push({
+                        time: Number(match[1]) * 60 + Number(match[2]) + fraction,
+                        text: lyricText
+                    });
+                }
+            }
+            return result.sort((a, b) => a.time - b.time);
+        }
+
+        function updateLyricLine(forceScroll) {
+            if (!lyrics.length) return;
+            let activeIndex = -1;
+            for (let i = 0; i < lyrics.length; i++) {
+                if (lyrics[i].time <= audio.currentTime) activeIndex = i;
+                else break;
+            }
+            const changed = activeIndex !== activeLyricIndex;
+            if (!changed && !forceScroll) return;
+            activeLyricIndex = activeIndex;
+            const nodes = lyricsPanel.querySelectorAll('.lyric-line');
+            nodes.forEach((node, index) => node.classList.toggle('active', index === activeIndex));
+            if (activeIndex >= 0 && nodes[activeIndex] && lyricsPanel.classList.contains('show')) {
+                scrollLyricLineIntoPanel(nodes[activeIndex]);
+            }
+            syncFloatingLyric();
+        }
+
+        /**
+         * 只滚动歌词面板本身。
+         * 之前用 scrollIntoView，它会把所有可滚动祖先（包括整个侧边菜单）一起滚动，
+         * 而 timeupdate 每秒触发多次，于是菜单被反复拽回歌词行，表现为“无法滑动主菜单”。
+         */
+        function scrollLyricLineIntoPanel(node) {
+            const panelRect = lyricsPanel.getBoundingClientRect();
+            const nodeRect = node.getBoundingClientRect();
+            const padding = 6;
+            if (nodeRect.top >= panelRect.top + padding && nodeRect.bottom <= panelRect.bottom - padding) return;
+            const target = lyricsPanel.scrollTop + (nodeRect.top - panelRect.top)
+                - (lyricsPanel.clientHeight - nodeRect.height) / 2;
+            lyricsPanel.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        }
+        initTheme();
+        initCards();
+        initLyricsWidget();
     </script>
 </body>
 </html>
