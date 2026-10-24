@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0700">
+    <meta name="app-version" content="20261025-0720">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -931,6 +931,54 @@
         .lw-controls button:hover { color: var(--primary-strong); }
         .lw-controls button.on { color: var(--primary-strong); font-weight: 700; }
 
+        .lw-resize {
+            position: absolute; right: 2px; bottom: 2px;
+            width: 16px; height: 16px;
+            cursor: nwse-resize;
+            touch-action: none;
+            background: linear-gradient(135deg, transparent 45%, rgba(var(--primary-rgb), .65) 45%, rgba(var(--primary-rgb), .65) 55%, transparent 55%);
+        }
+        .lw-body.qq-lyrics {
+            display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
+            flex: 1; min-height: 0;
+            overflow: hidden;
+            text-align: center;
+            padding: 10px 14px;
+        }
+        .qq-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .qq-cur {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            font-size: var(--lw-font-size, 22px);
+            font-weight: 800;
+            line-height: 1.35;
+            color: #b9a9a9;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
+        }
+        .qq-text { white-space: nowrap; }
+        .qq-fill {
+            position: absolute; left: 0; top: 0;
+            width: 0%; overflow: hidden;
+            color: var(--primary-strong);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
+            pointer-events: none;
+        }
+        .qq-fill .qq-text { display: block; width: max-content; }
+        .qq-next {
+            font-size: calc(var(--lw-font-size, 22px) * .72);
+            line-height: 1.4;
+            color: #c4b6b6;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, .85);
+        }
+        @keyframes qqPop {
+            from { opacity: .2; transform: translateY(6px) scale(.98); }
+            to { opacity: 1; transform: none; }
+        }
+        .qq-cur.qq-pop { animation: qqPop .28s ease; }
+        .lyrics-widget.lyrics-mode { background: rgba(255, 255, 255, calc(var(--lw-alpha) * .5)); }
+        .lyrics-widget.lyrics-mode .lw-player { display: none; }
+
         .lw-body {
             padding: 12px 14px;
             max-height: 220px; overflow-y: auto;
@@ -1381,6 +1429,7 @@
         <header class="lyrics-widget-head" id="lwHead">
             <span class="lw-title">🎵 播放器</span>
             <div class="lw-tools">
+                <button type="button" id="lwBackBtn" hidden title="返回播放器" onclick="toggleWidgetLyrics()">▣</button>
                 <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">📌</button>
                 <button type="button" data-lw="font-dec" title="字号减小">A−</button>
                 <button type="button" data-lw="font-inc" title="字号增大">A+</button>
@@ -1413,6 +1462,7 @@
                 </select>
             </label>
         </div>
+        <div class="lw-resize" id="lwResize" title="拖动调整大小"></div>
     </section>
 
     <button type="button" class="opacity-ctrl-btn" id="opacityBtn" onclick="toggleSlider()" aria-label="调节背景透明度">☀️</button>
@@ -2141,7 +2191,9 @@
             fontSize: 22,
             font: 'system',
             left: null,
-            top: null
+            top: null,
+            width: null,
+            height: null
         };
 
         function loadLyricsWidgetState() {
@@ -2154,6 +2206,8 @@
                 if (LW_FONTS[saved.font]) lwState.font = saved.font;
                 if (Number.isFinite(saved.left)) lwState.left = saved.left;
                 if (Number.isFinite(saved.top)) lwState.top = saved.top;
+                if (Number.isFinite(saved.width)) lwState.width = Math.max(260, saved.width);
+                if (Number.isFinite(saved.height)) lwState.height = Math.max(180, saved.height);
             } catch (error) {}
         }
 
@@ -2182,6 +2236,8 @@
                 widget.style.right = 'auto';
                 widget.style.bottom = 'auto';
             }
+            if (Number.isFinite(lwState.width)) widget.style.width = `${lwState.width}px`;
+            if (Number.isFinite(lwState.height)) widget.style.height = `${lwState.height}px`;
         }
 
         function toggleLyricsWidget(force) {
@@ -2201,30 +2257,65 @@
         function renderFloatingLyrics() {
             const body = document.getElementById('lwBody');
             body.innerHTML = '';
+            body.classList.add('qq-lyrics');
+            const current = document.createElement('div');
+            current.className = 'qq-line qq-cur';
+            current.id = 'qqCur';
+            const base = document.createElement('span');
+            base.className = 'qq-text qq-base';
+            base.id = 'qqBase';
+            const fill = document.createElement('span');
+            fill.className = 'qq-fill';
+            fill.id = 'qqFill';
+            const fillText = document.createElement('span');
+            fillText.className = 'qq-text';
+            fillText.id = 'qqFillText';
+            fill.appendChild(fillText);
+            current.append(base, fill);
+            const next = document.createElement('div');
+            next.className = 'qq-line qq-next';
+            next.id = 'qqNext';
+            body.append(current, next);
             if (!lyrics.length) {
-                body.textContent = '选好音乐并载入歌词后，这里会同步滚动。';
+                base.textContent = '选好音乐并载入歌词后，这里会显示双行歌词。';
                 return;
             }
-            lyrics.forEach((item, index) => {
-                const line = document.createElement('div');
-                line.className = 'lw-line';
-                line.dataset.index = String(index);
-                line.textContent = item.text || '♪';
-                body.appendChild(line);
-            });
             syncFloatingLyric();
         }
 
         function syncFloatingLyric() {
-            const body = document.getElementById('lwBody');
-            if (!body || !lyrics.length) return;
+            const base = document.getElementById('qqBase');
+            if (!base || !lyrics.length) return;
             const widget = document.getElementById('lyricsWidget');
-            const lines = body.querySelectorAll('.lw-line');
-            if (!lines.length) return;
-            lines.forEach((line, index) => line.classList.toggle('active', index === activeLyricIndex));
-            if (activeLyricIndex >= 0 && lines[activeLyricIndex] && !widget.hidden) {
-                scrollFloatingLine(lines[activeLyricIndex]);
+            if (!widget || widget.hidden) return;
+
+            let index = activeLyricIndex;
+            if (index < 0) index = 0;
+            const current = lyrics[index] || { text: '', time: 0 };
+            const next = lyrics[index + 1] || null;
+            const text = current.text || '♪';
+
+            if (base.textContent !== text) {
+                base.textContent = text;
+                const fillText = document.getElementById('qqFillText');
+                if (fillText) fillText.textContent = text;
+                const line = document.getElementById('qqCur');
+                if (line) {
+                    line.classList.remove('qq-pop');
+                    void line.offsetWidth;
+                    line.classList.add('qq-pop');
+                }
             }
+
+            const nextEl = document.getElementById('qqNext');
+            if (nextEl) nextEl.textContent = next ? (next.text || '♪') : '';
+
+            const start = current.time || 0;
+            const end = next ? next.time : (Number.isFinite(audio.duration) ? audio.duration : start + 4);
+            const span = Math.max(0.2, end - start);
+            const progress = Math.max(0, Math.min(1, (audio.currentTime - start) / span));
+            const fill = document.getElementById('qqFill');
+            if (fill) fill.style.width = `${progress * 100}%`;
         }
 
         function scrollFloatingLine(node) {
@@ -2235,6 +2326,35 @@
             const target = body.scrollTop + (nodeRect.top - bodyRect.top)
                 - (body.clientHeight - nodeRect.height) / 2;
             body.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        }
+
+        function startLyricsWidgetResize(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            const widget = document.getElementById('lyricsWidget');
+            const rect = widget.getBoundingClientRect();
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const startW = rect.width;
+            const startH = rect.height;
+            const move = (e) => {
+                const width = Math.min(window.innerWidth - 24, Math.max(260, startW + e.clientX - startX));
+                const height = Math.min(window.innerHeight - 40, Math.max(180, startH + e.clientY - startY));
+                widget.style.width = `${width}px`;
+                widget.style.height = `${height}px`;
+            };
+            const end = () => {
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', end);
+                document.removeEventListener('pointercancel', end);
+                const box = widget.getBoundingClientRect();
+                lwState.width = Math.round(box.width);
+                lwState.height = Math.round(box.height);
+                saveLyricsWidgetState();
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', end);
+            document.addEventListener('pointercancel', end);
         }
 
         function startLyricsWidgetDrag(event) {
@@ -2304,6 +2424,8 @@
             });
 
             document.getElementById('lwHead').addEventListener('pointerdown', startLyricsWidgetDrag);
+            const resizeHandle = document.getElementById('lwResize');
+            if (resizeHandle) resizeHandle.addEventListener('pointerdown', startLyricsWidgetResize);
         }
 
         /** 4.8 桌面宠物（web-mascot，按需加载） **/
@@ -2880,13 +3002,23 @@
             if (play) play.textContent = audio.paused ? '▶️' : '⏸️';
         }
 
-        function toggleWidgetLyrics() {
+        function toggleWidgetLyrics(force) {
+            const widget = document.getElementById('lyricsWidget');
             const body = document.getElementById('lwBody');
+            if (!widget || !body) return;
+            const on = typeof force === 'boolean' ? force : !widget.classList.contains('lyrics-mode');
+            widget.classList.toggle('lyrics-mode', on);
+            body.hidden = !on;
             const button = document.getElementById('lwLyricsBtn');
-            if (!body) return;
-            body.hidden = !body.hidden;
-            if (button) button.classList.toggle('on', !body.hidden);
-            if (!body.hidden) renderFloatingLyrics();
+            if (button) button.classList.toggle('on', on);
+            const back = document.getElementById('lwBackBtn');
+            if (back) back.hidden = !on;
+            const title = widget.querySelector('.lw-title');
+            if (title) title.textContent = on ? '🎵 桌面歌词' : '🎵 播放器';
+            if (on) {
+                renderFloatingLyrics();
+                syncFloatingLyric();
+            }
         }
 
         function nextTrack() {
@@ -2992,6 +3124,7 @@
             if (Number.isFinite(audio.duration)) durationTimeEl.textContent = formatTime(audio.duration);
             updateWidgetPlayer();
             updateLyricLine();
+            syncFloatingLyric();
         });
         audio.addEventListener('loadedmetadata', () => {
             durationTimeEl.textContent = formatTime(audio.duration);
