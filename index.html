@@ -958,6 +958,19 @@
         }
         .edit-done[hidden] { display: none; }
 
+        .mascot-switch-row { margin-top: 10px; }
+        .mascot-row {
+            display: flex; align-items: center; gap: 8px;
+            margin-top: 8px;
+            font-size: .7rem; color: #a99b9b;
+        }
+        .mascot-row[hidden] { display: none; }
+        .mascot-row select {
+            border: 1px solid #eee; border-radius: 8px;
+            background: #fff; padding: 3px 6px;
+            font-size: .7rem; color: var(--text-main);
+        }
+
         .card-form { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
         .card-form[hidden] { display: none; }
         .card-form input {
@@ -1136,6 +1149,22 @@
                 </button>
             </div>
             <p class="menu-hint">隐藏卡片与页脚，只留搜索框和背景。</p>
+
+            <div class="switch-row mascot-switch-row">
+                <span>桌面宠物</span>
+                <button type="button" class="switch-btn" id="mascotSwitch" role="switch" aria-checked="false"
+                        aria-label="桌面宠物" onclick="toggleMascot()">
+                    <span class="knob"></span>
+                </button>
+            </div>
+            <div class="mascot-row" id="mascotRow" hidden>
+                <label for="mascotPack">形象</label>
+                <select id="mascotPack" onchange="switchMascotPack(this.value)">
+                    <option value="Neuron">Neuron</option>
+                    <option value="Eviling">Eviling</option>
+                </select>
+            </div>
+            <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动，首次加载约 3MB 素材。</p>
         </section>
     </nav>
 
@@ -2019,6 +2048,99 @@
             document.getElementById('lwHead').addEventListener('pointerdown', startLyricsWidgetDrag);
         }
 
+        /** 4.8 桌面宠物（web-mascot，按需加载） **/
+        const MASCOT_KEY = 'mascotState';
+        const mascotState = { enabled: false, pack: 'Neuron' };
+        let mascotModule = null;
+        let mascotInstance = null;
+        let mascotBusy = false;
+
+        function loadMascotState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(MASCOT_KEY) || 'null');
+                if (!saved) return;
+                mascotState.enabled = Boolean(saved.enabled);
+                if (saved.pack === 'Neuron' || saved.pack === 'Eviling') mascotState.pack = saved.pack;
+            } catch (error) {}
+        }
+
+        function saveMascotState() {
+            try { localStorage.setItem(MASCOT_KEY, JSON.stringify(mascotState)); } catch (error) {}
+        }
+
+        function setMascotUI(on) {
+            const sw = document.getElementById('mascotSwitch');
+            sw.setAttribute('aria-checked', String(on));
+            sw.classList.toggle('on', on);
+            document.getElementById('mascotRow').hidden = !on;
+            document.getElementById('mascotPack').value = mascotState.pack;
+        }
+
+        function setMascotHint(text) {
+            const hint = document.getElementById('mascotHint');
+            if (hint) hint.textContent = text;
+        }
+
+        async function mountMascot() {
+            if (mascotInstance || mascotBusy) return;
+            mascotBusy = true;
+            setMascotHint('正在把桌宠抱过来…');
+            try {
+                if (!mascotModule) {
+                    mascotModule = await import('./mascot/index.js');
+                    mascotModule.configure({ assets: './mascot/mascot_pack' });
+                }
+                mascotInstance = await mascotModule.createMascot({
+                    container: document.body,
+                    pack: mascotState.pack
+                });
+                setMascotHint('小宠物来啦，切页或点开关都能让它休息。');
+            } catch (error) {
+                console.warn('[mascot]', error);
+                mascotState.enabled = false;
+                setMascotUI(false);
+                saveMascotState();
+                setMascotHint('桌宠没加载出来：确认 mascot/ 目录和页面一起上传了。');
+            } finally {
+                mascotBusy = false;
+            }
+        }
+
+        function destroyMascot() {
+            if (!mascotInstance) return;
+            try { mascotInstance.destroy(); } catch (error) {}
+            mascotInstance = null;
+        }
+
+        async function toggleMascot() {
+            mascotState.enabled = !mascotState.enabled;
+            setMascotUI(mascotState.enabled);
+            saveMascotState();
+            if (mascotState.enabled) {
+                await mountMascot();
+            } else {
+                destroyMascot();
+                setMascotHint('桌宠已收回，再打开会重新出现。');
+            }
+        }
+
+        async function switchMascotPack(pack) {
+            if (pack !== 'Neuron' && pack !== 'Eviling') return;
+            mascotState.pack = pack;
+            saveMascotState();
+            if (!mascotState.enabled) return;
+            destroyMascot();
+            await mountMascot();
+        }
+
+        function initMascot() {
+            loadMascotState();
+            setMascotUI(mascotState.enabled);
+            window.addEventListener('load', () => {
+                if (mascotState.enabled) mountMascot();
+            });
+        }
+
         /** 5. 透明度调节（修复移动端不生效问题） **/
         const sliderContainer = document.getElementById('sliderContainer');
         const slider = document.getElementById('opacitySlider');
@@ -2501,6 +2623,7 @@
         initTheme();
         initCards();
         initLyricsWidget();
+        initMascot();
     </script>
 </body>
 </html>
