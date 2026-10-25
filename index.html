@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1940">
+    <meta name="app-version" content="20261025-2053">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -318,7 +318,8 @@
         .simple-mode-toggle:focus-visible {
             opacity: 1; transform: translateY(0);
         }
-        body.simple-mode .simple-mode-toggle { opacity: .5; }
+        /* 简洁模式下不再把按钮强行亮着：平时隐形，hover / 聚焦才出现，
+           这样它和普通状态一样"能隐藏"；触屏没有悬停，由下面的 @media 常驻显示，保证找得到退出入口。 */
         /* 触屏没有悬停，常驻显示，否则用户根本找不到入口 */
         @media (hover: none) {
             .simple-mode-toggle { opacity: .7; transform: none; }
@@ -1327,6 +1328,11 @@
                 <p class="menu-hint">隐藏的按钮可以随时在这里重新打开。</p>
             </div>
 
+            <div class="btn-row">
+                <button type="button" class="ghost-btn" id="clearCacheBtn" onclick="clearSiteCache()">🧹 清理缓存</button>
+            </div>
+            <p class="menu-hint">清掉本地保存的主题、背景、卡片和偏好后自动刷新；样式或背景没跟着更新时用。</p>
+
             <p class="menu-hint">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
 
             <div class="switch-row mascot-switch-row">
@@ -1356,8 +1362,8 @@
 
             <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动；本地没有 mascot/ 时会自动从 CDN 加载（约 3MB）。</p>
 
-            <button type="button" class="ghost-btn" style="width:100%; margin-top:12px;" onclick="hardReload()">🔄 强制更新</button>
-            <p class="menu-hint">绕过浏览器和 CDN 缓存，拉取最新版本。</p>
+            <button type="button" class="ghost-btn" style="width:100%; margin-top:12px;" onclick="forceUpdate()">🔄 强制更新</button>
+            <p class="menu-hint">连本地缓存一起清掉，再绕过浏览器和 CDN 缓存拉取最新版本。</p>
         </section>
     </nav>
 
@@ -1713,7 +1719,8 @@
             const bgSlider = document.getElementById('opacitySlider');
             if (bgSlider) bgSlider.value = String(uiPrefs.bgOpacity);
             applyOpacity(uiPrefs.bgOpacity);
-            applySimpleMode(uiPrefs.simpleMode);
+            // 上次停在 0% 透明时，刷新后仍然按"透明即简洁"显示
+            applySimpleMode(uiPrefs.simpleMode || Number(uiPrefs.bgOpacity) <= 0);
         }
 
         function initAntiCrawl() {
@@ -3081,6 +3088,52 @@
             location.replace(bustUrl('reload'));
         }
 
+        /** 真正干活的清缓存：本地存储 + CacheStorage + Service Worker */
+        async function purgeLocalCache() {
+            try { localStorage.clear(); } catch (error) {}
+            try { sessionStorage.clear(); } catch (error) {}
+            try {
+                if (window.caches && typeof caches.keys === 'function') {
+                    const names = await caches.keys();
+                    await Promise.all(names.map(name => caches.delete(name)));
+                }
+            } catch (error) {}
+            try {
+                if (navigator.serviceWorker && typeof navigator.serviceWorker.getRegistrations === 'function') {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(reg => reg.unregister()));
+                }
+            } catch (error) {}
+        }
+
+        /** 清理缓存：本地存的设置全部恢复默认，再硬刷新一次，绕开浏览器缓存拿到最新页面 */
+        async function clearSiteCache() {
+            const ok = window.confirm(
+                '清理缓存会把这些本地数据恢复成默认：\n'
+                + '· 主题颜色与背景（底色、自定义图片）\n'
+                + '· 透明度、简洁模式、主页按钮等界面偏好\n'
+                + '· 自定义卡片与隐藏列表\n'
+                + '· 歌词小窗、桌面宠物、音乐选择\n\n'
+                + '清理完页面会自动刷新。确定继续吗？'
+            );
+            if (!ok) return;
+            await purgeLocalCache();
+            hardReload();
+        }
+
+        /** 强制更新：先连本地缓存一起清干净，再绕开浏览器/CDN 缓存拉最新版本 */
+        async function forceUpdate() {
+            const ok = window.confirm(
+                '强制更新会先强制清理缓存，再绕开浏览器缓存重新拉取最新版本。\n\n'
+                + '注意：主题、背景、透明度等界面偏好，自定义卡片与隐藏列表，\n'
+                + '歌词小窗、桌面宠物、音乐选择这些本地数据都会恢复默认。\n\n'
+                + '确定继续吗？'
+            );
+            if (!ok) return;
+            await purgeLocalCache();
+            hardReload();
+        }
+
         function showUpdateBanner() {
             updateFound = true;
             const banner = document.getElementById('updateBanner');
@@ -3151,12 +3204,24 @@
             if (label) label.textContent = `${Math.round(alpha * 100)}%`;
         }
 
+        /* 透明度拉到 0%（背景完全透明）时自动进入简洁模式。
+           只自动开、不自动关：拉回 80% 不会把简洁模式撤掉，退出仍由按钮控制，
+           按钮能不能显示也还是听「设置 → 主页按钮 → 简洁模式按钮」那个开关的。 */
+        function syncSimpleModeWithOpacity(value) {
+            if (Number(value) > 0) return;
+            if (document.body.classList.contains('simple-mode')) return;
+            applySimpleMode(true);
+            saveUiPrefs();
+        }
+
         slider.addEventListener('input', function() {
             applyOpacity(this.value);
+            syncSimpleModeWithOpacity(this.value);
         });
 
         slider.addEventListener('change', function() {
             applyOpacity(this.value);
+            syncSimpleModeWithOpacity(this.value);
             uiPrefs.bgOpacity = Math.max(0, Math.min(0.9, Number(this.value)));
             saveUiPrefs();
         });
@@ -3164,10 +3229,12 @@
         // 移动端触摸事件兼容
         slider.addEventListener('touchmove', function(e) {
             applyOpacity(this.value);
+            syncSimpleModeWithOpacity(this.value);
         }, { passive: true });
 
         slider.addEventListener('touchend', function() {
             applyOpacity(this.value);
+            syncSimpleModeWithOpacity(this.value);
         }, { passive: true });
 
         // 初始化透明度
