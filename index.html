@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1631">
+    <meta name="app-version" content="20261025-1657">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2742,50 +2742,86 @@
            所以只在渲染这一层做修正——但要按"不透明像素"算，不能按整块画布，
            否则会把贴图整体往页面里推，看着就不贴着页边了。 */
         const spriteBoxCache = new Map();
+        const spriteBoxPending = new Set();
 
-        /** 允许贴图压出页边几个像素：不切一丝会显得悬在边上，压一点才像腿搭在边线上。 */
-        const EDGE_CLIP_PX = 6;
+        /** 允许贴图压出页边 1px：不切一丝会显得悬在边上，压一点点才像腿搭在边线上。 */
+        const EDGE_CLIP_PX = 1;
+
+        /** 量一张图的透明留白。返回 null＝整张透明，undefined＝取不到像素（跨域被污染）。 */
+        function measureSpriteBox(source, width, height) {
+            let data = null;
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                if (!context) return undefined;
+                context.drawImage(source, 0, 0);
+                data = context.getImageData(0, 0, width, height).data;
+            } catch (error) {
+                return undefined;
+            }
+            let minX = width, maxX = -1, minY = height, maxY = -1;
+            for (let y = 0; y < height; y++) {
+                const row = y * width;
+                for (let x = 0; x < width; x++) {
+                    if (data[(row + x) * 4 + 3] > 8) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            if (maxX < minX) return null;
+            return { minX, maxX: maxX + 1, minY, maxY: maxY + 1 };
+        }
+
+        /** 素材走 CDN 时页面里的 <img> 是跨域的，画进 canvas 会被污染、读不出像素。
+            这时改用 fetch 取原始字节再解码（CDN 带 CORS 头），量到后缓存起来。 */
+        function loadSpriteBox(url) {
+            if (spriteBoxCache.has(url) || spriteBoxPending.has(url)) return;
+            if (typeof fetch !== 'function' || typeof createImageBitmap !== 'function') return;
+            spriteBoxPending.add(url);
+            fetch(url, { mode: 'cors', credentials: 'omit' })
+                .then((response) => (response.ok ? response.blob() : null))
+                .then((blob) => (blob ? createImageBitmap(blob) : null))
+                .then((bitmap) => {
+                    if (!bitmap) return;
+                    const box = measureSpriteBox(bitmap, bitmap.width, bitmap.height);
+                    if (box) spriteBoxCache.set(url, box);
+                    if (bitmap.close) bitmap.close();
+                })
+                .catch(() => {
+                    // 取不到就维持原样，不拿它当报错
+                })
+                .then(() => {
+                    spriteBoxPending.delete(url);
+                });
+        }
 
         /** 取这张贴图不透明像素的包围盒（相对画布，未缩放）；拿不到就返回 null。 */
         function spriteOpaqueBox(image, poseImage) {
             const url = image.currentSrc || image.src || '';
             if (!url) return null;
             if (spriteBoxCache.has(url)) return spriteBoxCache.get(url);
-            let box = null;
-            let attempted = false;
-            try {
-                const width = image.naturalWidth;
-                const height = image.naturalHeight;
-                const showsThisPose = !poseImage || url.indexOf(poseImage) >= 0;
-                if (image.complete && width > 0 && height > 0 && showsThisPose && width * height <= 262144) {
-                    attempted = true;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const context = canvas.getContext('2d', { willReadFrequently: true });
-                    if (context) {
-                        context.drawImage(image, 0, 0);
-                        const data = context.getImageData(0, 0, width, height).data;
-                        let minX = width, maxX = -1, minY = height, maxY = -1;
-                        for (let y = 0; y < height; y++) {
-                            const row = y * width;
-                            for (let x = 0; x < width; x++) {
-                                if (data[(row + x) * 4 + 3] > 8) {
-                                    if (x < minX) minX = x;
-                                    if (x > maxX) maxX = x;
-                                    if (y < minY) minY = y;
-                                    if (y > maxY) maxY = y;
-                                }
-                            }
-                        }
-                        if (maxX >= minX) box = { minX, maxX: maxX + 1, minY, maxY: maxY + 1 };
-                    }
+            const width = image.naturalWidth;
+            const height = image.naturalHeight;
+            const showsThisPose = !poseImage || url.indexOf(poseImage) >= 0;
+            if (image.complete && width > 0 && height > 0 && showsThisPose && width * height <= 262144) {
+                const measured = measureSpriteBox(image, width, height);
+                if (measured) {
+                    spriteBoxCache.set(url, measured);
+                    return measured;
                 }
-            } catch (error) {
-                box = null;
+                if (measured === undefined) {
+                    // 跨域读不到像素，换 fetch + createImageBitmap 异步补量
+                    loadSpriteBox(url);
+                    return null;
+                }
+                spriteBoxCache.set(url, null);
             }
-            if (box || attempted) spriteBoxCache.set(url, box);
-            return box;
+            return null;
         }
 
         /** 让贴图的可见部分留在视口内：贴边时正好贴住页边，只切掉透明留白。 */
@@ -2905,7 +2941,7 @@
         }
 
         /* 抱抱的前提：两只都站在地上、没在攀爬/挂墙，而且彼此靠得够近 */
-        const HUG_NEAR_PX = 200;
+        const HUG_NEAR_PX = 100;
         const HUG_NEAR_HEIGHT_PX = 140;
         const HUG_NEAR_POLL_MS = 1500;
         const HUG_NEAR_PATIENCE_MS = 30000;
@@ -3012,10 +3048,10 @@
                     preload.src = frameUrl(name);
                 });
 
-                const first = mascotInstances[0].instance.engine.position();
-                const last = mascotInstances[mascotInstances.length - 1].instance.engine.position();
-                const anchorX = (first.x + last.x) / 2;
-                const anchorY = (first.y + last.y) / 2;
+                const first = hugSpot(mascotInstances[0].instance.engine);
+                const lastSpot = hugSpot(mascotInstances[mascotInstances.length - 1].instance.engine);
+                const anchorX = (first.x + lastSpot.x) / 2;
+                const anchorY = (first.y + lastSpot.y) / 2;
 
                 image.width = sequence.size[0];
                 image.height = sequence.size[1];
@@ -3034,6 +3070,25 @@
                     image.src = frameUrl(name);
                     await new Promise(resolve => window.setTimeout(resolve, ticks * HUG_FRAME_MS));
                 }
+
+                /* 演完就留在演出的地方，不会跳回抱之前的位置：
+                   两只以抱抱图中心为轴、左右各站半个阈值，
+                   于是结束时的间距正好是"还能触发抱抱"的最大间距。 */
+                const halfGap = HUG_NEAR_PX / 2;
+                mascotInstances.forEach((item, index) => {
+                    const engine = item.instance && item.instance.engine;
+                    if (!engine) return;
+                    const targetX = anchorX + (index === 0 ? -halfGap : halfGap);
+                    engine.x = targetX;
+                    engine.y = anchorY;
+                    if ('prevX' in engine) engine.prevX = targetX;
+                    if ('prevY' in engine) engine.prevY = anchorY;
+                    try {
+                        engine.setBehavior('StandUp', 'hug-settle');
+                    } catch (error) {
+                        // 换不动行为也无所谓，位置已经落好了
+                    }
+                });
             } catch (error) {
                 console.warn('[hug]', error);
             } finally {
