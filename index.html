@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0553">
+    <meta name="app-version" content="20261026-0603">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -326,16 +326,23 @@
             body.simple-mode .simple-mode-toggle { opacity: .9; }
         }
         /* --- 主页按钮透明度 ---
-           JS 只往 :root 写一个变量，样式表里每个按钮自己乘上去；
-           以后新增悬浮按钮，只要写 opacity: var(--home-btn-alpha, 1) 就自动跟着滑块走。 */
+           只让「底色」跟着滑块变淡：边框、里面的图案（☰ / 🎵）和文字始终不透明，
+           所以调再低也一眼看得见按钮在哪。
+           新加悬浮按钮同样只需把背景写成 rgba(..., calc(基准 * var(--home-btn-alpha, 1))) */
         :root { --home-btn-alpha: 1; }
-        .menu-btn { opacity: var(--home-btn-alpha, 1); }
-        .lyrics-fab { opacity: var(--home-btn-alpha, 1); }
-        .simple-mode-toggle:hover,
-        .simple-mode-toggle:focus-visible { opacity: var(--home-btn-alpha, 1); }
-        @media (hover: none) {
-            .simple-mode-toggle { opacity: calc(var(--home-btn-alpha, 1) * .7); }
-            body.simple-mode .simple-mode-toggle { opacity: calc(var(--home-btn-alpha, 1) * .9); }
+        .menu-btn {
+            background: rgba(255, 255, 255, var(--home-btn-alpha, 1));
+            box-shadow: 0 8px 20px rgba(0, 0, 0, calc(.1 * var(--home-btn-alpha, 1)));
+        }
+        /* 音乐按钮的定义在文件后面，用 id 提权重才能盖住它 */
+        #lyricsFab {
+            background: rgba(255, 255, 255, calc(.92 * var(--home-btn-alpha, 1)));
+        }
+        #lyricsFab.on {
+            background: rgba(var(--primary-rgb), var(--home-btn-alpha, 1));
+        }
+        .simple-mode-toggle {
+            background: rgba(255, 255, 255, calc(.88 * var(--home-btn-alpha, 1)));
         }
 
         /* --- 自定义主题 --- */
@@ -704,27 +711,62 @@
         .music-player .ghost-btn { width: 100%; margin-top: 8px; flex: none; }
 
         .menu-hint { margin-top: 9px; font-size: 0.7rem; line-height: 1.6; color: #b3a5a5; }
-        /* --- 主菜单里的功能注释：平时收起来，鼠标悬停到对应功能才展开；
-               状态类注释（已保存 / 已恢复…）在文字变化时会自己弹一下 --- */
+        /* --- 主菜单里的功能注释 ---
+           平时不占位、不撑高内容；悬停到对应功能时以浮层卡片的形式盖在下面几行上，
+           这样侧栏高度永远不变，右边滚动条就不会跟着上下跳。
+           状态类注释（已保存 / 已恢复…）在文字变化时会自己弹一下。 */
+        #navMenu .menu-section { position: relative; }
         #navMenu .menu-hint {
-            max-height: 0;
-            margin-top: 0;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            z-index: 30;
+            margin: 0;
+            padding: 7px 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .97);
+            box-shadow: 0 6px 18px rgba(70, 45, 45, .16);
+            color: #8d7f7f;
             opacity: 0;
-            overflow: hidden;
-            transform: translateY(-3px);
-            transition: max-height .24s ease, opacity .16s ease, margin-top .24s ease, transform .2s ease;
+            visibility: hidden;
+            transform: translateY(-4px);
+            transition: opacity .16s ease, transform .16s ease, visibility .16s;
+            pointer-events: none;
         }
         #navMenu .menu-hint.hint-show {
-            max-height: 320px;
-            margin-top: 9px;
             opacity: 1;
+            visibility: visible;
             transform: none;
+            pointer-events: auto;
         }
+        /* 声明类注释（没有对应的功能行）保持原样、常驻 */
         #navMenu .menu-hint[data-hint-static="1"] {
-            max-height: none;
+            position: static;
             margin-top: 9px;
+            padding: 0;
+            background: none;
+            box-shadow: none;
             opacity: 1;
+            visibility: visible;
             transform: none;
+            pointer-events: auto;
+        }
+
+        /* --- 侧栏滚动条：细一点，跟菜单透明度一起变淡 --- */
+        .menu-sub-body {
+            scrollbar-gutter: stable;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(var(--primary-rgb), .5) transparent;
+        }
+        .menu-sub-body::-webkit-scrollbar { width: 9px; }
+        .menu-sub-body::-webkit-scrollbar-track { background: transparent; }
+        .menu-sub-body::-webkit-scrollbar-thumb {
+            border-radius: 9px;
+            background: rgba(var(--primary-rgb), calc(.55 * var(--menu-alpha, .92)));
+        }
+        .menu-sub-body::-webkit-scrollbar-thumb:hover {
+            background: rgba(var(--primary-rgb), calc(.85 * var(--menu-alpha, .92)));
         }
 
         .switch-row > span { font-size: 0.85rem; color: var(--text-main); }
@@ -952,6 +994,30 @@
             text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 3px rgba(90, 60, 60, .35);
         }
         .lw-settings label[hidden] { display: none; }
+        /* 干净模式（只看歌词）下界面都收起来了，这里给一个悬停才浮出的窗口透明滑块 */
+        .lw-clean-alpha {
+            display: none;
+            position: absolute;
+            right: 8px;
+            bottom: 8px;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .88);
+            color: var(--primary-strong);
+            font-size: .66rem;
+            line-height: 1;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            opacity: 0;
+            transition: opacity .2s;
+        }
+        .lyrics-widget.clean-mode .lw-clean-alpha { display: flex; }
+        .lyrics-widget.clean-mode:hover .lw-clean-alpha,
+        .lw-clean-alpha:focus-within { opacity: 1; }
+        .lw-clean-alpha input[type="range"] { width: 72px; }
 
         .lw-body {
             padding: 12px 14px;
@@ -1727,7 +1793,7 @@
         </div>
         <div class="lw-body" id="lwBody" hidden>选好音乐并载入歌词后，这里会同步滚动。</div>
         <div class="lw-settings">
-            <label id="lwAlphaRow">透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
+            <label id="lwAlphaRow">窗口透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
             <label id="lwBgRow" hidden>词底 <input type="range" id="lwLyricsAlpha" min="0" max="1" step="0.05" value="0.35"></label>
             <label id="lwColorRow" hidden>字色 <input type="color" id="lwLyricsColor" value="#ff8c94"></label>
             <label>字体
@@ -1741,6 +1807,10 @@
             </label>
         </div>
         <div class="lw-resize" id="lwResize" title="拖动调整大小"></div>
+        <label class="lw-clean-alpha" id="lwCleanAlphaRow" title="歌词窗口透明度">透明
+            <input type="range" id="lwCleanAlpha" min="0.2" max="1" step="0.05" value="0.85"
+                   aria-label="歌词窗口透明度">
+        </label>
         <button type="button" class="lw-clean-exit" id="lwCleanExit" hidden onclick="toggleCleanLyrics(false)" title="显示界面">▣</button>
     </section>
 
@@ -2231,6 +2301,28 @@
             applySimpleMode(uiPrefs.simpleMode || Number(uiPrefs.bgOpacity) <= 0);
         }
 
+        /** 把注释浮层摆到对应功能行的正下方（不参与布局，所以侧栏高度不变） */
+        function placeMenuHint(hint) {
+            const anchor = hint.hintAnchor;
+            if (!anchor || !anchor.isConnected) return;
+            const box = hint.offsetParent;
+            if (!box) return;
+            let top = 0;
+            let node = anchor;
+            while (node && node !== box) {
+                top += node.offsetTop;
+                node = node.offsetParent;
+            }
+            let offset = 0;
+            // 同一组连着几条注释：依次往下摞，别叠在一起互相盖住
+            let prev = hint.previousElementSibling;
+            while (prev && prev.classList.contains('menu-hint')) {
+                if (prev.classList.contains('hint-show')) offset += prev.offsetHeight + 4;
+                prev = prev.previousElementSibling;
+            }
+            hint.style.top = `${top + anchor.offsetHeight + 4 + offset}px`;
+        }
+
         /** 主菜单里的功能注释：默认收起，悬停到对应功能才展开 */
         function initMenuHints() {
             const menu = document.getElementById('navMenu');
@@ -2262,7 +2354,10 @@
                     triggers.push(trigger);
                 }
 
+                hint.hintAnchor = triggers.find(node => !node.hidden) || triggers[0];
+
                 const show = () => {
+                    placeMenuHint(hint);
                     hint.dataset.hintHover = '1';
                     hint.classList.add('hint-show');
                 };
@@ -2287,6 +2382,7 @@
             // 文字变了 = 状态更新，弹出来给用户看一眼再收回去
             const flash = (hint) => {
                 window.clearTimeout(Number(hint.dataset.hintTimer) || 0);
+                placeMenuHint(hint);
                 hint.classList.add('hint-show');
                 hint.dataset.hintTimer = String(window.setTimeout(() => {
                     if (hint.dataset.hintHover !== '1') hint.classList.remove('hint-show');
@@ -3803,11 +3899,13 @@
             widget.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
             widget.style.setProperty('--lw-alpha', String(lwState.alpha));
             document.getElementById('lwOpacity').value = String(lwState.alpha);
-            // 菜单里「个性化 → 透明度」的那个滑块与挂件内滑块同源
+            // 菜单里「个性化 → 透明度」、挂件设置条、干净模式浮出滑块，三处同源
             const lwMenuAlpha = document.getElementById('lwAlphaMenu');
             if (lwMenuAlpha) lwMenuAlpha.value = String(lwState.alpha);
             const lwMenuAlphaValue = document.getElementById('lwAlphaMenuValue');
             if (lwMenuAlphaValue) lwMenuAlphaValue.textContent = `${Math.round(lwState.alpha * 100)}%`;
+            const lwCleanAlpha = document.getElementById('lwCleanAlpha');
+            if (lwCleanAlpha) lwCleanAlpha.value = String(lwState.alpha);
             document.getElementById('lwFont').value = LW_FONTS[lwState.font] ? lwState.font : 'system';
             const pin = document.getElementById('lwPin');
             pin.setAttribute('aria-pressed', String(lwState.pinned));
@@ -4005,22 +4103,34 @@
             document.addEventListener('pointercancel', end);
         }
 
+        /** 窗口透明度统一入口：哪个滑块拖的都用它 */
+        function applyWidgetAlpha(value) {
+            const next = Math.min(1, Math.max(0.2, Number(value)));
+            if (!Number.isFinite(next)) return;
+            lwState.alpha = next;
+            applyLyricsWidget();
+            saveLyricsWidgetState();
+        }
+
         function initLyricsWidget() {
             loadLyricsWidgetState();
             applyLyricsWidget();
 
             document.getElementById('lwOpacity').addEventListener('input', function () {
-                lwState.alpha = Number(this.value);
-                applyLyricsWidget();
-                saveLyricsWidgetState();
+                applyWidgetAlpha(this.value);
             });
+
+            const lwCleanAlpha = document.getElementById('lwCleanAlpha');
+            if (lwCleanAlpha) {
+                lwCleanAlpha.addEventListener('input', function () {
+                    applyWidgetAlpha(this.value);
+                });
+            }
 
             const lwAlphaMenu = document.getElementById('lwAlphaMenu');
             if (lwAlphaMenu) {
                 lwAlphaMenu.addEventListener('input', function () {
-                    lwState.alpha = Math.min(1, Math.max(0.2, Number(this.value)));
-                    applyLyricsWidget();
-                    saveLyricsWidgetState();
+                    applyWidgetAlpha(this.value);
                 });
             }
 
