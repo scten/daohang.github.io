@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0527">
+    <meta name="app-version" content="20261026-0545">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -325,6 +325,41 @@
             .simple-mode-toggle { opacity: .7; transform: none; }
             body.simple-mode .simple-mode-toggle { opacity: .9; }
         }
+        /* --- 主页按钮透明度 ---
+           JS 只往 :root 写一个变量，样式表里每个按钮自己乘上去；
+           以后新增悬浮按钮，只要写 opacity: var(--home-btn-alpha, 1) 就自动跟着滑块走。 */
+        :root { --home-btn-alpha: 1; }
+        .menu-btn { opacity: var(--home-btn-alpha, 1); }
+        .lyrics-fab { opacity: var(--home-btn-alpha, 1); }
+        .simple-mode-toggle:hover,
+        .simple-mode-toggle:focus-visible { opacity: var(--home-btn-alpha, 1); }
+        @media (hover: none) {
+            .simple-mode-toggle { opacity: calc(var(--home-btn-alpha, 1) * .7); }
+            body.simple-mode .simple-mode-toggle { opacity: calc(var(--home-btn-alpha, 1) * .9); }
+        }
+
+        /* --- 自定义主题 --- */
+        .theme-dot-custom {
+            position: relative;
+            background: conic-gradient(from 210deg, var(--dot), var(--dot-strong), #fff7f5, var(--dot));
+        }
+        .theme-dot-custom::after {
+            content: '🎨';
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; line-height: 1;
+        }
+        .theme-custom {
+            margin-top: 10px;
+            padding: 4px 10px 10px;
+            border: 1px dashed rgba(var(--primary-rgb), .5);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .6);
+        }
+        .theme-custom[hidden] { display: none; }
+        .theme-custom .color-row { margin: 8px 0; }
+        .theme-custom .btn-row { margin-top: 6px; }
+
         /* --- 网格布局 --- */
         .nav-grid {
             display: grid;
@@ -387,7 +422,8 @@
             width: min(310px, 88vw);
             height: 100vh;
             height: 100dvh;
-            padding: 68px 16px 22px;
+            /* 顶部这 48px 原是给悬浮的 ☰ 让位，但菜单打开时它已经隐藏，收掉让内容靠上 */
+            padding: 20px 16px 22px;
             border-radius: 0 18px 18px 0;
             background: rgba(255, 255, 255, var(--menu-alpha, .92));
             box-shadow: 8px 0 28px rgba(70,45,45,.09);
@@ -1302,7 +1338,23 @@
         <section class="menu-section" data-panel="theme">
             <h4>🎨 主题</h4>
             <div class="theme-row" id="themeRow" role="radiogroup" aria-label="主题颜色"></div>
-            <p class="menu-hint" id="themeHint">马卡龙配色，选了会记住。</p>
+            <div class="theme-custom" id="themeCustomRow" hidden>
+                <div class="color-row">
+                    <label for="customPrimary">主色</label>
+                    <input type="color" id="customPrimary" value="#ffb7b2">
+                    <span id="customPrimaryValue">#ffb7b2</span>
+                </div>
+                <div class="color-row">
+                    <label for="customStrong">强调色</label>
+                    <input type="color" id="customStrong" value="#ff8c94">
+                    <span id="customStrongValue">#ff8c94</span>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="apply-btn" onclick="applyCustomTheme()">应用</button>
+                    <button type="button" class="ghost-btn" onclick="autoCustomStrong()">强调色自动配</button>
+                </div>
+            </div>
+            <p class="menu-hint" id="themeHint">马卡龙配色，选了会记住；最后一个 🎨 是自定义。</p>
         </section>
 
         <section class="menu-section" data-panel="background">
@@ -1318,16 +1370,6 @@
                 <span id="bgColorValue">#fdf6f0</span>
             </div>
 
-            <div class="range-row">
-                <label for="opacitySlider">背景透明度 <span id="opacityValue">80%</span></label>
-                <input type="range" id="opacitySlider" min="0" max="0.9" step="0.05" value="0.8">
-            </div>
-
-            <div class="range-row">
-                <label for="menuAlpha">菜单背景透明度 <span id="menuAlphaValue">92%</span></label>
-                <input type="range" id="menuAlpha" min="0.2" max="1" step="0.02" value="0.92">
-            </div>
-
             <div class="btn-row">
                 <button type="button" class="apply-btn" onclick="applyFileBackground()">应用背景</button>
                 <button type="button" class="ghost-btn" onclick="restoreRandomBackground()">恢复随机</button>
@@ -1340,6 +1382,30 @@
             <p class="menu-hint" id="bgPoolHint">自动识别：竖屏/手机加载 B 组竖图，横屏/桌面加载 A 组横图。</p>
             <p class="menu-hint" id="bgHint">不选图片也能直接应用底色。</p>
             <p class="menu-hint" id="bgCacheHint">背景会先显示一张，再悄悄把这组里的另外四张预缓存好。</p>
+        </section>
+
+        <section class="menu-section" data-panel="transparency">
+            <h4>🔍 透明度</h4>
+            <div class="range-row">
+                <label for="opacitySlider">背景图 <span id="opacityValue">80%</span></label>
+                <input type="range" id="opacitySlider" min="0" max="0.9" step="0.05" value="0.8">
+            </div>
+
+            <div class="range-row">
+                <label for="menuAlpha">菜单背景 <span id="menuAlphaValue">92%</span></label>
+                <input type="range" id="menuAlpha" min="0.2" max="1" step="0.02" value="0.92">
+            </div>
+
+            <div class="range-row">
+                <label for="homeBtnAlpha">主页按钮 <span id="homeBtnAlphaValue">100%</span></label>
+                <input type="range" id="homeBtnAlpha" min="0.2" max="1" step="0.05" value="1">
+            </div>
+
+            <div class="range-row">
+                <label for="lwAlphaMenu">歌词小窗 <span id="lwAlphaMenuValue">85%</span></label>
+                <input type="range" id="lwAlphaMenu" min="0.2" max="1" step="0.05" value="0.85">
+            </div>
+            <p class="menu-hint">全都记在这一个地方：背景拉到 0% 等于纯透明，会自动进简洁模式；歌词小窗和播放器里的那个滑块是同一个值。</p>
         </section>
 
         <section class="menu-section" data-panel="cards">
@@ -1483,7 +1549,7 @@
                         <span class="knob"></span>
                     </button>
                 </div>
-                <p class="menu-hint">隐藏的按钮可以随时在这里重新打开。</p>
+                <p class="menu-hint">这几个悬浮按钮的透明度在「🎨 个性化 → 🔍 透明度」里调；隐藏的按钮随时能在这里重新打开。</p>
             </div>
 
             <div class="btn-row">
@@ -1987,6 +2053,7 @@
         const uiPrefs = {
             menuAlpha: 0.92,
             bgOpacity: 0.8,
+            homeBtnAlpha: 1,
             showMusic: true,
             showSimple: true,
             autoHideInSimple: false,
@@ -2000,6 +2067,7 @@
                 if (!saved) return;
                 if (Number.isFinite(saved.menuAlpha)) uiPrefs.menuAlpha = Math.min(1, Math.max(0.2, saved.menuAlpha));
                 if (Number.isFinite(saved.bgOpacity)) uiPrefs.bgOpacity = Math.min(0.9, Math.max(0, saved.bgOpacity));
+                if (Number.isFinite(saved.homeBtnAlpha)) uiPrefs.homeBtnAlpha = Math.min(1, Math.max(0.2, saved.homeBtnAlpha));
                 ['showMusic', 'showSimple', 'autoHideInSimple', 'simpleMode', 'precache'].forEach(key => {
                     if (typeof saved[key] === 'boolean') uiPrefs[key] = saved[key];
                 });
@@ -2013,6 +2081,13 @@
         function applyUiPrefs() {
             const menu = document.getElementById('navMenu');
             if (menu) menu.style.setProperty('--menu-alpha', String(uiPrefs.menuAlpha));
+
+            // 主页按钮透明度：只写变量，剩下的交给 CSS
+            document.documentElement.style.setProperty('--home-btn-alpha', String(uiPrefs.homeBtnAlpha));
+            const homeAlpha = document.getElementById('homeBtnAlpha');
+            if (homeAlpha) homeAlpha.value = String(uiPrefs.homeBtnAlpha);
+            const homeAlphaValue = document.getElementById('homeBtnAlphaValue');
+            if (homeAlphaValue) homeAlphaValue.textContent = `${Math.round(uiPrefs.homeBtnAlpha * 100)}%`;
 
             const slider = document.getElementById('menuAlpha');
             if (slider) slider.value = String(uiPrefs.menuAlpha);
@@ -2069,6 +2144,22 @@
                 slider.addEventListener('input', function () {
                     uiPrefs.menuAlpha = Number(this.value);
                     applyUiPrefs();
+                    saveUiPrefs();
+                });
+            }
+            const homeAlphaSlider = document.getElementById('homeBtnAlpha');
+            if (homeAlphaSlider) {
+                const preview = () => {
+                    uiPrefs.homeBtnAlpha = Math.min(1, Math.max(0.2, Number(homeAlphaSlider.value)));
+                    applyUiPrefs();
+                };
+                homeAlphaSlider.addEventListener('input', () => {
+                    preview();
+                    const value = document.getElementById('homeBtnAlphaValue');
+                    if (value) value.textContent = `${Math.round(uiPrefs.homeBtnAlpha * 100)}%`;
+                });
+                homeAlphaSlider.addEventListener('change', () => {
+                    preview();
                     saveUiPrefs();
                 });
             }
@@ -2148,7 +2239,8 @@
             personalize.appendChild(personalizeTitle);
 
             Array.from(document.querySelectorAll('#navMenu > [data-panel], #navMenu > .menu-section')).forEach(section => {
-                if (section.dataset.panel === 'theme' || section.dataset.panel === 'background') {
+                if (section.dataset.panel === 'theme' || section.dataset.panel === 'background'
+                    || section.dataset.panel === 'transparency') {
                     personalize.appendChild(section);
                     section.hidden = false;
                 } else {
@@ -2297,6 +2389,147 @@
         ];
         let currentTheme = THEMES[0];
 
+        /** 自定义主题：只存主色和强调色，底色/文字反差按主色推出来 */
+        const THEME_CUSTOM_KEY = 'themeCustom';
+        const customTheme = { primary: '#ffb7b2', strong: '#ff8c94' };
+
+        function isHex6(value) {
+            return /^#[0-9a-fA-F]{6}$/.test(String(value || '').trim());
+        }
+
+        /** 接受 #abc / #aabbcc，别的一律退回 fallback */
+        function clampHex(value, fallback) {
+            const text = String(value || '').trim();
+            if (isHex6(text)) return text.toLowerCase();
+            if (/^#[0-9a-fA-F]{3}$/.test(text)) {
+                return ('#' + text.slice(1).split('').map(c => c + c).join('')).toLowerCase();
+            }
+            return fallback;
+        }
+
+        function parseHex(hex) {
+            const value = clampHex(hex, '#000000').slice(1);
+            return [0, 2, 4].map(i => parseInt(value.substr(i, 2), 16));
+        }
+
+        /** 把 hex 往 target 掺 ratio（0~1），用来算浅底色和深强调色 */
+        function mixHex(hex, target, ratio) {
+            const base = parseHex(hex);
+            const aim = parseHex(target);
+            const r = Math.min(1, Math.max(0, Number(ratio) || 0));
+            const out = base.map((v, i) => Math.round(v * (1 - r) + aim[i] * r));
+            return '#' + out.map(v => v.toString(16).padStart(2, '0')).join('');
+        }
+
+        /** 主色上该用白字还是深字 */
+        function contrastOn(hex) {
+            const parts = parseHex(hex);
+            const luma = 0.299 * parts[0] + 0.587 * parts[1] + 0.114 * parts[2];
+            return luma > 165 ? '#3d3d3d' : '#ffffff';
+        }
+
+        function buildCustomTheme() {
+            const primary = clampHex(customTheme.primary, '#ffb7b2');
+            return {
+                id: 'custom',
+                name: '自定义',
+                primary,
+                strong: clampHex(customTheme.strong, mixHex(primary, '#000000', 0.34)),
+                bg: mixHex(primary, '#ffffff', 0.9),
+                contrast: contrastOn(primary)
+            };
+        }
+
+        function hasCustomTheme() {
+            try { return Boolean(localStorage.getItem(THEME_CUSTOM_KEY)); } catch (error) { return false; }
+        }
+
+        function loadCustomTheme() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(THEME_CUSTOM_KEY) || 'null');
+                if (!saved || typeof saved !== 'object') return;
+                customTheme.primary = clampHex(saved.primary, customTheme.primary);
+                customTheme.strong = clampHex(saved.strong, customTheme.strong);
+            } catch (error) {}
+        }
+
+        function saveCustomTheme() {
+            try {
+                localStorage.setItem(THEME_CUSTOM_KEY, JSON.stringify({
+                    primary: customTheme.primary,
+                    strong: customTheme.strong
+                }));
+            } catch (error) {}
+        }
+
+        function paintCustomSwatch() {
+            const dot = document.querySelector('.theme-dot-custom');
+            if (!dot) return;
+            dot.style.setProperty('--dot', clampHex(customTheme.primary, '#ffb7b2'));
+            dot.style.setProperty('--dot-strong', clampHex(customTheme.strong, '#ff8c94'));
+        }
+
+        function syncCustomThemeInputs() {
+            const primary = clampHex(customTheme.primary, '#ffb7b2');
+            const strong = clampHex(customTheme.strong, '#ff8c94');
+            const primaryInput = document.getElementById('customPrimary');
+            const strongInput = document.getElementById('customStrong');
+            if (primaryInput) primaryInput.value = primary;
+            if (strongInput) strongInput.value = strong;
+            const primaryValue = document.getElementById('customPrimaryValue');
+            const strongValue = document.getElementById('customStrongValue');
+            if (primaryValue) primaryValue.textContent = primary;
+            if (strongValue) strongValue.textContent = strong;
+            paintCustomSwatch();
+        }
+
+        /** 拖色盘时只预览，不写盘；没选自定义主题就不动页面 */
+        function previewCustomTheme() {
+            syncCustomThemeInputs();
+            if (currentTheme && currentTheme.id === 'custom') setTheme('custom', false);
+        }
+
+        function applyCustomTheme() {
+            const primaryInput = document.getElementById('customPrimary');
+            const strongInput = document.getElementById('customStrong');
+            const nextPrimary = clampHex(primaryInput && primaryInput.value, customTheme.primary);
+            const nextStrong = clampHex(strongInput && strongInput.value,
+                mixHex(nextPrimary, '#000000', 0.34));
+            customTheme.primary = nextPrimary;
+            customTheme.strong = nextStrong;
+            saveCustomTheme();
+            setTheme('custom');
+            syncCustomThemeInputs();
+        }
+
+        function autoCustomStrong() {
+            const primaryInput = document.getElementById('customPrimary');
+            const base = clampHex(primaryInput && primaryInput.value, customTheme.primary);
+            customTheme.primary = base;
+            customTheme.strong = mixHex(base, '#000000', 0.34);
+            saveCustomTheme();
+            setTheme('custom');
+            syncCustomThemeInputs();
+        }
+
+        function initCustomThemeControls() {
+            const primaryInput = document.getElementById('customPrimary');
+            if (primaryInput) {
+                primaryInput.addEventListener('input', function () {
+                    customTheme.primary = clampHex(this.value, customTheme.primary);
+                    previewCustomTheme();
+                });
+            }
+            const strongInput = document.getElementById('customStrong');
+            if (strongInput) {
+                strongInput.addEventListener('input', function () {
+                    customTheme.strong = clampHex(this.value, customTheme.strong);
+                    previewCustomTheme();
+                });
+            }
+            paintCustomSwatch();
+        }
+
         function hexToRgb(hex) {
             const value = String(hex).replace('#', '');
             const full = value.length === 3 ? value.split('').map(c => c + c).join('') : value;
@@ -2320,10 +2553,28 @@
                 dot.addEventListener('click', () => setTheme(theme.id));
                 row.appendChild(dot);
             });
+
+            // 第七个圆点：自定义主题
+            const customDot = document.createElement('button');
+            customDot.type = 'button';
+            customDot.className = 'theme-dot theme-dot-custom';
+            customDot.dataset.theme = 'custom';
+            customDot.title = '自定义主题';
+            customDot.setAttribute('role', 'radio');
+            customDot.setAttribute('aria-label', '自定义主题');
+            customDot.addEventListener('click', () => setTheme('custom'));
+            row.appendChild(customDot);
+            paintCustomSwatch();
         }
 
         function setTheme(id, persist) {
-            const theme = THEMES.find(item => item.id === id) || THEMES[0];
+            // 第一次点「自定义」时从当前主题起步，别让用户从一片空白开始配
+            if (id === 'custom' && !hasCustomTheme()) {
+                customTheme.primary = currentTheme.primary;
+                customTheme.strong = currentTheme.strong;
+                saveCustomTheme();
+            }
+            const theme = id === 'custom' ? buildCustomTheme() : (THEMES.find(item => item.id === id) || THEMES[0]);
             currentTheme = theme;
             const root = document.documentElement.style;
             root.setProperty('--primary-color', theme.primary);
@@ -2346,8 +2597,17 @@
             document.querySelectorAll('.theme-dot').forEach(dot => {
                 dot.setAttribute('aria-checked', String(dot.dataset.theme === theme.id));
             });
+            // 自定义面板只在这一项被选中时展开，输入框同步成当前颜色
+            const customRow = document.getElementById('themeCustomRow');
+            if (customRow) customRow.hidden = theme.id !== 'custom';
+            if (theme.id === 'custom') syncCustomThemeInputs();
+
             const hint = document.getElementById('themeHint');
-            if (hint) hint.textContent = `当前：${theme.name}`;
+            if (hint) {
+                hint.textContent = theme.id === 'custom'
+                    ? `当前：自定义（主色 ${theme.primary} · 强调色 ${theme.strong}）`
+                    : `当前：${theme.name}`;
+            }
             applyOpacity(document.getElementById('opacitySlider').value);
             if (persist !== false) {
                 try { localStorage.setItem(THEME_KEY, theme.id); } catch (error) {}
@@ -2355,7 +2615,9 @@
         }
 
         function initTheme() {
+            loadCustomTheme();
             renderThemeSwatches();
+            initCustomThemeControls();
             let saved = null;
             try { saved = localStorage.getItem(THEME_KEY); } catch (error) {}
             setTheme(saved || 'sakura', false);
@@ -3399,6 +3661,11 @@
             widget.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
             widget.style.setProperty('--lw-alpha', String(lwState.alpha));
             document.getElementById('lwOpacity').value = String(lwState.alpha);
+            // 菜单里「个性化 → 透明度」的那个滑块与挂件内滑块同源
+            const lwMenuAlpha = document.getElementById('lwAlphaMenu');
+            if (lwMenuAlpha) lwMenuAlpha.value = String(lwState.alpha);
+            const lwMenuAlphaValue = document.getElementById('lwAlphaMenuValue');
+            if (lwMenuAlphaValue) lwMenuAlphaValue.textContent = `${Math.round(lwState.alpha * 100)}%`;
             document.getElementById('lwFont').value = LW_FONTS[lwState.font] ? lwState.font : 'system';
             const pin = document.getElementById('lwPin');
             pin.setAttribute('aria-pressed', String(lwState.pinned));
@@ -3605,6 +3872,15 @@
                 applyLyricsWidget();
                 saveLyricsWidgetState();
             });
+
+            const lwAlphaMenu = document.getElementById('lwAlphaMenu');
+            if (lwAlphaMenu) {
+                lwAlphaMenu.addEventListener('input', function () {
+                    lwState.alpha = Math.min(1, Math.max(0.2, Number(this.value)));
+                    applyLyricsWidget();
+                    saveLyricsWidgetState();
+                });
+            }
 
             document.getElementById('lwFont').addEventListener('change', function () {
                 lwState.font = LW_FONTS[this.value] ? this.value : 'system';
@@ -4544,7 +4820,7 @@
             updateCheckTimer = window.setInterval(() => checkForUpdate(true), UPDATE_CHECK_MS);
         }
 
-        /** 5. 背景透明度（已放进「个性化 → 背景」面板） **/
+        /** 5. 背景透明度（已放进「🎨 个性化 → 🔍 透明度」面板） **/
         const slider = document.getElementById('opacitySlider');
         const overlay = document.getElementById('overlay');
 
