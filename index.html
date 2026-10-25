@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-2057">
+    <meta name="app-version" content="20261026-0454">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -345,6 +345,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .nav-card:hover { transform: translateY(-8px) rotate(2deg); border: 2px solid var(--primary-color); }
+        /* 网格末尾的「＋ 添加网址」卡片：虚线框，一眼能看出是入口 */
+        .add-card-tile {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            background: rgba(255, 255, 255, .5);
+            border: 2px dashed rgba(var(--primary-rgb), .55);
+            color: var(--primary-strong);
+            font-family: inherit; cursor: pointer;
+        }
+        .add-card-tile:hover {
+            transform: translateY(-6px); rotate: 0deg;
+            border-color: var(--primary-color);
+            background: rgba(255, 255, 255, .85);
+        }
+        .add-card-tile .add-card-plus { font-size: 2rem; line-height: 1; font-weight: 300; }
+        .add-card-tile .add-card-text { font-size: .85rem; font-weight: 600; }
+        .add-card-tile .add-card-tip { font-size: .68rem; color: var(--text-sub); }
         .card-icon { font-size: 40px; margin-bottom: 15px; }
         .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; }
         .card-desc {
@@ -646,6 +662,8 @@
             touch-action: manipulation;
         }
         .ghost-btn:hover { background: rgba(var(--primary-rgb), 0.16); }
+        .ghost-btn.on { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+        .ghost-btn.on:hover { background: var(--primary-color); opacity: .92; }
         .ghost-btn:active { transform: scale(0.97); }
         .music-player .ghost-btn { width: 100%; margin-top: 8px; flex: none; }
 
@@ -1114,6 +1132,15 @@
         }
         .hidden-chip:hover { background: rgba(var(--primary-rgb), .14); }
 
+        /* 批量添加网址的输入框 */
+        #batchUrls {
+            width: 100%; box-sizing: border-box; margin-bottom: 6px; padding: 8px 10px;
+            border: 1px solid #eee; border-radius: 9px; background: #fff;
+            color: var(--text-main); font-size: .78rem; font-family: inherit;
+            line-height: 1.5; resize: vertical; min-height: 84px;
+        }
+        #batchUrls:focus { outline: none; border-color: var(--primary-color); }
+
         @media (max-width: 768px) {
             .nav-grid {
                 grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1208,7 +1235,14 @@
                 <button type="button" class="apply-btn" onclick="applyFileBackground()">应用背景</button>
                 <button type="button" class="ghost-btn" onclick="restoreRandomBackground()">恢复随机</button>
             </div>
+            <div class="btn-row" style="margin-top:8px;">
+                <button type="button" class="ghost-btn" id="bgPoolAutoBtn" onclick="setBgPoolMode('auto')">自动识别</button>
+                <button type="button" class="ghost-btn" id="bgPoolABtn" onclick="setBgPoolMode('a')">横图 A</button>
+                <button type="button" class="ghost-btn" id="bgPoolBBtn" onclick="setBgPoolMode('b')">竖图 B</button>
+            </div>
+            <p class="menu-hint" id="bgPoolHint">自动识别：竖屏/手机加载 B 组竖图，横屏/桌面加载 A 组横图。</p>
             <p class="menu-hint" id="bgHint">不选图片也能直接应用底色。</p>
+            <p class="menu-hint" id="bgCacheHint">背景会先显示一张，再悄悄把这组里的另外四张预缓存好。</p>
         </section>
 
         <section class="menu-section" data-panel="cards">
@@ -1220,9 +1254,10 @@
             <div class="card-form" id="cardForm" hidden>
                 <strong id="cardFormTitle" style="font-size:.8rem; color:var(--primary-strong);">添加卡片</strong>
                 <input type="text" id="cardTitle" placeholder="名称，例如 豆瓣" maxlength="20">
-                <input type="text" id="cardUrl" placeholder="网址，例如 https://www.douban.com/" maxlength="300">
+                <input type="text" id="cardUrl" placeholder="粘贴网址，名称和图标会自动补上" maxlength="300"
+                       onblur="autoFillCardMeta()" onchange="autoFillCardMeta()">
                 <input type="text" id="cardIcon" placeholder="图标 emoji，例如 🌿" maxlength="8">
-                <input type="text" id="cardIconImage" placeholder="图标图片 URL（可选，方形图标）" maxlength="500">
+                <input type="text" id="cardIconImage" placeholder="图标图片 URL（留空则用网站自己的 favicon）" maxlength="500">
                 <input type="text" id="cardDesc" placeholder="一句话描述（可选）" maxlength="30">
                 <div class="btn-row">
                     <button type="button" class="apply-btn" onclick="saveCardForm()">保存</button>
@@ -1232,6 +1267,30 @@
             </div>
             <div class="hidden-list" id="hiddenCards" hidden></div>
             <p class="menu-hint" id="cardHint">编辑模式里可拖动排序、换尺寸、隐藏卡片。</p>
+
+            <button type="button" class="collapse-head" id="batchPanelToggle" aria-expanded="false"
+                    onclick="toggleBatchPanel()">
+                <span>批量添加网址</span>
+                <span class="collapse-caret" aria-hidden="true">▸</span>
+            </button>
+            <div class="collapse-body" id="batchPanel" hidden>
+                <textarea id="batchUrls" rows="5" spellcheck="false"
+                          placeholder="一行一个网址，也可以写成「名称 网址」：&#10;https://example.com&#10;豆瓣 https://www.douban.com"></textarea>
+                <div class="btn-row">
+                    <button type="button" class="apply-btn" onclick="addCardsFromText()">批量添加</button>
+                    <button type="button" class="ghost-btn" onclick="clearBatchText()">清空</button>
+                </div>
+                <p class="menu-hint" id="batchHint">同网址会自动跳过。</p>
+            </div>
+
+            <div class="btn-row">
+                <button type="button" class="ghost-btn" onclick="exportCards()">⬇ 导出备份</button>
+                <button type="button" class="ghost-btn" onclick="document.getElementById('importCardsFile').click()">⬆ 导入备份</button>
+            </div>
+            <input type="file" id="importCardsFile" accept="application/json,.json" style="display:none"
+                   onchange="importCards(this)">
+            <p class="menu-hint">备份是 JSON 文件：换设备、清理缓存前先导出一份，之后可以导回来（同网址会跳过）。</p>
+
             <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="resetCards()">恢复默认卡片</button>
         </section>
 
@@ -1329,9 +1388,23 @@
             </div>
 
             <div class="btn-row">
-                <button type="button" class="ghost-btn" id="clearCacheBtn" onclick="clearSiteCache()">🧹 清理缓存</button>
+                <button type="button" class="ghost-btn" id="clearWebCacheBtn" onclick="clearWebCache()">🌐 清理网页缓存</button>
+                <button type="button" class="ghost-btn" id="clearUserCacheBtn" onclick="clearUserCache()">🗑 清理用户数据</button>
             </div>
-            <p class="menu-hint">清掉本地保存的主题、背景、卡片和偏好后自动刷新；样式或背景没跟着更新时用。</p>
+            <p class="menu-hint">
+                <strong>网页缓存</strong>：浏览器和 CDN 存下的页面、样式、脚本，清完重新下载，个人设置和卡片都保留；<br>
+                <strong>用户数据</strong>：本机保存的主题、背景、卡片、偏好，清完恢复默认（网页缓存不受影响）。
+            </p>
+
+            <div class="switch-row">
+                <span>网页预缓存</span>
+                <button type="button" class="switch-btn" id="precacheBtn" role="switch" aria-checked="true"
+                        aria-label="开启网页预缓存" onclick="togglePrecache()">
+                    <span class="knob"></span>
+                </button>
+            </div>
+            <p class="menu-hint" id="precacheHint">开启后把页面外壳、图标和宠物素材提前存到本机，第二次打开更快，断网也能看。</p>
+            <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="precacheNow()">📦 立即预缓存</button>
 
             <p class="menu-hint">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
 
@@ -1363,7 +1436,7 @@
             <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动；本地没有 mascot/ 时会自动从 CDN 加载（约 3MB）。</p>
 
             <button type="button" class="ghost-btn" style="width:100%; margin-top:12px;" onclick="forceUpdate()">🔄 强制更新</button>
-            <p class="menu-hint">连本地缓存一起清掉，再绕过浏览器和 CDN 缓存拉取最新版本。</p>
+            <p class="menu-hint">清掉网页缓存后绕过浏览器和 CDN 缓存拉最新版本，个人数据不动。</p>
         </section>
     </nav>
 
@@ -1511,24 +1584,184 @@
             if (opacitySlider) applyOpacity(opacitySlider.value);
         }
 
+        /* ---------------- 打开时识别：该加载 A 组横图还是 B 组竖图 ---------------- */
+        const BG_POOL_KEY = 'bgPoolMode';       // auto | a | b
+        let bgPoolMode = 'auto';
+        let backgroundIsRandom = false;         // 当前背景是不是"随机背景"（自定义背景时不自动换）
+        let lastPoolKey = '';
+        let bgPoolTimer = 0;
+
+        function loadBgPoolMode() {
+            let saved = '';
+            try { saved = localStorage.getItem(BG_POOL_KEY) || ''; } catch (error) {}
+            bgPoolMode = (saved === 'a' || saved === 'b') ? saved : 'auto';
+        }
+
+        /** 设备特征：竖屏 / 触摸 / 手机 UA / 窄屏 */
+        function detectProfile() {
+            const width = window.innerWidth || document.documentElement.clientWidth || 0;
+            const height = window.innerHeight || document.documentElement.clientHeight || 0;
+            const ua = navigator.userAgent || '';
+            return {
+                width,
+                height,
+                portrait: height > width,
+                touch: (navigator.maxTouchPoints || 0) > 0 || ('ontouchstart' in window),
+                uaMobile: /Android|iPhone|iPad|iPod|Mobile|HarmonyOS|MiuiBrowser|HuaweiBrowser|MicroMessenger/i.test(ua),
+                narrow: Math.min(width, height) <= 640
+            };
+        }
+
+        /** 竖屏/手机 → B 组竖图；横屏/桌面 → A 组横图 */
+        function detectBackgroundPool() {
+            if (bgPoolMode === 'a') return { key: 'a', label: '横图 A', reason: '你在设置里指定了 A 组' };
+            if (bgPoolMode === 'b') return { key: 'b', label: '竖图 B', reason: '你在设置里指定了 B 组' };
+            const profile = detectProfile();
+            let score = profile.portrait ? 2 : -2;          // 竖屏优先竖图，横屏优先横图
+            if (profile.touch) score += 1;
+            if (profile.portrait && profile.narrow) score += 1;
+            if (profile.portrait && profile.uaMobile) score += 1;
+            const key = score > 0 ? 'b' : 'a';
+            // 说明里只列真正支持这个判断的特征，读起来不至于拧着
+            const traits = [];
+            if (key === 'b') {
+                traits.push('竖屏');
+                if (profile.touch) traits.push('触摸屏');
+                if (profile.narrow) traits.push('窄屏');
+                if (profile.uaMobile) traits.push('手机 UA');
+            } else {
+                traits.push('横屏');
+                if (!profile.narrow) traits.push('宽屏');
+            }
+            return { key, label: key === 'b' ? '竖图 B' : '横图 A', reason: `按 ${traits.join(' + ')} 识别` };
+        }
+
+        /** 背景图组：按识别结果挑，某一组为空时退回另一组 */
+        function backgroundPool() {
+            const decision = detectBackgroundPool();
+            const useB = decision.key === 'b' && folderB.length > 0;
+            const pool = useB ? folderB : (folderA.length ? folderA : folderB);
+            lastPoolKey = decision.key;
+            renderBgPoolHint(decision, pool.length);
+            return pool;
+        }
+
+        function renderBgPoolHint(decision, count) {
+            const hint = document.getElementById('bgPoolHint');
+            if (hint) {
+                hint.textContent = `当前加载 ${decision.label}${count ? `（${count} 张）` : ''} · ${decision.reason}`;
+            }
+            applyBgPoolButtons();
+        }
+
+        function applyBgPoolButtons() {
+            const map = { bgPoolAutoBtn: 'auto', bgPoolABtn: 'a', bgPoolBBtn: 'b' };
+            Object.entries(map).forEach(([id, mode]) => {
+                const button = document.getElementById(id);
+                if (!button) return;
+                const active = bgPoolMode === mode;
+                button.classList.toggle('on', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+        }
+
+        function setBgPoolMode(mode) {
+            bgPoolMode = (mode === 'a' || mode === 'b') ? mode : 'auto';
+            try { localStorage.setItem(BG_POOL_KEY, bgPoolMode); } catch (error) {}
+            applyBgPoolButtons();
+            if (backgroundIsRandom) setRandomBackground();
+            else backgroundPool();
+        }
+
+        /** 转屏或改窗口大小后重新识别：组变了才换背景，不打扰自定义背景 */
+        function schedulePoolRefresh() {
+            if (bgPoolTimer) window.clearTimeout(bgPoolTimer);
+            bgPoolTimer = window.setTimeout(() => {
+                const decision = detectBackgroundPool();
+                const pool = decision.key === 'b' && folderB.length ? folderB : folderA;
+                renderBgPoolHint(decision, pool.length);
+                if (decision.key === lastPoolKey) return;
+                lastPoolKey = decision.key;
+                if (backgroundIsRandom) setRandomBackground();
+            }, 400);
+        }
+
+        function initBackgroundPool() {
+            loadBgPoolMode();
+            applyBgPoolButtons();
+            window.addEventListener('resize', schedulePoolRefresh);
+            window.addEventListener('orientationchange', schedulePoolRefresh);
+        }
+
         function setRandomBackground() {
-            const isMobile = window.innerWidth < 768;
-            const preferred = isMobile ? folderB : folderA;
-            const sourceFolder = preferred.length ? preferred : folderA;
+            const sourceFolder = backgroundPool();
             if (!sourceFolder.length) return;
             hideBackgroundVideo();
             setPageBaseColor(null);
             const selectedImg = sourceFolder[Math.floor(Math.random() * sourceFolder.length)];
             document.body.style.backgroundImage = `url('${selectedImg}')`;
+            backgroundIsRandom = true;
+            // 先让这一张显示出来，剩下的等页面空下来再补
+            scheduleBackgroundPrefetch(selectedImg);
+        }
+
+        /* ---------------- 背景预缓存：先显示一张，再预取四张 ---------------- */
+        const BG_PREFETCH_AHEAD = 4;
+        let bgPrefetchTimer = 0;
+        let bgPrefetchBusy = false;
+
+        function setBgCacheHint(text) {
+            const hint = document.getElementById('bgCacheHint');
+            if (hint) hint.textContent = text;
+        }
+
+        function scheduleBackgroundPrefetch(shown) {
+            if (bgPrefetchTimer) window.clearTimeout(bgPrefetchTimer);
+            bgPrefetchTimer = window.setTimeout(() => prefetchBackgrounds(shown), 2500);
+        }
+
+        function prefetchBackgrounds(shown) {
+            if (typeof uiPrefs !== 'undefined' && !uiPrefs.precache) return;
+            if (bgPrefetchBusy) return;
+            const pool = backgroundPool();
+            if (!pool.length) return;
+            const others = pool.filter(item => item !== shown);
+            for (let i = others.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [others[i], others[j]] = [others[j], others[i]];
+            }
+            // 当前这张也一起交给 SW 存进来（首次访问时页面比 SW 先跑，它没被拦到）
+            const targets = [shown, ...others.slice(0, BG_PREFETCH_AHEAD)].filter(Boolean);
+            if (!targets.length) return;
+            const worker = (typeof precacheWorker === 'function') ? precacheWorker() : null;
+            if (worker) {
+                try {
+                    bgPrefetchBusy = true;
+                    worker.postMessage({ type: 'WARM_BG', urls: targets });
+                    setBgCacheHint(`正在后台预缓存背景（当前这张 + ${targets.length - 1} 张）…`);
+                    return;
+                } catch (error) {
+                    bgPrefetchBusy = false;
+                }
+            }
+            // 没有 Service Worker 时退回普通预加载，至少进浏览器缓存
+            targets.forEach(src => {
+                const img = new Image();
+                img.decoding = 'async';
+                img.src = src;
+            });
+            setBgCacheHint(`已在后台预取 ${targets.length} 张背景（浏览器缓存）。`);
         }
 
         function applySolidBackground(color) {
+            backgroundIsRandom = false;
             hideBackgroundVideo();
             document.body.style.backgroundImage = 'none';
             setPageBaseColor(color);
         }
 
         function applyCustomBackground(source, color, isVideo) {
+            backgroundIsRandom = false;
             setPageBaseColor(color);
             const video = document.getElementById('bg-video');
             if (isVideo) {
@@ -1633,7 +1866,8 @@
             showMusic: true,
             showSimple: true,
             autoHideInSimple: false,
-            simpleMode: false
+            simpleMode: false,
+            precache: true
         };
 
         function loadUiPrefs() {
@@ -1642,7 +1876,7 @@
                 if (!saved) return;
                 if (Number.isFinite(saved.menuAlpha)) uiPrefs.menuAlpha = Math.min(1, Math.max(0.2, saved.menuAlpha));
                 if (Number.isFinite(saved.bgOpacity)) uiPrefs.bgOpacity = Math.min(0.9, Math.max(0, saved.bgOpacity));
-                ['showMusic', 'showSimple', 'autoHideInSimple', 'simpleMode'].forEach(key => {
+                ['showMusic', 'showSimple', 'autoHideInSimple', 'simpleMode', 'precache'].forEach(key => {
                     if (typeof saved[key] === 'boolean') uiPrefs[key] = saved[key];
                 });
             } catch (error) {}
@@ -1677,7 +1911,8 @@
             const states = {
                 showMusicBtn: uiPrefs.showMusic,
                 showSimpleBtn: uiPrefs.showSimple,
-                autoHideBtn: uiPrefs.autoHideInSimple
+                autoHideBtn: uiPrefs.autoHideInSimple,
+                precacheBtn: uiPrefs.precache
             };
             Object.entries(states).forEach(([id, checked]) => {
                 const button = document.getElementById(id);
@@ -2100,6 +2335,13 @@
                 icon.src = card.iconImage;
                 icon.alt = '';
                 icon.loading = 'lazy';
+                // 自动抓的 favicon 可能拿不到（有的站点没有 /favicon.ico），退回 emoji
+                icon.addEventListener('error', () => {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'card-icon';
+                    fallback.textContent = card.icon || '🔗';
+                    if (icon.parentNode) icon.parentNode.replaceChild(fallback, icon);
+                });
             } else {
                 icon = document.createElement('div');
                 icon.className = 'card-icon';
@@ -2124,8 +2366,35 @@
             grid.classList.toggle('no-anim', !animate);
             grid.innerHTML = '';
             cards.filter(card => !card.hidden).forEach(card => grid.appendChild(buildCard(card)));
+            grid.appendChild(buildAddCardTile());
             grid.dataset.rendered = '1';
             renderHiddenCards();
+        }
+
+        /** 网格最后的「＋ 添加网址」卡片：直接打开添加表单 */
+        function buildAddCardTile() {
+            const tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'nav-card add-card-tile';
+            tile.id = 'addCardTile';
+            tile.title = '添加一个自定义网址卡片';
+            tile.setAttribute('aria-label', '添加网址卡片');
+            const plus = document.createElement('span');
+            plus.className = 'add-card-plus';
+            plus.textContent = '＋';
+            const text = document.createElement('span');
+            text.className = 'add-card-text';
+            text.textContent = '添加网址';
+            const tip = document.createElement('span');
+            tip.className = 'add-card-tip';
+            tip.textContent = '名称和图标自动补';
+            tile.append(plus, text, tip);
+            tile.addEventListener('click', (event) => {
+                // 阻止冒泡：否则"点到菜单外就收起"的逻辑会在打开侧栏的同一拍把它关掉
+                event.stopPropagation();
+                openCardForm();
+            });
+            return tile;
         }
 
         function renderHiddenCards() {
@@ -2205,6 +2474,11 @@
                 const target = document.elementFromPoint(e.clientX, e.clientY);
                 const targetCard = target && target.closest ? target.closest('.nav-card') : null;
                 if (targetCard && targetCard !== cardEl && grid.contains(targetCard)) {
+                    // 拖到「＋ 添加网址」卡片上：排到最后一张真卡片的位置，别插到它后面
+                    if (targetCard.id === 'addCardTile') {
+                        grid.insertBefore(cardEl, targetCard);
+                        return;
+                    }
                     const rect = targetCard.getBoundingClientRect();
                     const insertAfter = e.clientY > rect.top + rect.height / 2;
                     grid.insertBefore(cardEl, insertAfter ? targetCard.nextSibling : targetCard);
@@ -2239,6 +2513,46 @@
             return /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
         }
 
+        /** 从网址里取主机名（去掉 www.） */
+        function hostOf(url) {
+            try {
+                return new URL(normalizeCardUrl(url)).hostname.replace(/^www\./i, '').toLowerCase();
+            } catch (error) {
+                return '';
+            }
+        }
+
+        /** 由网址猜一个名称：取域名第一段并首字母大写 */
+        function guessTitleFromUrl(url) {
+            const host = hostOf(url);
+            if (!host) return '';
+            const label = host.split('.')[0] || host;
+            return label.charAt(0).toUpperCase() + label.slice(1);
+        }
+
+        /** 由网址猜图标：优先用站点自己的 favicon.ico，加载失败会自动退回 emoji */
+        function guessIconFromUrl(url) {
+            const host = hostOf(url);
+            return host ? `https://${host}/favicon.ico` : '';
+        }
+
+        /** 网址栏填好后自动补名称和图标（用户已经填过的字段不动） */
+        function autoFillCardMeta() {
+            const urlInput = document.getElementById('cardUrl');
+            if (!urlInput) return;
+            const raw = String(urlInput.value || '').trim();
+            if (!raw) return;
+            const url = normalizeCardUrl(raw);
+            if (!/^https?:\/\/[^\s/]+\.[^\s/]+/i.test(url)) return;
+            const titleInput = document.getElementById('cardTitle');
+            if (titleInput && !titleInput.value.trim()) titleInput.value = guessTitleFromUrl(url);
+            const iconInput = document.getElementById('cardIcon');
+            const iconImageInput = document.getElementById('cardIconImage');
+            if (iconImageInput && !iconImageInput.value.trim() && !(iconInput && iconInput.value.trim())) {
+                iconImageInput.value = guessIconFromUrl(url);
+            }
+        }
+
         function openCardForm(id) {
             editingCardId = id || null;
             const menu = document.getElementById('navMenu');
@@ -2267,10 +2581,15 @@
         }
 
         function saveCardForm() {
-            const title = document.getElementById('cardTitle').value.trim();
             const url = normalizeCardUrl(document.getElementById('cardUrl').value);
-            const icon = document.getElementById('cardIcon').value.trim() || '🔗';
-            const iconImage = normalizeCardIconUrl(document.getElementById('cardIconImage').value);
+            // 名称没填就按网址自动补一个
+            let title = document.getElementById('cardTitle').value.trim();
+            if (!title && url) title = guessTitleFromUrl(url);
+            const iconTyped = document.getElementById('cardIcon').value.trim();
+            const icon = iconTyped || '🔗';
+            // 新卡片没指定图标图时，自动用站点自己的 favicon（加载失败会退回 emoji）
+            let iconImage = normalizeCardIconUrl(document.getElementById('cardIconImage').value);
+            if (!iconImage && !iconTyped && !editingCardId) iconImage = guessIconFromUrl(url);
             const desc = document.getElementById('cardDesc').value.trim();
             if (!title || !url) {
                 setCardHint('名称和网址都要填哦。');
@@ -2309,6 +2628,152 @@
             renderCards();
             closeCardForm();
             setCardHint('已恢复默认卡片。');
+        }
+
+        /** 4.6.1 批量添加网址 / 导入导出备份 **/
+        function setBatchHint(text) {
+            const hint = document.getElementById('batchHint');
+            if (hint) hint.textContent = text;
+        }
+
+        function toggleBatchPanel() {
+            const button = document.getElementById('batchPanelToggle');
+            const panel = document.getElementById('batchPanel');
+            if (!button || !panel) return;
+            const open = panel.hidden;
+            panel.hidden = !open;
+            button.setAttribute('aria-expanded', String(open));
+            if (open) {
+                const box = document.getElementById('batchUrls');
+                if (box) box.focus();
+            }
+        }
+
+        function clearBatchText() {
+            const box = document.getElementById('batchUrls');
+            if (box) box.value = '';
+            setBatchHint('同网址会自动跳过。');
+        }
+
+        /** 一行文字 → 一张卡片：认「网址」「名称 网址」「名称,网址」「名称 | 网址」 */
+        function parseCardLine(line) {
+            const text = String(line || '').trim();
+            if (!text || /^#/.test(text)) return null;
+            const match = text.match(/(https?:\/\/[^\s,，|]+|(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s,，|]*)?)/i);
+            if (!match) return null;
+            const url = normalizeCardUrl(match[1]);
+            if (!/^https?:\/\/[^\s/]+\.[^\s/]+/i.test(url)) return null;
+            const name = text.replace(match[1], '').replace(/[,，|]+/g, ' ').trim();
+            return { title: name || guessTitleFromUrl(url), url };
+        }
+
+        function pushCard(entry) {
+            cards.push({
+                id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+                title: entry.title,
+                url: entry.url,
+                icon: entry.icon || '🔗',
+                iconImage: entry.iconImage !== undefined ? entry.iconImage : guessIconFromUrl(entry.url),
+                desc: entry.desc || '',
+                size: CARD_SIZES.includes(entry.size) ? entry.size : 'sm',
+                hidden: Boolean(entry.hidden)
+            });
+        }
+
+        function hasSameUrl(url) {
+            const key = String(url || '').replace(/\/+$/, '').toLowerCase();
+            return cards.some(card => String(card.url || '').replace(/\/+$/, '').toLowerCase() === key);
+        }
+
+        function addCardsFromText() {
+            const box = document.getElementById('batchUrls');
+            if (!box) return;
+            const lines = String(box.value || '').split(/\r?\n/);
+            const added = [];
+            let skipped = 0;
+            lines.forEach(line => {
+                const parsed = parseCardLine(line);
+                if (!parsed) return;
+                if (hasSameUrl(parsed.url)) { skipped += 1; return; }
+                if (added.length >= 60) return;
+                pushCard(parsed);
+                added.push(parsed.title);
+            });
+            if (!added.length) {
+                setBatchHint(skipped
+                    ? `这些网址都已经在列表里了（跳过 ${skipped} 个）。`
+                    : '没认出网址：一行一个，例如 https://example.com，或「豆瓣 https://www.douban.com」。');
+                return;
+            }
+            saveCards();
+            renderCards();
+            box.value = '';
+            setBatchHint(`已添加 ${added.length} 个${skipped ? `，跳过重复 ${skipped} 个` : ''}：`
+                + added.slice(0, 5).join('、') + (added.length > 5 ? '…' : ''));
+        }
+
+        function exportCards() {
+            try {
+                const payload = {
+                    app: 'mylinks-nav',
+                    version: APP_VERSION,
+                    exportedAt: new Date().toISOString(),
+                    cards
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `nav-cards-${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                setCardHint(`已导出 ${cards.length} 张卡片。`);
+            } catch (error) {
+                setCardHint('导出失败，请重试。');
+            }
+        }
+
+        function importCards(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                input.value = '';
+                let list = null;
+                try {
+                    const parsed = JSON.parse(String(reader.result || ''));
+                    list = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.cards) ? parsed.cards : null);
+                } catch (error) {
+                    list = null;
+                }
+                if (!list) { setCardHint('这个文件不是卡片备份。'); return; }
+                const incoming = list
+                    .filter(item => item && item.title && item.url)
+                    .map(item => ({
+                        title: String(item.title).slice(0, 20),
+                        url: normalizeCardUrl(item.url),
+                        icon: String(item.icon || '🔗'),
+                        iconImage: String(item.iconImage || '') || guessIconFromUrl(item.url),
+                        desc: String(item.desc || '').slice(0, 30),
+                        size: item.size,
+                        hidden: Boolean(item.hidden)
+                    }))
+                    .filter(item => /^https?:\/\/[^\s/]+\.[^\s/]+/i.test(item.url));
+                let added = 0, skipped = 0;
+                incoming.forEach(entry => {
+                    if (hasSameUrl(entry.url)) { skipped += 1; return; }
+                    pushCard(entry);
+                    added += 1;
+                });
+                if (added) { saveCards(); renderCards(); }
+                setCardHint(added
+                    ? `导入完成：新增 ${added} 张${skipped ? `，跳过重复 ${skipped} 张` : ''}。`
+                    : (skipped ? `备份里的 ${skipped} 张卡片都已经有了。` : '备份里没有可用的卡片。'));
+            };
+            reader.onerror = () => setCardHint('读取文件失败。');
+            reader.readAsText(file);
         }
 
         function initCards() {
@@ -3092,10 +3557,8 @@
             location.replace(bustUrl('reload'));
         }
 
-        /** 真正干活的清缓存：本地存储 + CacheStorage + Service Worker */
-        async function purgeLocalCache() {
-            try { localStorage.clear(); } catch (error) {}
-            try { sessionStorage.clear(); } catch (error) {}
+        /** 网页缓存：浏览器/CDN 缓存下来的页面、样式、脚本（CacheStorage + Service Worker） */
+        async function purgeWebCache() {
             try {
                 if (window.caches && typeof caches.keys === 'function') {
                     const names = await caches.keys();
@@ -3110,32 +3573,233 @@
             } catch (error) {}
         }
 
-        /** 清理缓存：本地存的设置全部恢复默认，再硬刷新一次，绕开浏览器缓存拿到最新页面 */
-        async function clearSiteCache() {
+        /** 用户缓存：存在本机上的个人数据（主题、背景、卡片、偏好…） */
+        function purgeUserCache() {
+            try { localStorage.clear(); } catch (error) {}
+            try { sessionStorage.clear(); } catch (error) {}
+        }
+
+        /** 只清网页缓存：个人设置和卡片都保留，清完自动刷新拉最新页面 */
+        async function clearWebCache() {
             const ok = window.confirm(
-                '清理缓存会把这些本地数据恢复成默认：\n'
-                + '· 主题颜色与背景（底色、自定义图片）\n'
-                + '· 透明度、简洁模式、主页按钮等界面偏好\n'
-                + '· 自定义卡片与隐藏列表\n'
-                + '· 歌词小窗、桌面宠物、音乐选择\n\n'
-                + '清理完页面会自动刷新。确定继续吗？'
+                '清理网页缓存只会删掉浏览器和 CDN 缓存的页面、样式、脚本，\n'
+                + '主题、背景、卡片、歌词、桌面宠物这些个人数据都会保留。\n\n'
+                + '清理完会自动刷新页面。确定继续吗？'
             );
             if (!ok) return;
-            await purgeLocalCache();
+            await purgeWebCache();
             hardReload();
         }
 
-        /** 强制更新：先连本地缓存一起清干净，再绕开浏览器/CDN 缓存拉最新版本 */
+        /** 只清用户数据：恢复默认设置，网页缓存一点都不动 */
+        async function clearUserCache() {
+            const ok = window.confirm(
+                '清理用户数据会把这些本地保存的内容恢复成默认：\n'
+                + '· 主题颜色与背景（底色、自定义图片）\n'
+                + '· 透明度、简洁模式、主页按钮等界面偏好\n'
+                + '· 自定义卡片与隐藏列表（建议先用「导出备份」存一份）\n'
+                + '· 歌词小窗、桌面宠物、音乐选择\n\n'
+                + '网页缓存不会动。清理完页面会自动刷新。确定继续吗？'
+            );
+            if (!ok) return;
+            purgeUserCache();
+            hardReload();
+        }
+
+        /** 强制更新：清网页缓存 + 绕过浏览器/CDN 缓存拉最新版本，个人数据保留 */
         async function forceUpdate() {
             const ok = window.confirm(
-                '强制更新会先强制清理缓存，再绕开浏览器缓存重新拉取最新版本。\n\n'
-                + '注意：主题、背景、透明度等界面偏好，自定义卡片与隐藏列表，\n'
-                + '歌词小窗、桌面宠物、音乐选择这些本地数据都会恢复默认。\n\n'
+                '强制更新会先清掉网页缓存，再绕过浏览器和 CDN 缓存重新拉取最新版本。\n\n'
+                + '主题、背景、卡片、歌词、桌面宠物这些个人数据都会保留。\n\n'
                 + '确定继续吗？'
             );
             if (!ok) return;
-            await purgeLocalCache();
+            await purgeWebCache();
             hardReload();
+        }
+
+        /** 4.10 网页预缓存：Service Worker 把页面外壳、图标、宠物素材提前存到本机 **/
+        const PRECACHE_WARM_KEY = 'precacheWarmVersion';
+        // 首屏必需的小文件；注册好之后主动补一遍，避免"刚清过缓存又立刻打开"时安装阶段被跳过
+        const PRECACHE_CORE_URLS = [
+            'index.html', 'version.json', 'C/favicon.ico', 'C/favicon.svg',
+            'C/apple-touch-icon.png', 'mascot/index.js', 'mascot/chunks/MascotEngine-BegMTn5U.js'
+        ];
+        let precacheRegistration = null;
+        let precacheBusy = false;
+
+        function precacheSupported() {
+            return location.protocol !== 'file:' && 'serviceWorker' in navigator;
+        }
+
+        function setPrecacheHint(text) {
+            const hint = document.getElementById('precacheHint');
+            if (hint) hint.textContent = text;
+        }
+
+        function formatPrecacheBytes(bytes) {
+            const value = Number(bytes) || 0;
+            if (value >= 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
+            if (value >= 1024) return `${Math.round(value / 1024)} KB`;
+            return `${value} B`;
+        }
+
+        function precacheWorker() {
+            if (navigator.serviceWorker && navigator.serviceWorker.controller) return navigator.serviceWorker.controller;
+            if (!precacheRegistration) return null;
+            return precacheRegistration.active || precacheRegistration.waiting || precacheRegistration.installing || null;
+        }
+
+        function requestPrecacheStatus() {
+            const worker = precacheWorker();
+            if (!worker) return;
+            try { worker.postMessage({ type: 'STATUS' }); } catch (error) {}
+        }
+
+        function onPrecacheMessage(event) {
+            const data = event.data || {};
+            if (data.type === 'STATUS') {
+                const status = data.status || {};
+                precacheBusy = false;
+                setPrecacheHint(`网页预缓存已就绪：${status.count || 0} 个文件`
+                    + `${status.bytes ? ` · ${formatPrecacheBytes(status.bytes)}` : ''}。`
+                    + '清「网页缓存」或换新版之后会自己重建。');
+                if (!bgPrefetchBusy) {
+                    setBgCacheHint(`背景缓存：本机已存 ${status.bgCount || 0} 张`
+                        + `${status.bgBytes ? ` · ${formatPrecacheBytes(status.bgBytes)}` : ''}。`
+                        + '打开时先显示一张，随后再补四张。');
+                }
+                return;
+            }
+            if (data.type === 'PROGRESS') {
+                precacheBusy = true;
+                setPrecacheHint(`正在预缓存：${data.done}/${data.total} 个文件`
+                    + `${data.bytes ? ` · ${formatPrecacheBytes(data.bytes)}` : ''}`);
+                return;
+            }
+            if (data.type === 'DONE') {
+                precacheBusy = false;
+                setPrecacheHint(`预缓存完成：这轮新存 ${data.added} 个，共 ${data.total} 个`
+                    + `${data.bytes ? ` · ${formatPrecacheBytes(data.bytes)}` : ''}。`);
+                requestPrecacheStatus();
+                return;
+            }
+            if (data.type === 'BG_PROGRESS') {
+                setBgCacheHint(`正在后台预缓存背景：${data.done}/${data.total}`
+                    + `${data.bytes ? ` · ${formatPrecacheBytes(data.bytes)}` : ''}`);
+                return;
+            }
+            if (data.type === 'BG_DONE') {
+                bgPrefetchBusy = false;
+                const cached = data.cached || 0;
+                const skipped = data.skipped || 0;
+                setBgCacheHint(`背景预缓存完成：这轮新存 ${data.added} 张`
+                    + `${skipped ? `，有 ${skipped} 张太大跳过` : ''}`
+                    + `，本机共 ${cached} 张可直接用。`);
+                return;
+            }
+            if (data.type === 'ERROR') {
+                precacheBusy = false;
+                setPrecacheHint(`预缓存没成功：${data.message || '未知原因'}。`);
+            }
+        }
+
+        async function registerPrecache() {
+            if (!precacheSupported()) {
+                setPrecacheHint('这个环境不支持网页预缓存：要用 https 或 localhost 打开页面。');
+                return;
+            }
+            if (!uiPrefs.precache) {
+                setPrecacheHint('网页预缓存已关闭：不会提前下载，也没有断网副本。');
+                return;
+            }
+            try {
+                const base = siteBase();
+                precacheRegistration = await navigator.serviceWorker.register(new URL('sw.js', base).href, {
+                    scope: base,
+                    updateViaCache: 'none'
+                });
+            } catch (error) {
+                setPrecacheHint('网页预缓存没能启动（浏览器可能禁用了 Service Worker）。');
+                return;
+            }
+            precacheRegistration.addEventListener('updatefound', () => {
+                setPrecacheHint('预缓存发现新版本，正在后台换新…');
+            });
+            try { await navigator.serviceWorker.ready; } catch (error) {}
+            window.setTimeout(() => {
+                requestPrecacheStatus();
+                // 安装阶段被跳过、或者刚清完缓存就重新打开时，这里补一遍核心文件
+                const worker = precacheWorker();
+                if (!worker) return;
+                try { worker.postMessage({ type: 'WARM', urls: PRECACHE_CORE_URLS }); } catch (error) {}
+            }, 700);
+            schedulePrecacheWarm();
+        }
+
+        /** 宠物素材有 2MB 多，等页面闲下来再悄悄预取，同一版本只做一次 */
+        function schedulePrecacheWarm() {
+            let warmed = '';
+            try { warmed = localStorage.getItem(PRECACHE_WARM_KEY) || ''; } catch (error) {}
+            if (warmed === APP_VERSION) return;
+            if (!(mascotState && (mascotState.enabled || mascotState.second))) return;
+            window.setTimeout(() => {
+                if (precacheBusy) return;
+                const worker = precacheWorker();
+                if (!worker) return;
+                try {
+                    precacheBusy = true;
+                    worker.postMessage({ type: 'WARM' });
+                    localStorage.setItem(PRECACHE_WARM_KEY, APP_VERSION);
+                } catch (error) {
+                    precacheBusy = false;
+                }
+            }, 6000);
+        }
+
+        async function precacheNow() {
+            if (!precacheSupported()) { setPrecacheHint('这个环境不支持网页预缓存：要用 https 或 localhost 打开页面。'); return; }
+            if (!uiPrefs.precache) { setPrecacheHint('先把上面的「网页预缓存」开关打开。'); return; }
+            if (precacheBusy) { setPrecacheHint('正在预缓存中，稍等一下…'); return; }
+            const worker = precacheWorker();
+            if (!worker) { setPrecacheHint('预缓存还没启动好，刷新一下再试。'); return; }
+            precacheBusy = true;
+            setPrecacheHint('正在预缓存：准备中…');
+            try {
+                worker.postMessage({ type: 'WARM' });
+            } catch (error) {
+                precacheBusy = false;
+            }
+        }
+
+        async function togglePrecache() {
+            uiPrefs.precache = !uiPrefs.precache;
+            saveUiPrefs();
+            applyUiPrefs();
+            if (uiPrefs.precache) {
+                precacheRegistration = null;
+                await registerPrecache();
+                return;
+            }
+            // 关掉就把本机预缓存和 Service Worker 一起撤掉，别白占空间
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(reg => reg.unregister()));
+                }
+            } catch (error) {}
+            await purgeWebCache();
+            precacheRegistration = null;
+            setPrecacheHint('网页预缓存已关闭，本机存的预缓存也清空了。');
+        }
+
+        function initPrecache() {
+            if (!precacheSupported()) {
+                setPrecacheHint('这个环境不支持网页预缓存：要用 https 或 localhost 打开页面。');
+                return;
+            }
+            navigator.serviceWorker.addEventListener('message', onPrecacheMessage);
+            window.addEventListener('load', () => window.setTimeout(() => registerPrecache(), 1500));
         }
 
         function showUpdateBanner() {
@@ -3816,6 +4480,8 @@
         initMenuPanels();
         initAntiCrawl();
         initUiPrefs();
+        initBackgroundPool();
+        initPrecache();
     </script>
 </body>
 </html>
