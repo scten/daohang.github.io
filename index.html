@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1657">
+    <meta name="app-version" content="20261025-1722">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2744,8 +2744,9 @@
         const spriteBoxCache = new Map();
         const spriteBoxPending = new Set();
 
-        /** 允许贴图压出页边 1px：不切一丝会显得悬在边上，压一点点才像腿搭在边线上。 */
-        const EDGE_CLIP_PX = 1;
+        /** 贴边时允许压出页边的像素数，四个方向单独设置：
+            正数＝压出页边（切掉这么多），0＝一丝不切地贴住，负数＝往里退（留出空隙）。 */
+        const EDGE_CLIP_PX = { left: 10, right: 10, top: 26, bottom: 0 };
 
         /** 量一张图的透明留白。返回 null＝整张透明，undefined＝取不到像素（跨域被污染）。 */
         function measureSpriteBox(source, width, height) {
@@ -2855,10 +2856,14 @@
                     const right = this.lookRight ? baseX + anchorX - minX * scale : baseX - anchorX + maxX * scale;
                     const top = baseY - anchorY + minY * scale;
                     const bottom = baseY - anchorY + maxY * scale;
-                    const fixX = left < -EDGE_CLIP_PX ? -(left + EDGE_CLIP_PX)
-                        : (right > window.innerWidth + EDGE_CLIP_PX ? window.innerWidth + EDGE_CLIP_PX - right : 0);
-                    const fixY = top < -EDGE_CLIP_PX ? -(top + EDGE_CLIP_PX)
-                        : (bottom > window.innerHeight + EDGE_CLIP_PX ? window.innerHeight + EDGE_CLIP_PX - bottom : 0);
+                    const clipLeft = EDGE_CLIP_PX.left;
+                    const clipRight = EDGE_CLIP_PX.right;
+                    const clipTop = EDGE_CLIP_PX.top;
+                    const clipBottom = EDGE_CLIP_PX.bottom;
+                    const fixX = left < -clipLeft ? -(left + clipLeft)
+                        : (right > window.innerWidth + clipRight ? window.innerWidth + clipRight - right : 0);
+                    const fixY = top < -clipTop ? -(top + clipTop)
+                        : (bottom > window.innerHeight + clipBottom ? window.innerHeight + clipBottom - bottom : 0);
                     if (!fixX && !fixY) return;
                     root.style.transform = `translate3d(${baseX + fixX}px, ${baseY + fixY}px, 0)`;
                 } catch (error) {
