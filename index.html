@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1840">
+    <meta name="app-version" content="20261025-1940">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -1469,8 +1469,16 @@
         document.getElementById('loopBtn').classList.add('active');
 
         /** 1. 背景：随机图 / 自定义底色 / 图片视频 **/
-        const folderA = ['A/1.jpg', 'A/2.jpg', 'A/3.jpg', 'A/4.jpg', 'A/5.jpg'];
-        const folderB = [];   // 竖屏图还没加，空数组时自动回退到 folderA
+        /* 随机图池：A 是横屏图（桌面端），B 是竖屏图（窗口窄于 768px 时优先用 B）。
+           B 为空数组时会自动回退到 A；加新图直接往对应数组里补路径即可。 */
+        const folderA = ['A/1.jpg', 'A/2.jpg', 'A/3.jpg', 'A/4.jpg', 'A/5.jpg', 'A/6.jpg',
+            'A/7.jpg', 'A/8.jpg', 'A/9.jpg', 'A/10.jpg', 'A/11.jpg', 'A/12.jpg',
+            'A/13.png', 'A/14.jpg', 'A/15.jpg', 'A/16.jpg', 'A/17.jpg'];
+        const folderB = ['B/1.png', 'B/2.jpg', 'B/3.jpg', 'B/4.jpg', 'B/5.jpg', 'B/6.jpg',
+            'B/7.png', 'B/8.jpg', 'B/9.png', 'B/10.jpg', 'B/11.jpg', 'B/12.jpg',
+            'B/13.jpg', 'B/14.jpg', 'B/15.jpg', 'B/16.jpg', 'B/17.jpg', 'B/18.jpg',
+            'B/19.jpg', 'B/20.jpg', 'B/21.png', 'B/22.jpg', 'B/23.png', 'B/24.png',
+            'B/25.jpg', 'B/26.jpg', 'B/27.jpg', 'B/28.jpg', 'B/29.jpg', 'B/30.jpg'];
 
         const BG_MODE_KEY = 'bgMode';
         let currentBgObjectUrl = null;   // 当前背景用的 blob URL，换背景时要释放
