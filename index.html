@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1620">
+    <meta name="app-version" content="20261025-1631">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2743,6 +2743,9 @@
            否则会把贴图整体往页面里推，看着就不贴着页边了。 */
         const spriteBoxCache = new Map();
 
+        /** 允许贴图压出页边几个像素：不切一丝会显得悬在边上，压一点才像腿搭在边线上。 */
+        const EDGE_CLIP_PX = 6;
+
         /** 取这张贴图不透明像素的包围盒（相对画布，未缩放）；拿不到就返回 null。 */
         function spriteOpaqueBox(image, poseImage) {
             const url = image.currentSrc || image.src || '';
@@ -2816,8 +2819,10 @@
                     const right = this.lookRight ? baseX + anchorX - minX * scale : baseX - anchorX + maxX * scale;
                     const top = baseY - anchorY + minY * scale;
                     const bottom = baseY - anchorY + maxY * scale;
-                    const fixX = left < 0 ? -left : (right > window.innerWidth ? window.innerWidth - right : 0);
-                    const fixY = top < 0 ? -top : (bottom > window.innerHeight ? window.innerHeight - bottom : 0);
+                    const fixX = left < -EDGE_CLIP_PX ? -(left + EDGE_CLIP_PX)
+                        : (right > window.innerWidth + EDGE_CLIP_PX ? window.innerWidth + EDGE_CLIP_PX - right : 0);
+                    const fixY = top < -EDGE_CLIP_PX ? -(top + EDGE_CLIP_PX)
+                        : (bottom > window.innerHeight + EDGE_CLIP_PX ? window.innerHeight + EDGE_CLIP_PX - bottom : 0);
                     if (!fixX && !fixY) return;
                     root.style.transform = `translate3d(${baseX + fixX}px, ${baseY + fixY}px, 0)`;
                 } catch (error) {
@@ -2910,11 +2915,23 @@
             末尾的 (?![a-z]) 是为了放过 NoticeFallingTutel 这种名字里带 Fall 的地面行为。 */
         const HUG_AIR_BEHAVIOR = /jump|throw|hurl|drag|fall(?![a-z])/i;
 
+        /** 这一只画面上脚底中心的位置：贴边时逻辑坐标和画面位置能差几十像素，
+            所以判断远近要用画出来的位置，不然贴边抱抱会算不准。 */
+        function hugSpot(engine) {
+            const node = engine && (engine.elImg || engine.elRoot);
+            if (node && node.getBoundingClientRect) {
+                const rect = node.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) return { x: rect.left + rect.width / 2, y: rect.bottom };
+            }
+            const spot = engine.position();
+            return { x: spot.x, y: spot.y };
+        }
+
         /** 两只桌宠脚底中心的间距；不足两只时返回 null。 */
         function hugGap() {
             if (mascotInstances.length < 2) return null;
-            const first = mascotInstances[0].instance.engine.position();
-            const last = mascotInstances[mascotInstances.length - 1].instance.engine.position();
+            const first = hugSpot(mascotInstances[0].instance && mascotInstances[0].instance.engine);
+            const last = hugSpot(mascotInstances[mascotInstances.length - 1].instance && mascotInstances[mascotInstances.length - 1].instance.engine);
             return { dx: Math.abs(first.x - last.x), dy: Math.abs(first.y - last.y) };
         }
 
