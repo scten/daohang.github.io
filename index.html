@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1606">
+    <meta name="app-version" content="20261025-1620">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2737,10 +2737,55 @@
         }
 
         /* 攀爬贴墙、贴天花板时锚点落在这条边线上，而精灵是以锚点为基准画的：
-           shime12/13/14 的 ImageAnchor 是 54,128，GrabCeiling 一类是 64,52，
-           所以贴到边线就会有一截探出视口。引擎靠"锚点正好落在边线上"判定
-           BorderType，挪逻辑坐标会让攀爬直接断掉，于是在渲染之后把整块贴图
-           平移回可视范围内——只动画面，不动坐标。 */
+           shime12/13/14 的 ImageAnchor 是 54,128，GrabCeiling 一类是 64,52。
+           引擎靠"锚点正好落在边线上"判定 BorderType，挪逻辑坐标会让攀爬断掉，
+           所以只在渲染这一层做修正——但要按"不透明像素"算，不能按整块画布，
+           否则会把贴图整体往页面里推，看着就不贴着页边了。 */
+        const spriteBoxCache = new Map();
+
+        /** 取这张贴图不透明像素的包围盒（相对画布，未缩放）；拿不到就返回 null。 */
+        function spriteOpaqueBox(image, poseImage) {
+            const url = image.currentSrc || image.src || '';
+            if (!url) return null;
+            if (spriteBoxCache.has(url)) return spriteBoxCache.get(url);
+            let box = null;
+            let attempted = false;
+            try {
+                const width = image.naturalWidth;
+                const height = image.naturalHeight;
+                const showsThisPose = !poseImage || url.indexOf(poseImage) >= 0;
+                if (image.complete && width > 0 && height > 0 && showsThisPose && width * height <= 262144) {
+                    attempted = true;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const context = canvas.getContext('2d', { willReadFrequently: true });
+                    if (context) {
+                        context.drawImage(image, 0, 0);
+                        const data = context.getImageData(0, 0, width, height).data;
+                        let minX = width, maxX = -1, minY = height, maxY = -1;
+                        for (let y = 0; y < height; y++) {
+                            const row = y * width;
+                            for (let x = 0; x < width; x++) {
+                                if (data[(row + x) * 4 + 3] > 8) {
+                                    if (x < minX) minX = x;
+                                    if (x > maxX) maxX = x;
+                                    if (y < minY) minY = y;
+                                    if (y > maxY) maxY = y;
+                                }
+                            }
+                        }
+                        if (maxX >= minX) box = { minX, maxX: maxX + 1, minY, maxY: maxY + 1 };
+                    }
+                }
+            } catch (error) {
+                box = null;
+            }
+            if (box || attempted) spriteBoxCache.set(url, box);
+            return box;
+        }
+
+        /** 让贴图的可见部分留在视口内：贴边时正好贴住页边，只切掉透明留白。 */
         function keepSpriteVisible(engine) {
             if (!engine || typeof engine.render !== 'function' || engine.spriteVisibleGuard) return;
             engine.spriteVisibleGuard = true;
@@ -2753,21 +2798,26 @@
                     const image = this.elImg;
                     const pose = this.currentPose && this.currentPose();
                     if (!root || !image || !pose || !pose.image) return;
-                    const scale = this.spriteScale || 1;
-                    const width = (image.naturalWidth || 128) * scale;
-                    const height = (image.naturalHeight || 128) * scale;
-                    const anchorX = ((pose.imageAnchor && pose.imageAnchor.x) || 64) * scale;
-                    const anchorY = ((pose.imageAnchor && pose.imageAnchor.y) || 128) * scale;
                     const found = readTranslate.exec(root.style.transform || '');
                     if (!found) return;
+                    const scale = this.spriteScale || 1;
+                    const naturalWidth = image.naturalWidth || 128;
+                    const naturalHeight = image.naturalHeight || 128;
+                    const box = spriteOpaqueBox(image, pose.image);
+                    const minX = box ? box.minX : 0;
+                    const maxX = box ? box.maxX : naturalWidth;
+                    const minY = box ? box.minY : 0;
+                    const maxY = box ? box.maxY : naturalHeight;
+                    const anchorX = ((pose.imageAnchor && pose.imageAnchor.x) || 64) * scale;
+                    const anchorY = ((pose.imageAnchor && pose.imageAnchor.y) || 128) * scale;
                     const baseX = parseFloat(found[1]);
                     const baseY = parseFloat(found[2]);
-                    const left = this.lookRight ? baseX + anchorX - width : baseX - anchorX;
-                    const top = baseY - anchorY;
-                    const limitX = Math.max(0, window.innerWidth - width);
-                    const limitY = Math.max(0, window.innerHeight - height);
-                    const fixX = Math.min(Math.max(0, left), limitX) - left;
-                    const fixY = Math.min(Math.max(0, top), limitY) - top;
+                    const left = this.lookRight ? baseX + anchorX - maxX * scale : baseX - anchorX + minX * scale;
+                    const right = this.lookRight ? baseX + anchorX - minX * scale : baseX - anchorX + maxX * scale;
+                    const top = baseY - anchorY + minY * scale;
+                    const bottom = baseY - anchorY + maxY * scale;
+                    const fixX = left < 0 ? -left : (right > window.innerWidth ? window.innerWidth - right : 0);
+                    const fixY = top < 0 ? -top : (bottom > window.innerHeight ? window.innerHeight - bottom : 0);
                     if (!fixX && !fixY) return;
                     root.style.transform = `translate3d(${baseX + fixX}px, ${baseY + fixY}px, 0)`;
                 } catch (error) {
