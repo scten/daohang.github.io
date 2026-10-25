@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0545">
+    <meta name="app-version" content="20261026-0553">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -704,6 +704,28 @@
         .music-player .ghost-btn { width: 100%; margin-top: 8px; flex: none; }
 
         .menu-hint { margin-top: 9px; font-size: 0.7rem; line-height: 1.6; color: #b3a5a5; }
+        /* --- 主菜单里的功能注释：平时收起来，鼠标悬停到对应功能才展开；
+               状态类注释（已保存 / 已恢复…）在文字变化时会自己弹一下 --- */
+        #navMenu .menu-hint {
+            max-height: 0;
+            margin-top: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-3px);
+            transition: max-height .24s ease, opacity .16s ease, margin-top .24s ease, transform .2s ease;
+        }
+        #navMenu .menu-hint.hint-show {
+            max-height: 320px;
+            margin-top: 9px;
+            opacity: 1;
+            transform: none;
+        }
+        #navMenu .menu-hint[data-hint-static="1"] {
+            max-height: none;
+            margin-top: 9px;
+            opacity: 1;
+            transform: none;
+        }
 
         .switch-row > span { font-size: 0.85rem; color: var(--text-main); }
         .switch-btn {
@@ -1203,6 +1225,15 @@
             transition: transform .2s;
         }
         .collapse-head[aria-expanded="true"] .collapse-caret { transform: rotate(90deg); }
+        /* 可收起的整块设置：标题当开关用 */
+        .collapse-title {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .collapse-title:hover { color: var(--primary-strong); }
+        .collapse-title[aria-expanded="true"] .collapse-caret { transform: rotate(90deg); }
+        .collapse-title .collapse-caret { color: var(--primary-strong); transition: transform .2s; }
         .collapse-body { padding-top: 4px; }
         .range-row label {
             display: flex; justify-content: space-between; gap: 8px;
@@ -1385,7 +1416,13 @@
         </section>
 
         <section class="menu-section" data-panel="transparency">
-            <h4>🔍 透明度</h4>
+            <h4 class="collapse-title" id="transparencyToggle" role="button" tabindex="0"
+                aria-expanded="false" aria-controls="transparencyPanel"
+                onclick="toggleTransparencyPanel()">
+                <span>🔍 透明度</span>
+                <span class="collapse-caret" aria-hidden="true">▸</span>
+            </h4>
+            <div class="collapse-body" id="transparencyPanel" hidden>
             <div class="range-row">
                 <label for="opacitySlider">背景图 <span id="opacityValue">80%</span></label>
                 <input type="range" id="opacitySlider" min="0" max="0.9" step="0.05" value="0.8">
@@ -1406,6 +1443,7 @@
                 <input type="range" id="lwAlphaMenu" min="0.2" max="1" step="0.05" value="0.85">
             </div>
             <p class="menu-hint">全都记在这一个地方：背景拉到 0% 等于纯透明，会自动进简洁模式；歌词小窗和播放器里的那个滑块是同一个值。</p>
+            </div>
         </section>
 
         <section class="menu-section" data-panel="cards">
@@ -1571,7 +1609,7 @@
             <p class="menu-hint" id="precacheHint">开启后把页面外壳、图标和宠物素材提前存到本机，第二次打开更快，断网也能看。</p>
             <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="precacheNow()">📦 立即预缓存</button>
 
-            <p class="menu-hint">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
+            <p class="menu-hint" data-hint-static="1">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
 
             <div class="switch-row mascot-switch-row">
                 <span>桌面宠物</span>
@@ -2130,6 +2168,26 @@
             button.setAttribute('aria-expanded', String(open));
         }
 
+        /** 个性化里的「透明度」整块收起 / 展开 */
+        function toggleTransparencyPanel(force) {
+            const button = document.getElementById('transparencyToggle');
+            const panel = document.getElementById('transparencyPanel');
+            if (!button || !panel) return;
+            const open = typeof force === 'boolean' ? force : panel.hidden;
+            panel.hidden = !open;
+            button.setAttribute('aria-expanded', String(open));
+        }
+
+        function initTransparencyToggle() {
+            const button = document.getElementById('transparencyToggle');
+            if (!button) return;
+            button.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                toggleTransparencyPanel();
+            });
+        }
+
         function toggleUiPref(key) {
             if (typeof uiPrefs[key] !== 'boolean') return;
             uiPrefs[key] = !uiPrefs[key];
@@ -2171,6 +2229,90 @@
             applyOpacity(uiPrefs.bgOpacity);
             // 上次停在 0% 透明时，刷新后仍然按"透明即简洁"显示
             applySimpleMode(uiPrefs.simpleMode || Number(uiPrefs.bgOpacity) <= 0);
+        }
+
+        /** 主菜单里的功能注释：默认收起，悬停到对应功能才展开 */
+        function initMenuHints() {
+            const menu = document.getElementById('navMenu');
+            if (!menu) return;
+
+            const hints = Array.from(menu.querySelectorAll('.menu-hint'));
+
+            hints.forEach(hint => {
+                hint.dataset.hintText = hint.textContent.trim();
+                if (hint.dataset.hintStatic === '1') {
+                    hint.classList.add('hint-show');
+                    return;
+                }
+
+                // 连着写的几条注释共用同一个触发区：找到它们前面那个真正的功能行
+                let head = hint;
+                while (head.previousElementSibling
+                    && head.previousElementSibling.classList.contains('menu-hint')) {
+                    head = head.previousElementSibling;
+                }
+                let trigger = head.previousElementSibling;
+                if (!trigger) return;
+
+                const triggers = [];
+                if (trigger.hidden && trigger.previousElementSibling) {
+                    // 触发区自己收着（例如自定义主题面板），那就连同它前面那块一起算
+                    triggers.push(trigger.previousElementSibling, trigger);
+                } else {
+                    triggers.push(trigger);
+                }
+
+                const show = () => {
+                    hint.dataset.hintHover = '1';
+                    hint.classList.add('hint-show');
+                };
+                const hide = () => {
+                    delete hint.dataset.hintHover;
+                    hint.classList.remove('hint-show');
+                };
+
+                triggers.forEach(node => {
+                    node.addEventListener('mouseenter', show);
+                    node.addEventListener('mouseleave', hide);
+                    node.addEventListener('focusin', show);
+                    node.addEventListener('focusout', () => {
+                        if (!node.contains(document.activeElement)) hide();
+                    });
+                });
+                // 注释展开后鼠标能停上去看
+                hint.addEventListener('mouseenter', show);
+                hint.addEventListener('mouseleave', hide);
+            });
+
+            // 文字变了 = 状态更新，弹出来给用户看一眼再收回去
+            const flash = (hint) => {
+                window.clearTimeout(Number(hint.dataset.hintTimer) || 0);
+                hint.classList.add('hint-show');
+                hint.dataset.hintTimer = String(window.setTimeout(() => {
+                    if (hint.dataset.hintHover !== '1') hint.classList.remove('hint-show');
+                }, 4200));
+            };
+
+            const observer = new MutationObserver(records => {
+                records.forEach(record => {
+                    const node = record.target.nodeType === 1
+                        ? record.target
+                        : record.target.parentElement;
+                    const hint = node && node.closest ? node.closest('.menu-hint') : null;
+                    if (!hint || hint.dataset.hintStatic === '1') return;
+                    const text = hint.textContent.trim();
+                    if (text === hint.dataset.hintText) return;
+                    hint.dataset.hintText = text;
+                    flash(hint);
+                });
+            });
+            // 等启动那几秒的初始化写入过去再开始监听，免得一进页面就弹一片
+            window.setTimeout(() => {
+                hints.forEach(hint => {
+                    if (hint.dataset.hintStatic === '1') return;
+                    observer.observe(hint, { childList: true, characterData: true, subtree: true });
+                });
+            }, 2500);
         }
 
         function initAntiCrawl() {
@@ -5622,6 +5764,8 @@
         initMascot();
         initUpdateChecker();
         initMenuPanels();
+        initMenuHints();
+        initTransparencyToggle();
         initAntiCrawl();
         initUiPrefs();
         initBackgroundPool();
