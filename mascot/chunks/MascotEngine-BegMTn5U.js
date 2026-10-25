@@ -1431,7 +1431,7 @@ const ye = 150, S = 128, ut = "*", be = 80, xe = 1.25, ke = 260, ft = 12, we = 6
     }), window.addEventListener("scroll", () => {
       for (const t of h.liveEngines) {
         const e = window.scrollY - t.lastScrollY;
-        t.lastScrollY = window.scrollY, e !== 0 && (t.isScrolling = !0, t.scrollDirection = e > 0 ? 1 : -1, t.pendingScrollShift += e / t.spriteScale, t.scrollStopPending = !1, window.clearTimeout(t.scrollDebounceTimer), t.scrollDebounceTimer = window.setTimeout(() => {
+        t.lastScrollY = window.scrollY, e !== 0 && (t.isScrolling = !0, t.scrollDirection = e > 0 ? 1 : -1, t.scrollStopPending = !1, window.clearTimeout(t.scrollDebounceTimer), t.scrollDebounceTimer = window.setTimeout(() => {
           t.isScrolling = !1, t.scrollDirection = 0, t.scrollStopPending = !0;
         }, 160));
       }
