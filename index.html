@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0880">
+    <meta name="app-version" content="20261025-0920">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -100,6 +100,14 @@
             pointer-events: auto;
         }
         .menu-btn:hover { transform: scale(1.1); }
+        body.menu-open .menu-btn {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .menu-btn.auto-hidden { opacity: 0; }
+        .menu-btn.auto-hidden:hover,
+        .menu-btn.auto-hidden:focus-visible { opacity: 1; }
         .menu-btn:active { transform: scale(0.95); }
         .menu-btn span {
             display: block;
@@ -1694,6 +1702,7 @@
             const menuBtn = document.getElementById('menuBtn');
             const open = typeof force === 'boolean' ? force : !menu.classList.contains('active');
             menu.classList.toggle('active', open);
+            document.body.classList.toggle('menu-open', open);
             menuBtn.setAttribute('aria-expanded', String(open));
             menuBtn.setAttribute('aria-label', open ? '关闭菜单' : '打开菜单');
             if (open) backToMainMenu();
@@ -1781,6 +1790,8 @@
             }
             const simpleBtn = document.getElementById('simpleModeToggle');
             if (simpleBtn) simpleBtn.hidden = !uiPrefs.showSimple;
+            const menuBtn = document.getElementById('menuBtn');
+            if (menuBtn) menuBtn.classList.toggle('auto-hidden', autoHidden);
             const hotspot = document.querySelector('.simple-mode-hotspot');
             if (hotspot) hotspot.hidden = !uiPrefs.showSimple && !uiPrefs.autoHideInSimple;
 
