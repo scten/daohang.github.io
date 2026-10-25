@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0603">
+    <meta name="app-version" content="20261026-0615">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -916,12 +916,31 @@
         .lw-controls button:hover { color: var(--primary-strong); }
         .lw-controls button.on { color: var(--primary-strong); font-weight: 700; }
 
+        /* 四个角都能拖：右下/左上是一组斜纹，左下/右上反过来 */
         .lw-resize {
-            position: absolute; right: 2px; bottom: 2px;
-            width: 16px; height: 16px;
-            cursor: nwse-resize;
+            position: absolute;
+            width: 18px; height: 18px;
+            z-index: 4;
             touch-action: none;
+            opacity: .8;
+            transition: opacity .2s;
+        }
+        .lw-resize:hover { opacity: 1; }
+        .lw-resize.is-se {
+            right: 0; bottom: 0; cursor: nwse-resize;
             background: linear-gradient(135deg, transparent 45%, rgba(var(--primary-rgb), .65) 45%, rgba(var(--primary-rgb), .65) 55%, transparent 55%);
+        }
+        .lw-resize.is-nw {
+            left: 0; top: 0; cursor: nwse-resize;
+            background: linear-gradient(135deg, transparent 45%, rgba(var(--primary-rgb), .65) 45%, rgba(var(--primary-rgb), .65) 55%, transparent 55%);
+        }
+        .lw-resize.is-sw {
+            left: 0; bottom: 0; cursor: nesw-resize;
+            background: linear-gradient(45deg, transparent 45%, rgba(var(--primary-rgb), .65) 45%, rgba(var(--primary-rgb), .65) 55%, transparent 55%);
+        }
+        .lw-resize.is-ne {
+            right: 0; top: 0; cursor: nesw-resize;
+            background: linear-gradient(45deg, transparent 45%, rgba(var(--primary-rgb), .65) 45%, rgba(var(--primary-rgb), .65) 55%, transparent 55%);
         }
         .lw-body.qq-lyrics {
             display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
@@ -986,20 +1005,23 @@
         }
         .lyrics-widget.clean-mode .lyrics-widget-head,
         .lyrics-widget.clean-mode .lw-settings,
-        .lyrics-widget.clean-mode .lw-resize { display: none; }
+        .lyrics-widget.clean-mode .lw-resize { opacity: .32; }
+        .lyrics-widget.clean-mode .lw-resize:hover { opacity: .9; }
         .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; }
         .lyrics-widget.clean-mode .qq-base { opacity: .5; }
         .lyrics-widget.clean-mode .qq-base,
         .lyrics-widget.clean-mode .qq-next {
             text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 3px rgba(90, 60, 60, .35);
         }
-        .lw-settings label[hidden] { display: none; }
+        .lw-settings [hidden] { display: none; }
         /* 干净模式（只看歌词）下界面都收起来了，这里给一个悬停才浮出的窗口透明滑块 */
         .lw-clean-alpha {
             display: none;
             position: absolute;
-            right: 8px;
-            bottom: 8px;
+            left: 50%;
+            right: auto;
+            bottom: 6px;
+            transform: translateX(-50%);
             align-items: center;
             gap: 5px;
             padding: 4px 8px;
@@ -1039,6 +1061,48 @@
         }
         .lw-settings label { display: flex; align-items: center; gap: 4px; }
         .lw-settings input[type="range"] { width: 74px; }
+        /* 播放器里的「窗口透明」：用主菜单那种满宽滑条，轨道和滑块本身也跟着窗口一起淡 */
+        .lw-settings .lw-alpha-row {
+            flex: 1 0 100%;
+            margin: 0 0 2px;
+        }
+        .lw-settings .lw-alpha-row label {
+            margin-bottom: 2px;
+            color: #a99b9b;
+        }
+        .lw-settings .lw-alpha-row label span { color: var(--primary-strong); }
+        .lw-settings .lw-alpha-row input[type="range"] {
+            width: 100%;
+            height: 14px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        .lw-settings .lw-alpha-row input[type="range"]::-webkit-slider-runnable-track {
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(var(--primary-rgb), calc(.22 + .33 * var(--lw-alpha, 1)));
+        }
+        .lw-settings .lw-alpha-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 13px; height: 13px;
+            margin-top: -4.5px;
+            border-radius: 50%;
+            background: rgba(var(--primary-rgb), calc(.6 + .4 * var(--lw-alpha, 1)));
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+        }
+        .lw-settings .lw-alpha-row input[type="range"]::-moz-range-track {
+            height: 4px;
+            border-radius: 4px;
+            background: rgba(var(--primary-rgb), calc(.22 + .33 * var(--lw-alpha, 1)));
+        }
+        .lw-settings .lw-alpha-row input[type="range"]::-moz-range-thumb {
+            width: 13px; height: 13px;
+            border: none; border-radius: 50%;
+            background: rgba(var(--primary-rgb), calc(.6 + .4 * var(--lw-alpha, 1)));
+        }
         .lw-settings input[type="color"] {
             width: 36px; height: 24px; padding: 0;
             border: 1px solid #eee; border-radius: 6px;
@@ -1793,7 +1857,10 @@
         </div>
         <div class="lw-body" id="lwBody" hidden>选好音乐并载入歌词后，这里会同步滚动。</div>
         <div class="lw-settings">
-            <label id="lwAlphaRow">窗口透明 <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85"></label>
+            <div class="range-row lw-alpha-row" id="lwAlphaRow">
+                <label for="lwOpacity">窗口透明 <span id="lwAlphaValue">85%</span></label>
+                <input type="range" id="lwOpacity" min="0.2" max="1" step="0.05" value="0.85">
+            </div>
             <label id="lwBgRow" hidden>词底 <input type="range" id="lwLyricsAlpha" min="0" max="1" step="0.05" value="0.35"></label>
             <label id="lwColorRow" hidden>字色 <input type="color" id="lwLyricsColor" value="#ff8c94"></label>
             <label>字体
@@ -1806,7 +1873,10 @@
                 </select>
             </label>
         </div>
-        <div class="lw-resize" id="lwResize" title="拖动调整大小"></div>
+        <div class="lw-resize is-se" id="lwResize" data-resize="se" title="拖动右下角调整大小"></div>
+        <div class="lw-resize is-sw" data-resize="sw" title="拖动左下角调整大小"></div>
+        <div class="lw-resize is-ne" data-resize="ne" title="拖动右上角调整大小"></div>
+        <div class="lw-resize is-nw" data-resize="nw" title="拖动左上角调整大小"></div>
         <label class="lw-clean-alpha" id="lwCleanAlphaRow" title="歌词窗口透明度">透明
             <input type="range" id="lwCleanAlpha" min="0.2" max="1" step="0.05" value="0.85"
                    aria-label="歌词窗口透明度">
@@ -3866,8 +3936,16 @@
             top: null,
             width: null,
             height: null,
+            cleanWidth: null,
+            cleanHeight: null,
             lyricsAlpha: 0.35,
             lyricsColor: null
+        };
+
+        /* 播放器和「只看歌词」各记一套尺寸：纯歌词只有几行字，可以缩得很小 */
+        const LW_MIN_SIZE = {
+            player: { width: 260, height: 180 },
+            clean: { width: 120, height: 54 }
         };
 
         function loadLyricsWidgetState() {
@@ -3880,8 +3958,10 @@
                 if (LW_FONTS[saved.font]) lwState.font = saved.font;
                 if (Number.isFinite(saved.left)) lwState.left = saved.left;
                 if (Number.isFinite(saved.top)) lwState.top = saved.top;
-                if (Number.isFinite(saved.width)) lwState.width = Math.max(260, saved.width);
-                if (Number.isFinite(saved.height)) lwState.height = Math.max(180, saved.height);
+                if (Number.isFinite(saved.width)) lwState.width = Math.max(LW_MIN_SIZE.player.width, saved.width);
+                if (Number.isFinite(saved.height)) lwState.height = Math.max(LW_MIN_SIZE.player.height, saved.height);
+                if (Number.isFinite(saved.cleanWidth)) lwState.cleanWidth = Math.max(LW_MIN_SIZE.clean.width, saved.cleanWidth);
+                if (Number.isFinite(saved.cleanHeight)) lwState.cleanHeight = Math.max(LW_MIN_SIZE.clean.height, saved.cleanHeight);
                 if (Number.isFinite(saved.lyricsAlpha)) lwState.lyricsAlpha = Math.min(1, Math.max(0, saved.lyricsAlpha));
                 if (typeof saved.lyricsColor === 'string' && /^#[0-9a-f]{6}$/i.test(saved.lyricsColor)) {
                     lwState.lyricsColor = saved.lyricsColor;
@@ -3906,6 +3986,8 @@
             if (lwMenuAlphaValue) lwMenuAlphaValue.textContent = `${Math.round(lwState.alpha * 100)}%`;
             const lwCleanAlpha = document.getElementById('lwCleanAlpha');
             if (lwCleanAlpha) lwCleanAlpha.value = String(lwState.alpha);
+            const lwAlphaValue = document.getElementById('lwAlphaValue');
+            if (lwAlphaValue) lwAlphaValue.textContent = `${Math.round(lwState.alpha * 100)}%`;
             document.getElementById('lwFont').value = LW_FONTS[lwState.font] ? lwState.font : 'system';
             const pin = document.getElementById('lwPin');
             pin.setAttribute('aria-pressed', String(lwState.pinned));
@@ -3921,8 +4003,21 @@
                 widget.style.right = 'auto';
                 widget.style.bottom = 'auto';
             }
-            if (Number.isFinite(lwState.width)) widget.style.width = `${lwState.width}px`;
-            if (Number.isFinite(lwState.height)) widget.style.height = `${lwState.height}px`;
+            // 播放器 / 歌词模式各用各的尺寸；歌词模式最小可以缩到 120×54
+            const cleanMode = widget.classList.contains('clean-mode');
+            const minSize = cleanMode ? LW_MIN_SIZE.clean : LW_MIN_SIZE.player;
+            const wantWidth = cleanMode ? lwState.cleanWidth : lwState.width;
+            const wantHeight = cleanMode ? lwState.cleanHeight : lwState.height;
+            if (Number.isFinite(wantWidth)) {
+                widget.style.width = `${Math.max(minSize.width, Math.min(wantWidth, Math.max(minSize.width, window.innerWidth - 8)))}px`;
+            } else {
+                widget.style.width = '';
+            }
+            if (Number.isFinite(wantHeight)) {
+                widget.style.height = `${Math.max(minSize.height, Math.min(wantHeight, Math.max(minSize.height, window.innerHeight - 8)))}px`;
+            } else {
+                widget.style.height = '';
+            }
             widget.style.setProperty('--lw-lyrics-alpha', String(lwState.lyricsAlpha));
             if (lwState.lyricsColor) {
                 widget.style.setProperty('--lw-lyrics-color', lwState.lyricsColor);
@@ -4041,28 +4136,57 @@
             body.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
         }
 
+        /** 四个角都能拖：按角的方向改宽高，拖左/上边时锚住对角 */
         function startLyricsWidgetResize(event) {
             event.preventDefault();
             event.stopPropagation();
             const widget = document.getElementById('lyricsWidget');
+            const corner = (event.currentTarget && event.currentTarget.dataset.resize) || 'se';
             const rect = widget.getBoundingClientRect();
             const startX = event.clientX;
             const startY = event.clientY;
             const startW = rect.width;
             const startH = rect.height;
+            const startLeft = rect.left;
+            const startTop = rect.top;
+            const cleanMode = widget.classList.contains('clean-mode');
+            const minSize = cleanMode ? LW_MIN_SIZE.clean : LW_MIN_SIZE.player;
+            const maxWidth = Math.max(minSize.width, window.innerWidth - 8);
+            const maxHeight = Math.max(minSize.height, window.innerHeight - 8);
+
             const move = (e) => {
-                const width = Math.min(window.innerWidth - 24, Math.max(260, startW + e.clientX - startX));
-                const height = Math.min(window.innerHeight - 40, Math.max(180, startH + e.clientY - startY));
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                const width = Math.min(maxWidth, Math.max(minSize.width, startW + (corner.indexOf('e') >= 0 ? dx : -dx)));
+                const height = Math.min(maxHeight, Math.max(minSize.height, startH + (corner.indexOf('s') >= 0 ? dy : -dy)));
                 widget.style.width = `${width}px`;
                 widget.style.height = `${height}px`;
+
+                if (corner.indexOf('w') >= 0) {
+                    const left = Math.min(Math.max(0, startLeft + (startW - width)), window.innerWidth - width);
+                    widget.style.left = `${left}px`;
+                    widget.style.right = 'auto';
+                }
+                if (corner.indexOf('n') >= 0) {
+                    const top = Math.min(Math.max(0, startTop + (startH - height)), window.innerHeight - height);
+                    widget.style.top = `${top}px`;
+                    widget.style.bottom = 'auto';
+                }
             };
             const end = () => {
                 document.removeEventListener('pointermove', move);
                 document.removeEventListener('pointerup', end);
                 document.removeEventListener('pointercancel', end);
                 const box = widget.getBoundingClientRect();
-                lwState.width = Math.round(box.width);
-                lwState.height = Math.round(box.height);
+                if (cleanMode) {
+                    lwState.cleanWidth = Math.round(box.width);
+                    lwState.cleanHeight = Math.round(box.height);
+                } else {
+                    lwState.width = Math.round(box.width);
+                    lwState.height = Math.round(box.height);
+                }
+                lwState.left = Math.round(box.left);
+                lwState.top = Math.round(box.top);
                 saveLyricsWidgetState();
             };
             document.addEventListener('pointermove', move);
@@ -4158,8 +4282,9 @@
             });
 
             document.getElementById('lwHead').addEventListener('pointerdown', startLyricsWidgetDrag);
-            const resizeHandle = document.getElementById('lwResize');
-            if (resizeHandle) resizeHandle.addEventListener('pointerdown', startLyricsWidgetResize);
+            Array.from(document.querySelectorAll('.lw-resize')).forEach(handle => {
+                handle.addEventListener('pointerdown', startLyricsWidgetResize);
+            });
 
             document.getElementById('lwLyricsAlpha').addEventListener('input', function () {
                 lwState.lyricsAlpha = Number(this.value);
@@ -5554,6 +5679,8 @@
             if (exit) exit.hidden = !on;
             const hideBtn = document.getElementById('lwHideBtn');
             if (hideBtn) hideBtn.classList.toggle('on', on);
+            // 换了模式就套用那一套尺寸（歌词模式能小很多）
+            applyLyricsWidget();
         }
 
         function nextTrack() {
