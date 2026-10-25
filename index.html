@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0920">
+    <meta name="app-version" content="20261025-1555">
+    <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
+    <meta name="theme-color" content="#ffb7b2">
+    <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="C/favicon.ico" sizes="16x16 32x32 48x48">
+    <link rel="apple-touch-icon" href="C/apple-touch-icon.png">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -119,83 +124,17 @@
         }
 
         /* --- 侧边菜单 --- */
-        .nav-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 300px;
-            height: 100vh;
-            height: 100dvh;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 80px 25px;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.05);
-            transform: translateX(-100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1001;
-            border-radius: 0 20px 20px 0;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
         .nav-menu.active { transform: translateX(0); }
         .nav-menu ul { list-style: none; }
-        .nav-menu li { margin: 15px 0; }
-        .nav-menu a {
-            text-decoration: none; color: var(--text-main);
-            font-size: 1rem; transition: var(--transition);
-            display: flex; align-items: center; gap: 8px;
-        }
         .nav-menu a:hover { color: var(--primary-color); transform: translateX(5px); }
 
-        .menu-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .menu-section h4 { font-size: 0.9rem; color: var(--primary-strong); margin-bottom: 10px; }
-        .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { font-size: 0.75rem; color: #999; display: block; margin-bottom: 4px; }
         .input-group input {
             width: 100%; padding: 8px; border: 1px solid #ddd;
             border-radius: 8px; font-size: 0.85rem;
         }
-        .apply-btn {
-            width: 100%; padding: 10px; background: var(--primary-color);
-            border: none; border-radius: 8px; color: white; cursor: pointer;
-            font-weight: bold;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-        .apply-btn:active { opacity: 0.8; }
 
         /* --- 增强版音乐播放器 --- */
-        .music-player {
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 20px;
-            border: 1px solid rgba(var(--primary-rgb), 0.3);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            box-shadow: var(--shadow);
-        }
-        .music-info {
-            font-size: 0.85rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: var(--text-main);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .music-controls-main {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        .playback-btns { display: flex; gap: 15px; align-items: center; }
         .playback-btns button {
             background: none; border: none; cursor: pointer; font-size: 1.2rem;
             transition: transform 0.2s;
@@ -207,21 +146,6 @@
         .playback-btns button:hover { transform: scale(1.2); }
         .playback-btns button:active { transform: scale(0.9); }
 
-        /* 进度条样式 */
-        .progress-container {
-            width: 100%;
-            height: 6px;
-            background: #ddd;
-            border-radius: 3px;
-            margin-bottom: 10px;
-            overflow: hidden;
-            position: relative;
-        }
-        #progress-bar {
-            height: 100%;
-            background: var(--primary-color);
-            width: 0%;
-        }
         .time-display {
             font-size: 0.7rem;
             color: #888;
@@ -230,33 +154,8 @@
         }
 
         /* 音量和模式 */
-        .music-extra-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.7rem;
-        }
-        .volume-ctrl { display: flex; align-items: center; gap: 5px; }
-        .volume-ctrl input { width: 60px; }
-        .mode-btns { display: flex; gap: 10px; }
-        .mode-btns button {
-            background: #eee; border: none; padding: 2px 8px;
-            border-radius: 10px; cursor: pointer; font-size: 0.7rem;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-        .mode-btns button.active { background: var(--primary-color); color: white; }
 
         /* 播放列表 */
-        .playlist-container {
-            margin-top: 10px;
-            max-height: 120px;
-            overflow-y: auto;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.5);
-            padding: 5px;
-            font-size: 0.75rem;
-        }
         .playlist-item {
             padding: 4px 8px;
             border-radius: 5px;
@@ -351,9 +250,14 @@
         .engine-option[aria-selected="true"] { background: rgba(var(--primary-rgb), 0.30); }
         .engine-option img { width: 22px; height: 22px; display: block; pointer-events: none; }
 
-        /* 可拖动、平滑的播放进度条 */
+        /* 可拖动、平滑的播放进度条（已并入原「进度条样式」的全部属性） */
         .progress-container {
+            position: relative;
+            width: 100%;
             height: 8px;
+            margin-bottom: 10px;
+            background: #ddd;
+            border-radius: 3px;
             overflow: visible;
             cursor: pointer;
             touch-action: none;
@@ -362,6 +266,8 @@
         }
         #progress-bar {
             width: 0%;
+            height: 100%;
+            background: var(--primary-color);
             border-radius: 8px;
             pointer-events: none;
             will-change: width;
@@ -370,26 +276,6 @@
             content: "";
             position: absolute;
             inset: -8px 0;
-        }
-        .volume-ctrl { gap: 6px; }
-        #volumePercent { min-width: 32px; text-align: right; color: #777; }
-        .mode-btns { align-items: center; }
-        .mode-btns button {
-            min-height: 28px;
-            padding: 5px 10px;
-            border: 1px solid #ddd;
-            border-radius: 15px;
-            background: #fcfcfc;
-            color: var(--text-main);
-            font-size: 0.72rem;
-            line-height: 1;
-            white-space: nowrap;
-            transition: background .2s, border-color .2s;
-        }
-        .mode-btns button.active {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
         }
         .lyrics-panel {
             display: none;
@@ -414,45 +300,35 @@
             letter-spacing: 0.02em;
         }
         .lyrics-panel .lyric-line.active { color: var(--primary-strong); font-weight: 700; transform: scale(1.02); }
-        .lyrics-tools { display: flex; gap: 6px; margin-top: 6px; }
-        .lyrics-tools button {
-            flex: 1; border: 1px solid #eee; border-radius: 8px;
-            padding: 5px; background: rgba(255,255,255,.75);
-            color: #777; font-size: .7rem; cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
         .simple-mode-toggle {
             position: fixed; top: 74px; right: 18px; z-index: 1003;
             border: 1px solid rgba(var(--primary-rgb),.65); border-radius: 18px;
             padding: 7px 12px; background: rgba(255,255,255,.88);
             color: #777; box-shadow: 0 3px 12px rgba(0,0,0,.08);
-            cursor: pointer; opacity: 0; visibility: hidden;
-            transform: translateY(-4px); transition: opacity .2s, transform .2s, visibility .2s;
+            cursor: pointer;
+            /* 透明但可悬停/可点击：不再用 100x124 的透明热区去挡右上角的点击 */
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity .2s, transform .2s;
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-size: .78rem;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
-        .simple-mode-hotspot {
-            position: fixed; top: 0; right: 0; width: 100px; height: 124px; z-index: 1002;
-            pointer-events: auto;
-        }
-        .simple-mode-hotspot:hover + .simple-mode-toggle,
         .simple-mode-toggle:hover,
         .simple-mode-toggle:focus-visible {
-            opacity: 1; visibility: visible; transform: translateY(0);
+            opacity: 1; transform: translateY(0);
         }
-        body.simple-mode .simple-mode-toggle { opacity: .55; }
-        .opacity-ctrl-btn {
-            width: 40px !important; height: 40px !important;
-            font-size: 1.15rem !important; border-width: 1px !important;
+        body.simple-mode .simple-mode-toggle { opacity: .5; }
+        /* 触屏没有悬停，常驻显示，否则用户根本找不到入口 */
+        @media (hover: none) {
+            .simple-mode-toggle { opacity: .7; transform: none; }
+            body.simple-mode .simple-mode-toggle { opacity: .9; }
         }
-        .slider-container { padding: 14px !important; border-radius: 16px !important; }
-
         /* --- 网格布局 --- */
         .nav-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-auto-rows: 180px;
             gap: 25px;
         }
         .nav-card {
@@ -470,125 +346,91 @@
         .nav-card:hover { transform: translateY(-8px) rotate(2deg); border: 2px solid var(--primary-color); }
         .card-icon { font-size: 40px; margin-bottom: 15px; }
         .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 8px; }
-        .card-desc { font-size: 0.85rem; color: var(--text-sub); }
-
-        /* --- 透明度控制（移动端修复） --- */
-        .opacity-ctrl-btn {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 55px; height: 55px; background: white;
-            border-radius: 50%; display: flex; align-items: center;
-            justify-content: center; font-size: 1.8rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            cursor: pointer; z-index: 1000; border: 2px solid var(--primary-color);
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            pointer-events: auto;
-            min-width: 44px;
-            min-height: 44px;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .opacity-ctrl-btn:active { transform: scale(0.92); }
-        .slider-container {
-            position: fixed; bottom: 90px; right: 20px;
-            background: white; padding: 20px; border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            display: none; flex-direction: column; align-items: center;
-            gap: 12px; z-index: 1000;
-            -webkit-tap-highlight-color: transparent;
-            pointer-events: auto;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        .slider-container.show { display: flex; }
-
-        /* 自定义滑块样式，移动端友好 */
-        .slider-container input[type="range"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 160px;
-            height: 8px;
-            background: #eee;
-            border-radius: 6px;
-            outline: none;
-            margin: 0;
-            touch-action: none;
-        }
-        .slider-container input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            border: 2px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            cursor: pointer;
-            touch-action: none;
-        }
-        .slider-container input[type="range"]::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            border: 2px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            cursor: pointer;
-            touch-action: none;
+        .card-desc {
+            font-size: 0.85rem; color: var(--text-sub);
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .hidden-grid { display: none !important; }
         #footer { transition: opacity 0.3s; }
 
         @media (max-width: 768px) {
-            .nav-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
             .nav-menu { width: 85%; }
-        }
-        @media (max-width: 480px) {
-            .nav-grid { grid-template-columns: 1fr; }
         }
 
         /* 第二轮：收紧侧栏布局，避免循环按钮溢出 */
         .nav-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
             width: min(310px, 88vw);
+            height: 100vh;
+            height: 100dvh;
             padding: 68px 16px 22px;
             border-radius: 0 18px 18px 0;
-            background: rgba(255,255,255,.92);
+            background: rgba(255, 255, 255, var(--menu-alpha, .92));
             box-shadow: 8px 0 28px rgba(70,45,45,.09);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            -webkit-overflow-scrolling: touch;
         }
         .nav-menu > h3 {
             font-size: 1.05rem;
             margin-bottom: 12px !important;
         }
         .nav-menu li { margin: 10px 0; }
-        .nav-menu a { font-size: .92rem; }
+        .nav-menu a {
+            text-decoration: none; color: var(--text-main);
+            font-size: .92rem; transition: var(--transition);
+            display: flex; align-items: center; gap: 8px;
+        }
         .menu-section {
             margin-top: 18px;
             padding-top: 14px;
             border-top: 1px solid rgba(var(--primary-rgb),.25);
         }
-        .menu-section h4 { margin-bottom: 8px; }
-        .input-group { margin-bottom: 9px; }
+        .menu-section h4 { font-size: 0.9rem; color: var(--primary-strong); margin-bottom: 8px; }
+        .input-group { margin-bottom: 9px; text-align: left; }
         .music-player {
-            padding: 11px;
             margin-top: 12px;
-            border-radius: 16px;
+            padding: 11px;
             background: rgba(255,248,248,.82);
-            border-color: rgba(var(--primary-rgb),.25);
+            border: 1px solid rgba(var(--primary-rgb),.25);
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             box-shadow: 0 5px 16px rgba(90,60,60,.06);
             min-width: 0;
             width: 100%;
         }
-        .music-info { font-size: .8rem; margin-bottom: 8px; }
+        .music-info {
+            font-size: .8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .music-controls-main {
             display: flex;
             flex-direction: column;
             align-items: stretch;
+            justify-content: space-between;
             gap: 8px;
             margin: 8px 0;
             min-width: 0;
         }
         .playback-btns {
+            display: flex;
+            align-items: center;
             justify-content: center;
             gap: 22px;
         }
@@ -600,8 +442,11 @@
             align-items: center;
             gap: 8px;
             min-width: 0;
+            font-size: 0.7rem;
         }
         .volume-ctrl {
+            display: flex;
+            align-items: center;
             flex: 1 1 125px;
             min-width: 0;
             gap: 5px;
@@ -612,9 +457,10 @@
             flex: 1 1 auto;
             -webkit-appearance: none;
         }
-        #volumePercent { min-width: 30px; font-size: .68rem; }
+        #volumePercent { min-width: 30px; font-size: .68rem; text-align: right; color: #777; }
         .mode-btns {
             display: flex;
+            align-items: center;
             flex: 0 0 auto;
             gap: 4px;
             max-width: 100%;
@@ -622,26 +468,54 @@
         .mode-btns button {
             padding: 5px 7px;
             min-height: 26px;
-            font-size: .66rem;
-            border-radius: 13px;
             max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 13px;
+            background: #fcfcfc;
+            color: var(--text-main);
+            font-size: .66rem;
+            line-height: 1;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .mode-btns button.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
         }
         .playlist-container {
-            max-height: 92px;
             margin-top: 8px;
-            background: rgba(255,255,255,.65);
-        }
-        .lyrics-tools { gap: 5px; }
-        .lyrics-tools button { font-size: .66rem; padding: 6px 4px; }
-        .apply-btn {
+            max-height: 92px;
+            overflow-y: auto;
             border-radius: 10px;
+            background: rgba(255,255,255,.65);
+            padding: 5px;
+            font-size: 0.75rem;
+        }
+        .lyrics-tools { display: flex; gap: 5px; margin-top: 6px; }
+        .lyrics-tools button {
+            flex: 1; border: 1px solid #eee; border-radius: 8px;
+            padding: 6px 4px; background: rgba(255,255,255,.75);
+            color: #777; font-size: .66rem; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        .apply-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
             font-weight: 600;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
-        .opacity-ctrl-btn {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 1rem !important;
-        }
+        .apply-btn:active { opacity: 0.8; }
         @media (max-width: 360px) {
             .nav-menu { padding-left: 12px; padding-right: 12px; }
             .music-extra-controls { justify-content: center; }
@@ -655,19 +529,6 @@
                 min-width: 52px;
                 min-height: 52px;
                 padding: 14px;
-            }
-            .opacity-ctrl-btn {
-                width: 52px !important;
-                height: 52px !important;
-                font-size: 1.4rem !important;
-            }
-            .slider-container input[type="range"] {
-                width: 180px;
-                height: 10px;
-            }
-            .slider-container input[type="range"]::-webkit-slider-thumb {
-                width: 28px;
-                height: 28px;
             }
         }
 
@@ -689,7 +550,6 @@
             cursor: pointer;
         }
         .menu-gear:hover { background: rgba(var(--primary-rgb), .34); }
-        .nav-menu { display: flex; flex-direction: column; overflow: hidden; }
         .menu-main { display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
         .menu-main[hidden] { display: none; }
         .menu-cat {
@@ -790,7 +650,6 @@
 
         .menu-hint { margin-top: 9px; font-size: 0.7rem; line-height: 1.6; color: #b3a5a5; }
 
-        .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .switch-row > span { font-size: 0.85rem; color: var(--text-main); }
         .switch-btn {
             position: relative;
@@ -846,9 +705,7 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 12px;
             }
-            .nav-card { padding: 18px 10px; border-radius: 18px; }
-            .card-icon { font-size: 30px; margin-bottom: 8px; }
-            .card-title { font-size: 0.98rem; margin-bottom: 4px; }
+            .nav-card { border-radius: 18px; }
             .card-desc { font-size: 0.72rem; line-height: 1.35; }
         }
         @media (max-width: 360px) {
@@ -919,6 +776,7 @@
             height: 6px; border-radius: 3px;
             background: #eee; overflow: hidden;
             cursor: pointer;
+            touch-action: none;
         }
         .lw-progress > div {
             height: 100%; width: 0;
@@ -1054,7 +912,9 @@
         }
 
         /* --- 卡片系统：尺寸 / 编辑 / 拖拽 --- */
-        .nav-grid { grid-auto-rows: 180px; }
+        /* 这段必须留在 @media (max-width:480px) 之后，不能并到上面第 329 行那段：
+           本段的 padding:0 需要压过移动端的 padding 覆盖（那条已确认是死声明，已删），
+           若并到前面，本段若带 border-radius 就会反过来盖掉移动端的 18px。 */
         .nav-card { padding: 0; height: 100%; position: relative; overflow: hidden; }
         .card-link {
             display: flex; flex-direction: column;
@@ -1069,10 +929,6 @@
         .size-md .card-title { font-size: 1.35rem; }
         .size-lg .card-title { font-size: 1.5rem; }
         .size-lg .card-desc { font-size: .95rem; }
-        .card-desc {
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
         .card-icon-img {
             width: 56px; height: 56px;
             margin: 0 auto 12px;
@@ -1171,8 +1027,13 @@
         .ghost-btn:disabled { opacity: .5; cursor: not-allowed; }
 
         [hidden] { display: none !important; }
-        .nav-menu { background: rgba(255, 255, 255, var(--menu-alpha, .92)); }
-        .switch-row { margin: 8px 0; }
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 8px 0;
+        }
         .range-row { margin: 10px 0; }
         .collapse-head {
             display: flex; justify-content: space-between; align-items: center;
@@ -1253,13 +1114,16 @@
         .hidden-chip:hover { background: rgba(var(--primary-rgb), .14); }
 
         @media (max-width: 768px) {
-            .nav-grid { grid-auto-rows: 160px; }
+            .nav-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                grid-auto-rows: 160px;
+            }
         }
         @media (max-width: 480px) {
             .nav-grid { grid-auto-rows: 150px; }
             .card-link { padding: 16px 10px; }
             .card-icon { font-size: 28px; margin-bottom: 8px; }
-            .card-title { font-size: .98rem; }
+            .card-title { font-size: .98rem; margin-bottom: 4px; }
             .size-lg .card-icon { font-size: 46px; }
             .card-tools { top: 6px; right: 6px; gap: 3px; }
             .card-tool { width: 26px; height: 26px; font-size: .74rem; }
@@ -1271,7 +1135,6 @@
     <video id="bg-video" autoplay muted loop playsinline></video>
     <div class="overlay" id="overlay"></div>
 
-    <div class="simple-mode-hotspot" aria-hidden="true"></div>
     <button class="simple-mode-toggle" id="simpleModeToggle" onclick="toggleSimpleMode()" aria-label="切换简洁模式">简洁模式</button>
 
     <!-- 汉堡菜单按钮 -->
@@ -1610,6 +1473,7 @@
         const folderB = [];   // 竖屏图还没加，空数组时自动回退到 folderA
 
         const BG_MODE_KEY = 'bgMode';
+        let currentBgObjectUrl = null;   // 当前背景用的 blob URL，换背景时要释放
         const BG_COLOR_KEY = 'bgColor';
         const BG_IMAGE_KEY = 'bgImage';
         const THEME_KEY = 'themeId';
@@ -1751,9 +1615,11 @@
         const UI_PREFS_KEY = 'uiPrefs';
         const uiPrefs = {
             menuAlpha: 0.92,
+            bgOpacity: 0.8,
             showMusic: true,
             showSimple: true,
-            autoHideInSimple: false
+            autoHideInSimple: false,
+            simpleMode: false
         };
 
         function loadUiPrefs() {
@@ -1761,7 +1627,8 @@
                 const saved = JSON.parse(localStorage.getItem(UI_PREFS_KEY) || 'null');
                 if (!saved) return;
                 if (Number.isFinite(saved.menuAlpha)) uiPrefs.menuAlpha = Math.min(1, Math.max(0.2, saved.menuAlpha));
-                ['showMusic', 'showSimple', 'autoHideInSimple'].forEach(key => {
+                if (Number.isFinite(saved.bgOpacity)) uiPrefs.bgOpacity = Math.min(0.9, Math.max(0, saved.bgOpacity));
+                ['showMusic', 'showSimple', 'autoHideInSimple', 'simpleMode'].forEach(key => {
                     if (typeof saved[key] === 'boolean') uiPrefs[key] = saved[key];
                 });
             } catch (error) {}
@@ -1792,9 +1659,6 @@
             if (simpleBtn) simpleBtn.hidden = !uiPrefs.showSimple;
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn) menuBtn.classList.toggle('auto-hidden', autoHidden);
-            const hotspot = document.querySelector('.simple-mode-hotspot');
-            if (hotspot) hotspot.hidden = !uiPrefs.showSimple && !uiPrefs.autoHideInSimple;
-
 
             const states = {
                 showMusicBtn: uiPrefs.showMusic,
@@ -1836,6 +1700,12 @@
                 });
             }
             applyUiPrefs();
+
+            // 背景透明度、简洁模式以前刷新就丢，这里按存下来的值恢复
+            const bgSlider = document.getElementById('opacitySlider');
+            if (bgSlider) bgSlider.value = String(uiPrefs.bgOpacity);
+            applyOpacity(uiPrefs.bgOpacity);
+            applySimpleMode(uiPrefs.simpleMode);
         }
 
         function initAntiCrawl() {
@@ -1933,19 +1803,26 @@
         });
 
 
-        /** 3. 简洁模式 **/
-        function toggleSimpleMode() {
+        /** 3. 简洁模式（状态会持久化，刷新后保持） **/
+        function applySimpleMode(enabled) {
             const grid = document.getElementById('mainGrid');
             const footer = document.getElementById('footer');
-            const enabled = grid.classList.toggle('hidden-grid');
-            document.body.classList.toggle('simple-mode', enabled);
-            footer.style.opacity = enabled ? "0" : "1";
-            footer.style.visibility = enabled ? "hidden" : "visible";
+            const on = Boolean(enabled);
+            grid.classList.toggle('hidden-grid', on);
+            document.body.classList.toggle('simple-mode', on);
+            footer.style.opacity = on ? '0' : '1';
+            footer.style.visibility = on ? 'hidden' : 'visible';
             const switchBtn = document.getElementById('simpleModeBtn');
-            switchBtn.setAttribute('aria-checked', String(enabled));
-            switchBtn.classList.toggle('on', enabled);
-            document.getElementById('simpleModeToggle').innerText = enabled ? "退出简洁模式" : "简洁模式";
+            switchBtn.setAttribute('aria-checked', String(on));
+            switchBtn.classList.toggle('on', on);
+            document.getElementById('simpleModeToggle').textContent = on ? '退出简洁模式' : '简洁模式';
+            uiPrefs.simpleMode = on;
             applyUiPrefs();
+        }
+
+        function toggleSimpleMode() {
+            applySimpleMode(!document.body.classList.contains('simple-mode'));
+            saveUiPrefs();
         }
 
         /** 4. 搜索引擎（C 文件夹图标切换） **/
@@ -2030,7 +1907,7 @@
                 const query = document.getElementById('searchInput').value.trim();
                 if (query !== "") {
                     const buildUrl = ENGINE_URLS[currentEngine] || ENGINE_URLS.bing;
-                    window.open(buildUrl(query), '_blank');
+                    window.open(buildUrl(query), '_blank', 'noopener');
                 }
             }
         }
@@ -2351,6 +2228,8 @@
             editingCardId = id || null;
             const menu = document.getElementById('navMenu');
             if (!menu.classList.contains('active')) toggleMenu(true);
+            // toggleMenu 会回到主菜单，这里必须再切到「卡片」面板，否则表单被藏在子面板里看不见
+            openMenuPanel('cards');
             const card = id ? cards.find(item => item.id === id) : null;
             document.getElementById('cardFormTitle').textContent = card ? '编辑卡片' : '添加卡片';
             document.getElementById('cardTitle').value = card ? card.title : '';
@@ -2929,17 +2808,47 @@
             await remountMascots();
         }
 
-        function scheduleRandomHug() {
+        /* 抱抱的"靠近"判定：两只脚底中心的水平差/高度差都在门限内，才算贴在一起 */
+        const HUG_NEAR_PX = 200;
+        const HUG_NEAR_HEIGHT_PX = 140;
+        const HUG_NEAR_POLL_MS = 1500;
+        const HUG_NEAR_PATIENCE_MS = 30000;
+
+        /** 两只桌宠脚底中心的间距；不足两只时返回 null。 */
+        function hugGap() {
+            if (mascotInstances.length < 2) return null;
+            const first = mascotInstances[0].instance.engine.position();
+            const last = mascotInstances[mascotInstances.length - 1].instance.engine.position();
+            return { dx: Math.abs(first.x - last.x), dy: Math.abs(first.y - last.y) };
+        }
+
+        /** 只有靠在一起时才允许抱抱。 */
+        function hugIsNear() {
+            const gap = hugGap();
+            return Boolean(gap) && gap.dx <= HUG_NEAR_PX && gap.dy <= HUG_NEAR_HEIGHT_PX;
+        }
+
+        function scheduleRandomHug(delayMs, waitedMs) {
             window.clearTimeout(hugTimer);
+            hugTimer = 0;
             if (mascotInstances.length < 2 || hugPlaying) return;
-            const delay = 20000 + Math.random() * 25000;
-            hugTimer = window.setTimeout(async () => {
-                if (mascotInstances.length >= 2 && !hugPlaying && Math.random() < 0.55) {
-                    await playHug(false);
-                } else {
-                    scheduleRandomHug();
-                }
-            }, delay);
+            const delay = typeof delayMs === 'number' ? delayMs : 20000 + Math.random() * 25000;
+            const waited = waitedMs || 0;
+            hugTimer = window.setTimeout(() => { tryRandomHug(waited); }, delay);
+        }
+
+        async function tryRandomHug(waitedMs) {
+            hugTimer = 0;
+            if (mascotInstances.length < 2 || hugPlaying) return;
+            const waited = waitedMs || 0;
+            if (!hugIsNear()) {
+                // 没贴在一起：再给一阵子让它们自己走到一块，等太久就退回常规间隔
+                if (waited < HUG_NEAR_PATIENCE_MS) scheduleRandomHug(HUG_NEAR_POLL_MS, waited + HUG_NEAR_POLL_MS);
+                else scheduleRandomHug();
+                return;
+            }
+            if (Math.random() < 0.55) await playHug(false);
+            else scheduleRandomHug();
         }
 
         async function playHug(manual) {
@@ -3031,8 +2940,17 @@
             return value;
         }
 
+        // 站内目录基址：保留 pathname，换成子路径部署时不会被带到域名根
+        function siteBase() {
+            const url = new URL(location.href);
+            if (!url.pathname.endsWith('/')) {
+                url.pathname = url.pathname.replace(/[^/]*$/, '');
+            }
+            return `${url.origin}${url.pathname}`;
+        }
+
         function bustUrl(kind) {
-            return `${location.origin}${'/'.repeat(nextBustSlashes(kind))}`;
+            return `${siteBase()}${'/'.repeat(nextBustSlashes(kind))}`;
         }
 
         function hardReload() {
@@ -3054,6 +2972,18 @@
             const now = Date.now();
             if (!force && now - lastUpdateCheck < 60 * 1000) return;
             lastUpdateCheck = now;
+
+            // 优先读同目录的 version.json（几十字节）；没有这个文件才退回拉整页 HTML
+            try {
+                const small = await fetch(`${siteBase()}version.json`, { cache: 'no-store' });
+                if (small.ok) {
+                    const data = await small.json().catch(() => null);
+                    const remote = data && typeof data.version === 'string' ? data.version.trim() : '';
+                    if (remote && APP_VERSION && remote !== APP_VERSION) showUpdateBanner();
+                    return;
+                }
+            } catch (error) {}
+
             try {
                 const response = await fetch(bustUrl('check'), { cache: 'no-store' });
                 if (!response.ok) return;
@@ -3073,8 +3003,8 @@
                     clean.searchParams.delete('v');
                     changed = true;
                 }
-                if (/^\/+$/.test(clean.pathname) && clean.pathname !== '/') {
-                    clean.pathname = '/';
+                if (/\/{2,}$/.test(clean.pathname)) {
+                    clean.pathname = clean.pathname.replace(/\/+$/, '/');
                     changed = true;
                 }
                 if (changed) {
@@ -3107,6 +3037,8 @@
 
         slider.addEventListener('change', function() {
             applyOpacity(this.value);
+            uiPrefs.bgOpacity = Math.max(0, Math.min(0.9, Number(this.value)));
+            saveUiPrefs();
         });
 
         // 移动端触摸事件兼容
@@ -3158,7 +3090,12 @@
 
             const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|ogv|mov|m4v)$/i.test(file.name);
             const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|avif|bmp)$/i.test(file.name);
-            applyCustomBackground(URL.createObjectURL(file), color, isVideo);
+            if (currentBgObjectUrl) {
+                URL.revokeObjectURL(currentBgObjectUrl);
+                currentBgObjectUrl = null;
+            }
+            currentBgObjectUrl = URL.createObjectURL(file);
+            applyCustomBackground(currentBgObjectUrl, color, isVideo);
 
             let savedImage = null;
             if (isImage && file.size <= 1024 * 1024) {
@@ -3177,6 +3114,10 @@
 
         function restoreRandomBackground() {
             saveBackgroundState(null);
+            if (currentBgObjectUrl) {
+                URL.revokeObjectURL(currentBgObjectUrl);
+                currentBgObjectUrl = null;
+            }
             document.body.style.backgroundImage = 'none';
             document.getElementById('bgFileInput').value = '';
             document.getElementById('bgFileName').textContent = '选择图片或视频';
@@ -3374,6 +3315,13 @@
 
         function prevTrack() {
             if (!playlist.length) return;
+            if (isShuffle && playlist.length > 1) {
+                let prevIndex;
+                do { prevIndex = Math.floor(Math.random() * playlist.length); }
+                while (prevIndex === currentTrackIndex);
+                loadTrack(prevIndex);
+                return;
+            }
             loadTrack((currentTrackIndex - 1 + playlist.length) % playlist.length);
         }
 
@@ -3431,12 +3379,37 @@
         progressContainer.addEventListener('pointercancel', () => { isSeeking = false; });
         const lwProgress = document.getElementById('lwProgress');
         if (lwProgress) {
-            lwProgress.addEventListener('pointerdown', (event) => {
+            let lwSeeking = false;
+            const seekWidget = (event) => {
                 if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
                 const rect = lwProgress.getBoundingClientRect();
                 const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
                 audio.currentTime = ratio * audio.duration;
                 updateWidgetPlayer();
+            };
+            lwProgress.addEventListener('pointerdown', (event) => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                lwSeeking = true;
+                lwProgress.setPointerCapture?.(event.pointerId);
+                seekWidget(event);
+            });
+            lwProgress.addEventListener('pointermove', (event) => {
+                if (lwSeeking) seekWidget(event);
+            });
+            lwProgress.addEventListener('pointerup', (event) => {
+                if (lwSeeking) seekWidget(event);
+                lwSeeking = false;
+            });
+            lwProgress.addEventListener('pointercancel', () => { lwSeeking = false; });
+            // role=slider 应该能用键盘调
+            lwProgress.addEventListener('keydown', (event) => {
+                if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+                if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    audio.currentTime = Math.max(0, Math.min(audio.duration,
+                        audio.currentTime + (event.key === 'ArrowRight' ? 5 : -5)));
+                    updateWidgetPlayer();
+                }
             });
         }
 
