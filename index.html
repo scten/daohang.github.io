@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-2053">
+    <meta name="app-version" content="20261025-2057">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -3051,6 +3051,10 @@
         let lastUpdateCheck = 0;
         let updateFound = false;
 
+        /** 多久问一次服务端有没有新版本 */
+        const UPDATE_CHECK_MS = 5 * 60 * 1000;
+        let updateCheckTimer = 0;
+
         const CACHE_BUST_KEY = 'cacheBustCounter';
         const CACHE_CHECK_KEY = 'cacheBustCheck';
 
@@ -3186,10 +3190,16 @@
             } catch (error) {}
 
             window.addEventListener('load', () => window.setTimeout(() => checkForUpdate(true), 2500));
+
+            // 标签页切回来时，如果已经超过 5 分钟没查过，立刻补一次
             document.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') checkForUpdate(false);
+                if (document.visibilityState !== 'visible') return;
+                if (Date.now() - lastUpdateCheck > UPDATE_CHECK_MS) checkForUpdate(true);
             });
-            window.setInterval(() => checkForUpdate(false), 5 * 60 * 1000);
+
+            // 每 5 分钟主动向服务端要一次版本信息（force 跳过 60 秒节流，保证真的发请求）
+            if (updateCheckTimer) window.clearInterval(updateCheckTimer);
+            updateCheckTimer = window.setInterval(() => checkForUpdate(true), UPDATE_CHECK_MS);
         }
 
         /** 5. 背景透明度（已放进「个性化 → 背景」面板） **/
