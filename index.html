@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-0870">
+    <meta name="app-version" content="20261025-0880">
     <title>我的灵感导航站 ✨</title>
     <style>
         /* --- 基础样式定义 --- */
@@ -1190,6 +1190,15 @@
         }
         .range-row input[type="range"] { width: 100%; }
 
+        .lyrics-fab.auto-hidden {
+            opacity: 0;
+            transition: opacity .2s ease, transform .2s ease;
+        }
+        .lyrics-fab.auto-hidden:hover,
+        .lyrics-fab.auto-hidden:focus-visible {
+            opacity: 1;
+        }
+
         body.anti-crawl { user-select: none; -webkit-user-select: none; }
         body.anti-crawl input,
         body.anti-crawl textarea,
@@ -1370,9 +1379,9 @@
 
                 <div class="music-controls-main">
                     <div class="playback-btns">
-                        <button onclick="prevTrack()"><<</button>
-                        <button id="playBtn" onclick="togglePlay()">▶️</button>
-                        <button onclick="nextTrack()">>></button>
+                        <button type="button" onclick="prevTrack()" aria-label="上一首" title="上一首">⏮</button>
+                        <button type="button" id="playBtn" onclick="togglePlay()" aria-label="播放或暂停">▶️</button>
+                        <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">⏭</button>
                     </div>
                     <div class="music-extra-controls">
                         <div class="volume-ctrl">
@@ -1766,12 +1775,14 @@
             const autoHidden = inSimple && uiPrefs.autoHideInSimple;
 
             const music = document.getElementById('lyricsFab');
-            if (music) music.hidden = autoHidden || !uiPrefs.showMusic;
-
+            if (music) {
+                music.hidden = !uiPrefs.showMusic;
+                music.classList.toggle('auto-hidden', autoHidden && uiPrefs.showMusic);
+            }
             const simpleBtn = document.getElementById('simpleModeToggle');
-            if (simpleBtn) simpleBtn.hidden = autoHidden || !uiPrefs.showSimple;
+            if (simpleBtn) simpleBtn.hidden = !uiPrefs.showSimple;
             const hotspot = document.querySelector('.simple-mode-hotspot');
-            if (hotspot) hotspot.hidden = autoHidden || !uiPrefs.showSimple;
+            if (hotspot) hotspot.hidden = !uiPrefs.showSimple && !uiPrefs.autoHideInSimple;
 
 
             const states = {
