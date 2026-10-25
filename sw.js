@@ -7,7 +7,7 @@
      · 图片、字体等：缓存优先，用到就存
      · A/ B/ 里的大背景图、跨域请求（别家 favicon）不碰，交给浏览器自己缓存
 */
-const VERSION = '20261026-0454';
+const VERSION = '20261026-0527';
 const CORE_CACHE = `mylinks-core-${VERSION}`;
 const RUNTIME_CACHE = `mylinks-runtime-${VERSION}`;
 const MANIFEST_URL = 'precache-manifest.json';

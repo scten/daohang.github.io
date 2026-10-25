@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0454">
+    <meta name="app-version" content="20261026-0527">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -974,6 +974,103 @@
         body.editing-cards .nav-card { border: 1px dashed rgba(var(--primary-rgb), .55); }
         body.editing-cards .nav-card:hover { transform: none; }
         body.editing-cards .card-link { pointer-events: none; }
+
+        /* --- 文件夹卡片：把多张卡片收进一张卡 --- */
+        body.editing-cards .folder-card .card-link { pointer-events: auto; }
+        .folder-link {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; width: 100%; height: 100%; padding: 18px 12px;
+            border: none; background: none; font-family: inherit; color: inherit; cursor: pointer;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .folder-preview {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px;
+            width: 62px; height: 62px; padding: 5px; border-radius: 16px;
+            background: rgba(var(--primary-rgb), .14);
+        }
+        .folder-cell {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 6px; background: rgba(255, 255, 255, .75);
+            font-size: 13px; line-height: 1; overflow: hidden;
+        }
+        .folder-cell.empty { background: rgba(255, 255, 255, .32); }
+        .folder-cell img { width: 100%; height: 100%; object-fit: cover; }
+        .folder-count { font-size: .7rem; color: var(--text-sub); }
+        .size-md .folder-preview { width: 78px; height: 78px; }
+        .size-lg .folder-preview { width: 104px; height: 104px; }
+        .size-lg .folder-cell { font-size: 17px; }
+
+        /* 文件夹展开层 */
+        .folder-overlay {
+            position: fixed; inset: 0; z-index: 90;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px; background: rgba(48, 36, 36, .4);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            animation: fadeIn .18s ease;
+        }
+        .folder-overlay[hidden] { display: none !important; }
+        body.folder-open { overflow: hidden; }
+        .folder-panel {
+            width: min(540px, 100%); max-height: min(78vh, 640px);
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 16px; border-radius: 22px;
+            background: rgba(255, 255, 255, .97);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, .22);
+        }
+        .folder-head { display: flex; align-items: center; gap: 8px; }
+        .folder-head strong {
+            flex: 1; font-size: .95rem; color: var(--primary-strong);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .folder-head .folder-icon { font-size: 1.1rem; line-height: 1; }
+        .folder-nav {
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(var(--primary-rgb), .4); border-radius: 50%;
+            background: #fff; color: var(--primary-strong); font-size: .95rem; line-height: 1;
+            cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .folder-nav[hidden] { display: none !important; }
+        .folder-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+            gap: 10px; overflow-y: auto; padding: 4px 2px 6px;
+        }
+        .folder-app {
+            position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px;
+            padding: 10px 4px 8px; border: none; border-radius: 14px;
+            background: rgba(var(--primary-rgb), .07); color: var(--text-main);
+            font-family: inherit; font-size: .7rem; cursor: pointer;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .folder-app:hover { background: rgba(var(--primary-rgb), .16); }
+        .folder-app-icon {
+            width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: #fff; font-size: 20px; line-height: 1; overflow: hidden;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, .08);
+        }
+        .folder-app-icon img { width: 100%; height: 100%; object-fit: cover; }
+        .folder-app-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .folder-app-tools { position: absolute; top: -5px; right: -3px; display: flex; gap: 3px; }
+        .folder-app-tools button {
+            width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+            padding: 0; border: 1px solid rgba(var(--primary-rgb), .5); border-radius: 50%;
+            background: #fff; color: var(--text-sub); font-size: .62rem; line-height: 1; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .folder-empty { grid-column: 1 / -1; font-size: .78rem; color: var(--text-sub); text-align: center; padding: 14px 6px; }
+        .folder-picker-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; padding: 2px; }
+        .folder-picker-row {
+            display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 11px;
+            border: 1px solid rgba(var(--primary-rgb), .28); border-radius: 12px;
+            background: #fff; color: var(--text-main); font-family: inherit; font-size: .8rem;
+            text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .folder-picker-row:hover { background: rgba(var(--primary-rgb), .12); }
+        .folder-picker-row .path { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .folder-picker-row .count { font-size: .68rem; color: var(--text-sub); }
+        @media (max-width: 480px) {
+            .folder-panel { max-height: 82vh; border-radius: 18px; padding: 13px; }
+            .folder-preview { width: 52px; height: 52px; }
+        }
         .card-tool {
             width: 26px; height: 26px; padding: 0;
             display: flex; align-items: center; justify-content: center;
@@ -1250,6 +1347,7 @@
             <div class="btn-row">
                 <button type="button" class="apply-btn edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">编辑模式</button>
                 <button type="button" class="ghost-btn" onclick="openCardForm()">＋ 添加</button>
+                <button type="button" class="ghost-btn" onclick="createFolder()">📁 文件夹</button>
             </div>
             <div class="card-form" id="cardForm" hidden>
                 <strong id="cardFormTitle" style="font-size:.8rem; color:var(--primary-strong);">添加卡片</strong>
@@ -1342,6 +1440,7 @@
                        style="display:none; margin-top:10px;" onchange="handleFolderSelect(this)">
                 <button type="button" class="ghost-btn"
                         onclick="document.getElementById('musicFolder').click()">📁 选择音乐文件夹</button>
+                <p class="menu-hint" id="musicSaveHint">选过的文件夹会存到本机：刷新、换版本后自动恢复，不用重选。要清掉它，用设置里的「清理用户数据」。</p>
             </div>
         </section>
 
@@ -1393,7 +1492,7 @@
             </div>
             <p class="menu-hint">
                 <strong>网页缓存</strong>：浏览器和 CDN 存下的页面、样式、脚本，清完重新下载，个人设置和卡片都保留；<br>
-                <strong>用户数据</strong>：本机保存的主题、背景、卡片、偏好，清完恢复默认（网页缓存不受影响）。
+                <strong>用户数据</strong>：本机保存的全部个人内容——主题、背景（含自定义图片 / 视频）、卡片与文件夹、界面偏好、导入的音乐和歌词，一次清完恢复默认（网页缓存不受影响）。
             </p>
 
             <div class="switch-row">
@@ -1560,6 +1659,8 @@
             'B/25.jpg', 'B/26.jpg', 'B/27.jpg', 'B/28.jpg', 'B/29.jpg', 'B/30.jpg'];
 
         const BG_MODE_KEY = 'bgMode';
+        const BG_FILE_KEY = 'bgFileId';          // 自定义背景文件在文件库里的 id
+        const BG_FILE_KIND_KEY = 'bgFileKind';   // image | video
         let currentBgObjectUrl = null;   // 当前背景用的 blob URL，换背景时要释放
         const BG_COLOR_KEY = 'bgColor';
         const BG_IMAGE_KEY = 'bgImage';
@@ -1778,33 +1879,56 @@
         function saveBackgroundState(state) {
             try {
                 if (!state) {
-                    [BG_MODE_KEY, BG_COLOR_KEY, BG_IMAGE_KEY, 'customBgUrl', 'customBgColor']
-                        .forEach(key => localStorage.removeItem(key));
+                    [BG_MODE_KEY, BG_COLOR_KEY, BG_IMAGE_KEY, 'customBgUrl', 'customBgColor',
+                        BG_FILE_KEY, BG_FILE_KIND_KEY].forEach(key => localStorage.removeItem(key));
                     return;
                 }
                 localStorage.setItem(BG_MODE_KEY, 'custom');
                 localStorage.setItem(BG_COLOR_KEY, state.color);
                 if (state.image) localStorage.setItem(BG_IMAGE_KEY, state.image);
                 else localStorage.removeItem(BG_IMAGE_KEY);
+                if (state.fileId) localStorage.setItem(BG_FILE_KEY, state.fileId);
+                else localStorage.removeItem(BG_FILE_KEY);
+                if (state.kind) localStorage.setItem(BG_FILE_KIND_KEY, state.kind);
+                else localStorage.removeItem(BG_FILE_KIND_KEY);
             } catch (error) {
                 // 存储写满时降级为“只记底色”
                 try { localStorage.removeItem(BG_IMAGE_KEY); } catch (ignored) {}
             }
         }
 
-        function restoreSavedBackground() {
+        async function restoreSavedBackground() {
             const mode = localStorage.getItem(BG_MODE_KEY);
             const color = localStorage.getItem(BG_COLOR_KEY) || currentTheme.bg;
             const image = localStorage.getItem(BG_IMAGE_KEY);
+            const fileId = localStorage.getItem(BG_FILE_KEY);
+            const kind = localStorage.getItem(BG_FILE_KIND_KEY) || 'image';
             updateBgColorValue(color);
             if (mode !== 'custom') return false;
+            if (fileId) {
+                // 先在底色上待着，文件从本机库读出来再换上，不至于白屏
+                applySolidBackground(color);
+                const record = await filesGet(fileId);
+                if (record && record.blob) {
+                    if (currentBgObjectUrl) URL.revokeObjectURL(currentBgObjectUrl);
+                    currentBgObjectUrl = URL.createObjectURL(record.blob);
+                    applyCustomBackground(currentBgObjectUrl, color, kind === 'video');
+                    const label = document.getElementById('bgFileName');
+                    if (label) label.textContent = record.name || '自定义背景';
+                    setBgHint(`已恢复上次用的${kind === 'video' ? '视频' : '图片'}背景：${record.name || ''}`);
+                    return true;
+                }
+                setBgHint('上次的背景文件已经不在了，先显示底色。重新选一张即可。');
+                return true;
+            }
             if (image) applyCustomBackground(image, color, false);
             else applySolidBackground(color);
             return true;
         }
 
-        window.addEventListener('load', () => {
-            if (!restoreSavedBackground()) setRandomBackground();
+        window.addEventListener('load', async () => {
+            const restored = await restoreSavedBackground();
+            if (!restored) setRandomBackground();
         });
 
         /** 2. 菜单与交互 **/
@@ -2270,20 +2394,9 @@
             let stored = null;
             try { stored = JSON.parse(localStorage.getItem(CARD_STORAGE_KEY) || 'null'); } catch (error) { stored = null; }
             if (Array.isArray(stored)) {
-                cards = stored
-                    .filter(item => item && item.title && item.url)
-                    .map(item => ({
-                        id: String(item.id || `c${Math.random().toString(36).slice(2, 8)}`),
-                        title: String(item.title),
-                        url: /^https?:\/\//i.test(String(item.url)) ? String(item.url) : `https://${String(item.url)}`,
-                        icon: String(item.icon || '🔗'),
-                        iconImage: String(item.iconImage || ''),
-                        desc: String(item.desc || ''),
-                        size: CARD_SIZES.includes(item.size) ? item.size : 'sm',
-                        hidden: Boolean(item.hidden)
-                    }));
+                cards = stored.map(normalizeCardItem).filter(Boolean);
             }
-            if (!cards.length) cards = DEFAULT_CARDS.map(item => ({ ...item }));
+            if (!cards.length) cards = DEFAULT_CARDS.map(normalizeCardItem).filter(Boolean);
         }
 
         function saveCards() {
@@ -2301,7 +2414,8 @@
             const buttons = [
                 ['drag', '⠿', '拖动排序'],
                 ['size', '⤢', `尺寸：${CARD_SIZE_NAMES[card.size]}，点击切换`],
-                ['edit', '✎', '编辑卡片'],
+                ['move', '📁', isFolder(card) ? '移到别的文件夹 / 移回主页' : '放进文件夹'],
+                ['edit', '✎', isFolder(card) ? '重命名文件夹' : '编辑卡片'],
                 ['hide', '🙈', '隐藏卡片']
             ];
             buttons.forEach(([action, label, title]) => {
@@ -2318,6 +2432,7 @@
         }
 
         function buildCard(card) {
+            if (isFolder(card)) return buildFolderCard(card);
             const el = document.createElement('div');
             el.className = `nav-card size-${card.size}`;
             el.dataset.id = card.id;
@@ -2430,12 +2545,14 @@
             btn.textContent = editMode ? '完成' : '编辑模式';
             document.getElementById('editDoneBtn').hidden = !editMode;
             renderCards();
-            setCardHint(editMode ? '拖动 ⠿ 排序，⤢ 换尺寸，✎ 编辑，🙈 隐藏。' : '编辑模式已关闭。');
+            if (folderStack.length) renderFolderContents();   // 展开着的文件夹也要跟着切换工具
+            setCardHint(editMode ? '拖动 ⠿ 排序，⤢ 换尺寸，📁 收进文件夹，✎ 编辑，🙈 隐藏。' : '编辑模式已关闭。');
             if (editMode) closeMenu();
         }
 
         function cycleCardSize(id) {
-            const card = cards.find(item => item.id === id);
+            const hit = findCardDeep(id);
+            const card = hit && hit.card;
             if (!card) return;
             const index = CARD_SIZES.indexOf(card.size);
             card.size = CARD_SIZES[(index + 1) % CARD_SIZES.length];
@@ -2445,7 +2562,8 @@
         }
 
         function hideCard(id) {
-            const card = cards.find(item => item.id === id);
+            const hit = findCardDeep(id);
+            const card = hit && hit.card;
             if (!card) return;
             card.hidden = true;
             saveCards();
@@ -2559,12 +2677,17 @@
             if (!menu.classList.contains('active')) toggleMenu(true);
             // toggleMenu 会回到主菜单，这里必须再切到「卡片」面板，否则表单被藏在子面板里看不见
             openMenuPanel('cards');
-            const card = id ? cards.find(item => item.id === id) : null;
-            document.getElementById('cardFormTitle').textContent = card ? '编辑卡片' : '添加卡片';
+            const hit = id ? findCardDeep(id) : null;
+            const card = hit ? hit.card : null;
+            cardFormIsFolder = !!card && isFolder(card);
+            document.getElementById('cardFormTitle').textContent =
+                card ? (cardFormIsFolder ? '编辑文件夹' : '编辑卡片') : '添加卡片';
             document.getElementById('cardTitle').value = card ? card.title : '';
-            document.getElementById('cardUrl').value = card ? card.url : '';
+            document.getElementById('cardUrl').value = card ? (card.url || '') : '';
+            document.getElementById('cardUrl').hidden = cardFormIsFolder;
             document.getElementById('cardIcon').value = card ? card.icon : '';
             document.getElementById('cardIconImage').value = card ? (card.iconImage || '') : '';
+            document.getElementById('cardIconImage').hidden = cardFormIsFolder;
             document.getElementById('cardDesc').value = card ? card.desc : '';
             document.getElementById('deleteCardBtn').hidden = !card;
             document.getElementById('cardForm').hidden = false;
@@ -2581,6 +2704,25 @@
         }
 
         function saveCardForm() {
+            if (cardFormIsFolder) {
+                const hit = editingCardId ? findCardDeep(editingCardId) : null;
+                const folder = hit && hit.card;
+                if (!folder) { closeCardForm(); return; }
+                const folderTitle = document.getElementById('cardTitle').value.trim();
+                const folderIcon = document.getElementById('cardIcon').value.trim();
+                if (!folderTitle) { setCardHint('给文件夹起个名字吧。'); return; }
+                Object.assign(folder, {
+                    title: folderTitle,
+                    icon: folderIcon || folder.icon || '📁',
+                    desc: document.getElementById('cardDesc').value.trim()
+                });
+                saveCards();
+                renderCards();
+                closeCardForm();
+                if (folderStack.length) renderFolderContents();
+                setCardHint(`已保存文件夹「${folderTitle}」。`);
+                return;
+            }
             const url = normalizeCardUrl(document.getElementById('cardUrl').value);
             // 名称没填就按网址自动补一个
             let title = document.getElementById('cardTitle').value.trim();
@@ -2595,13 +2737,13 @@
                 setCardHint('名称和网址都要填哦。');
                 return;
             }
-            if (editingCardId) {
-                const card = cards.find(item => item.id === editingCardId);
-                if (card) Object.assign(card, { title, url, icon, iconImage, desc });
+            const hit = editingCardId ? findCardDeep(editingCardId) : null;
+            if (hit) {
+                Object.assign(hit.card, { title, url, icon, iconImage, desc, type: 'link' });
             } else {
                 cards.push({
-                    id: `c${Date.now().toString(36)}`,
-                    title, url, icon, iconImage, desc, size: 'sm', hidden: false
+                    id: newCardId(), type: 'link',
+                    title, url, icon, iconImage, desc, size: 'sm', hidden: false, children: []
                 });
             }
             saveCards();
@@ -2612,18 +2754,22 @@
 
         function deleteCard() {
             if (!editingCardId) return;
-            const index = cards.findIndex(item => item.id === editingCardId);
-            if (index === -1) return;
-            const [removed] = cards.splice(index, 1);
+            const hit = findCardDeep(editingCardId);
+            if (!hit) return;
+            const removed = hit.card;
+            if (isFolder(removed) && removed.children.length
+                && !window.confirm(`删除文件夹「${removed.title}」以及里面的 ${countLinks(removed)} 个应用？`)) return;
+            detachCard(removed.id);
             saveCards();
             renderCards();
             closeCardForm();
+            if (folderStack.length) renderFolderContents();
             setCardHint(`已删除「${removed.title}」。`);
         }
 
         function resetCards() {
             if (!window.confirm('恢复默认卡片？自定义内容和排序会被清空。')) return;
-            cards = DEFAULT_CARDS.map(item => ({ ...item }));
+            cards = DEFAULT_CARDS.map(normalizeCardItem).filter(Boolean);
             saveCards();
             renderCards();
             closeCardForm();
@@ -2669,20 +2815,28 @@
 
         function pushCard(entry) {
             cards.push({
-                id: `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`,
+                id: newCardId(),
+                type: 'link',
                 title: entry.title,
                 url: entry.url,
                 icon: entry.icon || '🔗',
                 iconImage: entry.iconImage !== undefined ? entry.iconImage : guessIconFromUrl(entry.url),
                 desc: entry.desc || '',
                 size: CARD_SIZES.includes(entry.size) ? entry.size : 'sm',
-                hidden: Boolean(entry.hidden)
+                hidden: Boolean(entry.hidden),
+                children: []
             });
         }
 
         function hasSameUrl(url) {
             const key = String(url || '').replace(/\/+$/, '').toLowerCase();
-            return cards.some(card => String(card.url || '').replace(/\/+$/, '').toLowerCase() === key);
+            let found = false;
+            walkCards(cards, card => {
+                if (found) return false;
+                if (!isFolder(card) && String(card.url || '').replace(/\/+$/, '').toLowerCase() === key) found = true;
+                return !found;
+            });
+            return found;
         }
 
         function addCardsFromText() {
@@ -2749,22 +2903,13 @@
                     list = null;
                 }
                 if (!list) { setCardHint('这个文件不是卡片备份。'); return; }
-                const incoming = list
-                    .filter(item => item && item.title && item.url)
-                    .map(item => ({
-                        title: String(item.title).slice(0, 20),
-                        url: normalizeCardUrl(item.url),
-                        icon: String(item.icon || '🔗'),
-                        iconImage: String(item.iconImage || '') || guessIconFromUrl(item.url),
-                        desc: String(item.desc || '').slice(0, 30),
-                        size: item.size,
-                        hidden: Boolean(item.hidden)
-                    }))
-                    .filter(item => /^https?:\/\/[^\s/]+\.[^\s/]+/i.test(item.url));
+                const incoming = list.map(normalizeCardItem).filter(Boolean);
                 let added = 0, skipped = 0;
                 incoming.forEach(entry => {
-                    if (hasSameUrl(entry.url)) { skipped += 1; return; }
-                    pushCard(entry);
+                    const links = [];
+                    walkCards([entry], card => { if (!isFolder(card)) links.push(card); });
+                    if (links.length && links.every(link => hasSameUrl(link.url))) { skipped += 1; return; }
+                    cards.push(reassignCardIds(entry));
                     added += 1;
                 });
                 if (added) { saveCards(); renderCards(); }
@@ -2791,11 +2936,415 @@
                 if (tool.dataset.action === 'size') cycleCardSize(id);
                 else if (tool.dataset.action === 'edit') openCardForm(id);
                 else if (tool.dataset.action === 'hide') hideCard(id);
+                else if (tool.dataset.action === 'move') openFolderPicker(id);
             });
             grid.addEventListener('pointerdown', (event) => {
                 const handle = event.target.closest('.drag-handle');
                 if (!handle || !editMode) return;
                 startCardDrag(event, handle.closest('.nav-card'));
+            });
+        }
+
+        /** 4.6.3 文件夹：把多张卡片收进一张卡，还能一层层套下去 **/
+        let folderStack = [];            // 当前展开路径（文件夹 id）
+        let pickerCardId = null;         // 正在被移动的卡片
+        let cardFormIsFolder = false;    // 表单现在编辑的是文件夹
+
+        function newCardId() {
+            return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+        }
+
+        function isFolder(card) {
+            return !!card && (card.type === 'folder' || (Array.isArray(card.children) && card.children.length > 0));
+        }
+
+        /** 读盘和导入都走它：链接必须有网址，文件夹可以再套文件夹 */
+        function normalizeCardItem(item) {
+            if (!item || !item.title) return null;
+            const children = (Array.isArray(item.children) ? item.children : [])
+                .map(child => normalizeCardItem(child)).filter(Boolean);
+            const type = (item.type === 'folder' || children.length) ? 'folder' : 'link';
+            const url = type === 'folder' ? '' : normalizeCardUrl(item.url);
+            if (type === 'link' && !/^https?:\/\/[^\s/]+\.[^\s/]+/i.test(url)) return null;
+            return {
+                id: String(item.id || newCardId()),
+                type,
+                title: String(item.title).slice(0, 20),
+                url,
+                icon: String(item.icon || (type === 'folder' ? '📁' : '🔗')),
+                iconImage: String(item.iconImage || ''),
+                desc: String(item.desc || '').slice(0, 30),
+                size: CARD_SIZES.includes(item.size) ? item.size : 'sm',
+                hidden: Boolean(item.hidden),
+                children
+            };
+        }
+
+        function walkCards(list, visit) {
+            (list || []).forEach(card => {
+                if (!card) return;
+                if (visit(card) === false) return;
+                if (isFolder(card)) walkCards(card.children, visit);
+            });
+        }
+
+        /** 在整棵树里找卡片，连它所在的数组一起返回，方便搬来搬去 */
+        function findCardDeep(id, list) {
+            let found = null;
+            const search = (items) => {
+                for (const card of items || []) {
+                    if (card.id === id) { found = { card, parent: items }; return true; }
+                    if (isFolder(card) && search(card.children)) return true;
+                }
+                return false;
+            };
+            search(list || cards);
+            return found;
+        }
+
+        function countLinks(card) {
+            let total = 0;
+            walkCards(card.children || [], child => { if (!isFolder(child)) total += 1; });
+            return total;
+        }
+
+        function countFolders(card) {
+            let total = 0;
+            walkCards(card.children || [], child => { if (isFolder(child)) total += 1; });
+            return total;
+        }
+
+        function detachCard(id) {
+            const hit = findCardDeep(id);
+            if (!hit) return null;
+            const index = hit.parent.indexOf(hit.card);
+            if (index >= 0) hit.parent.splice(index, 1);
+            return hit.card;
+        }
+
+        function reassignCardIds(card) {
+            card.id = newCardId();
+            (card.children || []).forEach(child => reassignCardIds(child));
+            return card;
+        }
+
+        /** 所有可以当目标的文件夹（排除自己和自己的子孙，避免套成环） */
+        function collectFolders(excludeId) {
+            const out = [];
+            const walk = (items, trail) => {
+                (items || []).forEach(card => {
+                    if (!isFolder(card) || card.id === excludeId) return;
+                    const path = [...trail, card.title];
+                    out.push({ card, label: path.join(' / ') });
+                    walk(card.children, path);
+                });
+            };
+            walk(cards, []);
+            return out;
+        }
+
+        /* ---------------- 网格里的文件夹卡片 ---------------- */
+        function buildFolderCard(card) {
+            const el = document.createElement('div');
+            el.className = `nav-card folder-card size-${card.size}`;
+            el.dataset.id = card.id;
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'card-link folder-link';
+            button.title = `打开文件夹「${card.title}」`;
+
+            const preview = document.createElement('div');
+            preview.className = 'folder-preview';
+            const kids = card.children.filter(child => !child.hidden).slice(0, 4);
+            for (let i = 0; i < 4; i += 1) {
+                const cell = document.createElement('div');
+                cell.className = 'folder-cell';
+                const kid = kids[i];
+                if (!kid) {
+                    cell.classList.add('empty');
+                } else if (kid.iconImage) {
+                    const img = document.createElement('img');
+                    img.src = kid.iconImage;
+                    img.alt = '';
+                    img.loading = 'lazy';
+                    img.addEventListener('error', () => {
+                        img.remove();
+                        cell.textContent = kid.icon || (isFolder(kid) ? '📁' : '🔗');
+                    });
+                    cell.appendChild(img);
+                } else {
+                    cell.textContent = kid.icon || (isFolder(kid) ? '📁' : '🔗');
+                }
+                preview.appendChild(cell);
+            }
+
+            const title = document.createElement('div');
+            title.className = 'card-title';
+            title.textContent = card.title;
+            const meta = document.createElement('div');
+            meta.className = 'folder-count';
+            const links = countLinks(card);
+            const folders = countFolders(card);
+            meta.textContent = `${links} 个应用${folders ? ` · ${folders} 个子文件夹` : ''}`;
+
+            button.append(preview, title, meta);
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openFolder(card.id);
+            });
+            el.appendChild(button);
+            if (editMode) el.appendChild(buildCardTools(card));
+            return el;
+        }
+
+        /* ---------------- 展开层 ---------------- */
+        function currentFolder() {
+            if (!folderStack.length) return null;
+            const hit = findCardDeep(folderStack[folderStack.length - 1]);
+            return hit && isFolder(hit.card) ? hit.card : null;
+        }
+
+        function openFolder(id) {
+            const hit = findCardDeep(id);
+            if (!hit || !isFolder(hit.card)) return;
+            folderStack = [id];
+            renderFolderContents();
+            const overlay = document.getElementById('folderOverlay');
+            if (overlay) overlay.hidden = false;
+            document.body.classList.add('folder-open');
+        }
+
+        function folderGoBack() {
+            if (folderStack.length <= 1) { closeFolder(); return; }
+            folderStack.pop();
+            renderFolderContents();
+        }
+
+        function closeFolder() {
+            folderStack = [];
+            const overlay = document.getElementById('folderOverlay');
+            if (overlay) overlay.hidden = true;
+            document.body.classList.remove('folder-open');
+        }
+
+        function renderFolderContents() {
+            const folder = currentFolder();
+            const grid = document.getElementById('folderGrid');
+            if (!folder || !grid) return;
+            document.getElementById('folderTitle').textContent = folder.title;
+            document.getElementById('folderIcon').textContent = folder.icon || '📁';
+            document.getElementById('folderBackBtn').hidden = folderStack.length <= 1;
+            grid.innerHTML = '';
+            if (!folder.children.length) {
+                const empty = document.createElement('p');
+                empty.className = 'folder-empty';
+                empty.textContent = '这个文件夹还是空的：进入编辑模式，点卡片上的 📁 就能把卡片收进来。';
+                grid.appendChild(empty);
+            }
+            folder.children.forEach(child => grid.appendChild(buildFolderApp(child)));
+            document.getElementById('folderHint').textContent = editMode
+                ? '点图标打开或展开；右上角 ⤴ 移出、✕ 删除。'
+                : '点图标打开；编辑模式下可以整理里面的内容。';
+        }
+
+        function buildFolderApp(card) {
+            const tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'folder-app';
+            tile.dataset.id = card.id;
+
+            const iconBox = document.createElement('span');
+            iconBox.className = 'folder-app-icon';
+            if (card.iconImage) {
+                const img = document.createElement('img');
+                img.src = card.iconImage;
+                img.alt = '';
+                img.loading = 'lazy';
+                img.addEventListener('error', () => {
+                    img.remove();
+                    iconBox.textContent = card.icon || (isFolder(card) ? '📁' : '🔗');
+                });
+                iconBox.appendChild(img);
+            } else {
+                iconBox.textContent = card.icon || (isFolder(card) ? '📁' : '🔗');
+            }
+
+            const title = document.createElement('span');
+            title.className = 'folder-app-title';
+            title.textContent = isFolder(card) ? `${card.title} ›` : card.title;
+            tile.append(iconBox, title);
+
+            if (editMode) {
+                const tools = document.createElement('span');
+                tools.className = 'folder-app-tools';
+                const out = document.createElement('button');
+                out.type = 'button';
+                out.textContent = '⤴';
+                out.title = '移出到上一层';
+                out.addEventListener('click', (event) => { event.stopPropagation(); moveChildOut(card.id); });
+                const del = document.createElement('button');
+                del.type = 'button';
+                del.textContent = '✕';
+                del.title = '删除';
+                del.addEventListener('click', (event) => { event.stopPropagation(); deleteChildCard(card.id); });
+                tools.append(out, del);
+                tile.appendChild(tools);
+            }
+
+            tile.addEventListener('click', () => {
+                if (isFolder(card)) {
+                    folderStack.push(card.id);
+                    renderFolderContents();
+                    return;
+                }
+                window.open(card.url, '_blank', 'noopener');
+            });
+            return tile;
+        }
+
+        /* ---------------- 新建 / 移动 / 删除 ---------------- */
+        function createFolder(silent) {
+            const folder = {
+                id: newCardId(),
+                type: 'folder',
+                title: '新文件夹',
+                url: '',
+                icon: '📁',
+                iconImage: '',
+                desc: '',
+                size: 'sm',
+                hidden: false,
+                children: []
+            };
+            cards.push(folder);
+            saveCards();
+            renderCards();
+            closeFolderPicker();
+            if (!silent) openCardForm(folder.id);
+            setCardHint('已新建文件夹：先改个名字，再把卡片上的 📁 点进来。');
+            return folder;
+        }
+
+        function openFolderPicker(cardId) {
+            const hit = findCardDeep(cardId);
+            if (!hit) return;
+            pickerCardId = cardId;
+            const list = document.getElementById('folderPickerList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            const row = (icon, label, count, handler) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'folder-picker-row';
+                const mark = document.createElement('span');
+                mark.textContent = icon;
+                const path = document.createElement('span');
+                path.className = 'path';
+                path.textContent = label;
+                button.append(mark, path);
+                if (count) {
+                    const num = document.createElement('span');
+                    num.className = 'count';
+                    num.textContent = count;
+                    button.appendChild(num);
+                }
+                button.addEventListener('click', handler);
+                return button;
+            };
+
+            if (hit.parent !== cards) {
+                list.appendChild(row('⤴', '移回主页（不放进文件夹）', '', () => moveCardInto(null)));
+            }
+            const folders = collectFolders(cardId);
+            folders.forEach(entry => {
+                const links = countLinks(entry.card);
+                list.appendChild(row('📁', entry.label, `${links} 个`, () => moveCardInto(entry.card.id)));
+            });
+            list.appendChild(row('＋', '新建文件夹并放进去', '', () => {
+                const folder = createFolder(true);
+                moveCardInto(folder.id);
+            }));
+
+            document.getElementById('folderPickerHint').textContent = folders.length
+                ? `把「${hit.card.title}」放到哪里？选中即移动。`
+                : '还没有文件夹：新建一个最方便。';
+            const picker = document.getElementById('folderPicker');
+            if (picker) picker.hidden = false;
+        }
+
+        function closeFolderPicker() {
+            pickerCardId = null;
+            const picker = document.getElementById('folderPicker');
+            if (picker) picker.hidden = true;
+        }
+
+        function moveCardInto(folderId) {
+            const movingId = pickerCardId;
+            const moving = movingId ? findCardDeep(movingId) : null;
+            if (!moving) { closeFolderPicker(); return; }
+            const target = folderId ? findCardDeep(folderId) : null;
+            if (folderId && (!target || !isFolder(target.card))) { closeFolderPicker(); return; }
+            detachCard(moving.card.id);
+            if (target) {
+                moving.card.hidden = false;
+                target.card.children.push(moving.card);
+            } else {
+                moving.card.hidden = false;
+                cards.push(moving.card);
+            }
+            saveCards();
+            renderCards();
+            if (folderStack.length) renderFolderContents();
+            closeFolderPicker();
+            setCardHint(folderId
+                ? `已把「${moving.card.title}」放进「${target.card.title}」。`
+                : `已把「${moving.card.title}」移回主页。`);
+        }
+
+        /** 在展开层里把某个东西移到"上一层" */
+        function moveChildOut(id) {
+            const hit = findCardDeep(id);
+            if (!hit) return;
+            const current = currentFolder();
+            const currentHit = current ? findCardDeep(current.id) : null;
+            const destination = currentHit ? currentHit.parent : cards;
+            detachCard(id);
+            hit.card.hidden = false;
+            destination.push(hit.card);
+            saveCards();
+            renderCards();
+            if (folderStack.length) renderFolderContents();
+            setCardHint(`已把「${hit.card.title}」移出这一层。`);
+        }
+
+        function deleteChildCard(id) {
+            const hit = findCardDeep(id);
+            if (!hit) return;
+            if (isFolder(hit.card) && hit.card.children.length
+                && !window.confirm(`删除文件夹「${hit.card.title}」以及里面的 ${countLinks(hit.card)} 个应用？`)) return;
+            detachCard(id);
+            saveCards();
+            renderCards();
+            if (folderStack.length) renderFolderContents();
+            setCardHint(`已删除「${hit.card.title}」。`);
+        }
+
+        /** 浮层在 <script> 之后才被解析，所以这里用事件委托、用到时再查元素 */
+        function initFolders() {
+            document.addEventListener('click', (event) => {
+                const id = event.target && event.target.id;
+                if (id === 'folderOverlay') closeFolder();
+                else if (id === 'folderPicker') closeFolderPicker();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key !== 'Escape') return;
+                const picker = document.getElementById('folderPicker');
+                if (picker && !picker.hidden) { closeFolderPicker(); return; }
+                const overlay = document.getElementById('folderOverlay');
+                if (overlay && !overlay.hidden) closeFolder();
             });
         }
 
@@ -3573,10 +4122,138 @@
             } catch (error) {}
         }
 
-        /** 用户缓存：存在本机上的个人数据（主题、背景、卡片、偏好…） */
-        function purgeUserCache() {
+        /** 8.9 用户文件库：自定义背景、导入的音乐都存在这里（IndexedDB），刷新和更新都不丢 **/
+        const FILES_DB = 'mylinks-user-files';
+        const FILES_STORE = 'files';
+        const MUSIC_LIB_KEY = 'musicLibrary';
+        const MUSIC_INDEX_KEY = 'musicLastIndex';
+        let filesDbPromise = null;
+
+        function openFilesDb() {
+            if (filesDbPromise) return filesDbPromise;
+            filesDbPromise = new Promise((resolve) => {
+                if (typeof indexedDB === 'undefined') { resolve(null); return; }
+                let request;
+                try { request = indexedDB.open(FILES_DB, 1); } catch (error) { resolve(null); return; }
+                request.onupgradeneeded = () => {
+                    const db = request.result;
+                    if (!db.objectStoreNames.contains(FILES_STORE)) {
+                        const store = db.createObjectStore(FILES_STORE, { keyPath: 'id' });
+                        store.createIndex('kind', 'kind', { unique: false });
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => resolve(null);
+                request.onblocked = () => resolve(null);
+            });
+            return filesDbPromise;
+        }
+
+        let storagePersistAsked = false;
+
+        /** 请浏览器把这份数据当"重要数据"，空间紧张时别自动清掉 */
+        async function requestPersistentStorage() {
+            if (storagePersistAsked) return;
+            storagePersistAsked = true;
+            try {
+                if (navigator.storage && navigator.storage.persist) await navigator.storage.persist();
+            } catch (error) {}
+        }
+
+        async function filesPut(record) {
+            await requestPersistentStorage();
+            const db = await openFilesDb();
+            if (!db) return false;
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(FILES_STORE, 'readwrite');
+                    tx.objectStore(FILES_STORE).put(record);
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                    tx.onabort = () => resolve(false);
+                } catch (error) {
+                    resolve(false);
+                }
+            });
+        }
+
+        async function filesGet(id) {
+            const db = await openFilesDb();
+            if (!db) return null;
+            return new Promise((resolve) => {
+                try {
+                    const request = db.transaction(FILES_STORE, 'readonly').objectStore(FILES_STORE).get(id);
+                    request.onsuccess = () => resolve(request.result || null);
+                    request.onerror = () => resolve(null);
+                } catch (error) {
+                    resolve(null);
+                }
+            });
+        }
+
+        async function filesGetByKind(kind) {
+            const db = await openFilesDb();
+            if (!db) return [];
+            return new Promise((resolve) => {
+                try {
+                    const request = db.transaction(FILES_STORE, 'readonly')
+                        .objectStore(FILES_STORE).index('kind').getAll(kind);
+                    request.onsuccess = () => {
+                        const list = request.result || [];
+                        list.sort((a, b) => (a.order || 0) - (b.order || 0));
+                        resolve(list);
+                    };
+                    request.onerror = () => resolve([]);
+                } catch (error) {
+                    resolve([]);
+                }
+            });
+        }
+
+        async function filesDeleteKind(kind) {
+            const db = await openFilesDb();
+            if (!db) return false;
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(FILES_STORE, 'readwrite');
+                    const store = tx.objectStore(FILES_STORE);
+                    const keysRequest = store.index('kind').getAllKeys(kind);
+                    keysRequest.onsuccess = () => {
+                        (keysRequest.result || []).forEach(key => store.delete(key));
+                    };
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => resolve(false);
+                    tx.onabort = () => resolve(false);
+                } catch (error) {
+                    resolve(false);
+                }
+            });
+        }
+
+        /** 清空文件库：连接开着的时候 deleteDatabase 会被挡住，所以直接清仓库再断开 */
+        async function filesClearAll() {
+            const db = await openFilesDb();
+            if (!db) return;
+            await new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(FILES_STORE, 'readwrite');
+                    tx.objectStore(FILES_STORE).clear();
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                    tx.onabort = () => resolve();
+                } catch (error) {
+                    resolve();
+                }
+            });
+            try { db.close(); } catch (error) {}
+            filesDbPromise = null;
+        }
+
+        /** 清理用户数据：本机上所有个人内容一起清（localStorage + 文件库里的背景/音乐） */
+        async function purgeUserCache() {
             try { localStorage.clear(); } catch (error) {}
             try { sessionStorage.clear(); } catch (error) {}
+            await filesClearAll();
         }
 
         /** 只清网页缓存：个人设置和卡片都保留，清完自动刷新拉最新页面 */
@@ -3594,15 +4271,16 @@
         /** 只清用户数据：恢复默认设置，网页缓存一点都不动 */
         async function clearUserCache() {
             const ok = window.confirm(
-                '清理用户数据会把这些本地保存的内容恢复成默认：\n'
-                + '· 主题颜色与背景（底色、自定义图片）\n'
+                '清理用户数据会把本机保存的个人内容全部清掉并恢复默认：\n'
+                + '· 主题颜色与背景（底色、自定义图片 / 视频文件）\n'
                 + '· 透明度、简洁模式、主页按钮等界面偏好\n'
-                + '· 自定义卡片与隐藏列表（建议先用「导出备份」存一份）\n'
-                + '· 歌词小窗、桌面宠物、音乐选择\n\n'
-                + '网页缓存不会动。清理完页面会自动刷新。确定继续吗？'
+                + '· 自定义卡片、文件夹与隐藏列表（建议先用「导出备份」存一份）\n'
+                + '· 导入的音乐、歌词与播放列表\n'
+                + '· 歌词小窗、桌面宠物、搜索记录\n\n'
+                + '网页缓存和预缓存不会动。清理完页面会自动刷新。确定继续吗？'
             );
             if (!ok) return;
-            purgeUserCache();
+            await purgeUserCache();
             hardReload();
         }
 
@@ -3923,7 +4601,7 @@
             const file = input.files && input.files[0];
             document.getElementById('bgFileName').textContent = file ? file.name : '选择图片或视频';
             setBgHint(file
-                ? '点「应用背景」生效；1MB 以内的图片会连底色一起记住。'
+                ? '点「应用背景」生效：图片和视频都会存到本机，大小不限，刷新后还在。'
                 : '不选图片也能直接应用底色。');
         }
 
@@ -3958,8 +4636,22 @@
             currentBgObjectUrl = URL.createObjectURL(file);
             applyCustomBackground(currentBgObjectUrl, color, isVideo);
 
+            // 存进本机文件库：不受 1MB 限制，刷新和更新都还在
+            const fileId = `bg-${Date.now().toString(36)}`;
+            await filesDeleteKind('bg');
+            const stored = await filesPut({
+                id: fileId,
+                kind: 'bg',
+                name: file.name,
+                type: file.type || '',
+                size: file.size,
+                savedAt: Date.now(),
+                blob: file
+            });
+
             let savedImage = null;
-            if (isImage && file.size <= 1024 * 1024) {
+            if (!stored && isImage && file.size <= 1024 * 1024) {
+                // 文件库不可用（隐私模式等）时退回以前的 dataURL 方案
                 try {
                     const dataUrl = await readFileAsDataUrl(file);
                     if (dataUrl.length <= 2 * 1024 * 1024) savedImage = dataUrl;
@@ -3967,14 +4659,23 @@
                     savedImage = null;
                 }
             }
-            saveBackgroundState({ color, image: savedImage });
-            setBgHint(savedImage
-                ? '已应用并记住，刷新后仍是这张图。'
-                : '已应用；图片较大或是视频，刷新后会回到这个底色。');
+
+            saveBackgroundState({
+                color,
+                image: savedImage,
+                fileId: stored ? fileId : null,
+                kind: isVideo ? 'video' : 'image'
+            });
+            setBgHint(stored
+                ? `已保存到本机（${formatPrecacheBytes(file.size)}），刷新、更新后都还是这张。`
+                : (savedImage
+                    ? '已应用并记住，刷新后仍是这张图。'
+                    : '已应用；这个环境存不下大文件，刷新后会回到这个底色。'));
         }
 
-        function restoreRandomBackground() {
+        async function restoreRandomBackground() {
             saveBackgroundState(null);
+            await filesDeleteKind('bg');
             if (currentBgObjectUrl) {
                 URL.revokeObjectURL(currentBgObjectUrl);
                 currentBgObjectUrl = null;
@@ -4026,39 +4727,203 @@
             return name.replace(/\.[^.]+$/, '');
         }
 
-        function handleFolderSelect(input) {
+        async function handleFolderSelect(input) {
             const files = Array.from(input.files);
             const audioFiles = files.filter(file =>
                 file.type.startsWith('audio/') || AUDIO_FILE_RE.test(file.name)
             );
             if (!audioFiles.length) return;
+            const lyricRaw = files.filter(file => LYRIC_FILE_RE.test(file.name));
 
-            // 歌词文件先收好，切歌时按「同目录 + 同名」自动匹配
-            lyricFiles = files.filter(file => LYRIC_FILE_RE.test(file.name)).map(file => {
-                const path = file.webkitRelativePath || file.name;
-                return {
-                    name: file.name,
-                    lowerName: file.name.toLowerCase(),
-                    base: baseName(file.name).toLowerCase(),
-                    dir: pathDir(path),
-                    file
-                };
-            });
-
-            playlist.forEach(track => URL.revokeObjectURL(track.url));
-            playlist = audioFiles.map((file, index) => {
-                const path = file.webkitRelativePath || file.name;
-                return {
-                    name: file.name,
-                    base: baseName(file.name).toLowerCase(),
-                    dir: pathDir(path),
-                    url: URL.createObjectURL(file),
-                    id: index
-                };
-            });
-            renderPlaylist();
+            // 先用手里的文件立刻建好播放列表，别让用户等存储
+            setTrackLyricFiles(lyricRaw.map(file => ({
+                name: file.name,
+                dir: pathDir(file.webkitRelativePath || file.name),
+                blob: file
+            })));
+            buildPlaylistFrom(audioFiles.map(file => ({
+                name: file.name,
+                dir: pathDir(file.webkitRelativePath || file.name),
+                base: baseName(file.name).toLowerCase(),
+                blob: file
+            })));
             loadTrack(0);
+
+            setMusicSaveHint(`正在把 ${audioFiles.length} 首存到本机…`);
+            const report = await saveMusicLibrary(audioFiles, lyricRaw);
+            if (report.saved) {
+                setMusicSaveHint(`已存到本机：${report.saved} 首`
+                    + `${report.lyrics ? `、${report.lyrics} 个歌词` : ''}`
+                    + ` · ${formatPrecacheBytes(report.bytes)}`
+                    + `${report.failed ? `（${report.failed} 首没存下）` : ''}`
+                    + '，刷新和更新后会自动恢复。');
+            } else {
+                setMusicSaveHint('这个环境存不下音乐文件（隐私模式或空间不足），刷新后需要重新选一次文件夹。');
+            }
         }
+
+        function setMusicSaveHint(text) {
+            const hint = document.getElementById('musicSaveHint');
+            if (hint) hint.textContent = text;
+        }
+
+        /** 歌词列表：既能接住用户刚选的 File，也能接住文件库里取回的 Blob */
+        function setTrackLyricFiles(items) {
+            lyricFiles = (items || []).map(item => ({
+                name: item.name,
+                lowerName: String(item.name).toLowerCase(),
+                base: item.base || baseName(item.name).toLowerCase(),
+                dir: typeof item.dir === 'string' ? item.dir : '',
+                file: item.blob || item.file || item
+            }));
+        }
+
+        function buildPlaylistFrom(items) {
+            playlist.forEach(track => { if (track.url) URL.revokeObjectURL(track.url); });
+            playlist = items.map((item, index) => ({
+                name: item.name,
+                base: item.base || baseName(item.name).toLowerCase(),
+                dir: typeof item.dir === 'string' ? item.dir : '',
+                url: URL.createObjectURL(item.blob),
+                id: index
+            }));
+            renderPlaylist();
+        }
+
+        /** 把选中的音乐和同目录歌词存进本机文件库 */
+        async function saveMusicLibrary(audioFiles, lyricRaw) {
+            const stamp = Date.now().toString(36);
+            await filesDeleteKind('music');
+            await filesDeleteKind('lyric');
+
+            const tracks = [];
+            let bytes = 0;
+            let failed = 0;
+            for (let i = 0; i < audioFiles.length; i += 1) {
+                const file = audioFiles[i];
+                const path = file.webkitRelativePath || file.name;
+                const id = `m-${stamp}-${i}`;
+                const ok = await filesPut({
+                    id,
+                    kind: 'music',
+                    order: i,
+                    name: file.name,
+                    dir: pathDir(path),
+                    base: baseName(file.name).toLowerCase(),
+                    type: file.type || '',
+                    size: file.size,
+                    savedAt: Date.now(),
+                    blob: file
+                });
+                if (ok) {
+                    tracks.push({ id, name: file.name });
+                    bytes += file.size;
+                } else {
+                    failed += 1;
+                }
+            }
+
+            const lyrics = [];
+            for (let i = 0; i < lyricRaw.length; i += 1) {
+                const file = lyricRaw[i];
+                const path = file.webkitRelativePath || file.name;
+                const id = `l-${stamp}-${i}`;
+                const ok = await filesPut({
+                    id,
+                    kind: 'lyric',
+                    order: i,
+                    name: file.name,
+                    dir: pathDir(path),
+                    base: baseName(file.name).toLowerCase(),
+                    size: file.size,
+                    savedAt: Date.now(),
+                    blob: file
+                });
+                if (ok) lyrics.push({ id, name: file.name });
+            }
+
+            try {
+                if (tracks.length) {
+                    localStorage.setItem(MUSIC_LIB_KEY, JSON.stringify({
+                        savedAt: Date.now(),
+                        tracks,
+                        lyrics
+                    }));
+                } else {
+                    localStorage.removeItem(MUSIC_LIB_KEY);
+                }
+            } catch (error) {}
+
+            return { saved: tracks.length, failed, bytes, lyrics: lyrics.length };
+        }
+
+        /** 打开网页时把上次的音乐找回来（不自动播放，等用户点） */
+        async function restoreMusicLibrary() {
+            let saved = null;
+            try { saved = JSON.parse(localStorage.getItem(MUSIC_LIB_KEY) || 'null'); } catch (error) { saved = null; }
+            if (!saved || !Array.isArray(saved.tracks) || !saved.tracks.length) return false;
+
+            const records = await filesGetByKind('music');
+            const tracks = records
+                .filter(record => record && record.blob)
+                .map(record => ({
+                    name: record.name,
+                    base: record.base || baseName(record.name).toLowerCase(),
+                    dir: typeof record.dir === 'string' ? record.dir : '',
+                    blob: record.blob
+                }));
+            if (!tracks.length) {
+                setMusicSaveHint('上次存的音乐文件已经不在了，需要重新选一次文件夹。');
+                return false;
+            }
+
+            const lyricRecords = await filesGetByKind('lyric');
+            setTrackLyricFiles(lyricRecords.map(record => ({
+                name: record.name,
+                dir: typeof record.dir === 'string' ? record.dir : '',
+                blob: record.blob
+            })));
+
+            buildPlaylistFrom(tracks);
+            const storedIndex = Number(localStorage.getItem(MUSIC_INDEX_KEY));
+            const index = Number.isFinite(storedIndex) && storedIndex >= 0
+                ? Math.min(storedIndex, tracks.length - 1) : 0;
+            restoreTrackSelection(index);
+
+            let bytes = 0;
+            records.forEach(record => { bytes += Number(record.size || 0); });
+            setMusicSaveHint(`已恢复上次的播放列表：${tracks.length} 首`
+                + `${lyricRecords.length ? `、${lyricRecords.length} 个歌词` : ''}`
+                + ` · ${formatPrecacheBytes(bytes)}，点 ▶️ 继续。`);
+            return true;
+        }
+
+        /** 恢复时只加载不出声：浏览器不允许自动播放 */
+        function restoreTrackSelection(index) {
+            if (!playlist.length) return;
+            currentTrackIndex = index;
+            audio.src = playlist[index].url;
+            musicName.textContent = playlist[index].name;
+            const widgetTrack = document.getElementById('lwTrack');
+            if (widgetTrack) widgetTrack.textContent = playlist[index].name;
+            updateWidgetPlayer();
+            renderPlaylist();
+            lyrics = [];
+            activeLyricIndex = -1;
+            lyricsPanel.textContent = '已恢复上次的列表，点 ▶️ 继续播放。';
+            progressBar.style.width = '0%';
+            currentTimeEl.textContent = '00:00';
+            durationTimeEl.textContent = '00:00';
+            renderFloatingLyrics();
+            updatePlayBtn(false);
+            autoLoadTrackLyrics(playlist[index]);
+        }
+
+        function saveMusicIndex(index) {
+            try { localStorage.setItem(MUSIC_INDEX_KEY, String(index)); } catch (error) {}
+        }
+
+
 
         function renderPlaylist() {
             playlistEl.innerHTML = '';
@@ -4074,6 +4939,7 @@
         function loadTrack(index) {
             if (!playlist.length) return;
             currentTrackIndex = index;
+            saveMusicIndex(index);
             audio.src = playlist[index].url;
             musicName.textContent = playlist[index].name;
             const widgetTrack = document.getElementById('lwTrack');
@@ -4474,7 +5340,9 @@
         }
         initTheme();
         initCards();
+        initFolders();
         initLyricsWidget();
+        restoreMusicLibrary();
         initMascot();
         initUpdateChecker();
         initMenuPanels();
@@ -4483,5 +5351,31 @@
         initBackgroundPool();
         initPrecache();
     </script>
+
+    <div class="folder-overlay" id="folderOverlay" hidden>
+        <div class="folder-panel" role="dialog" aria-modal="true" aria-labelledby="folderTitle">
+            <div class="folder-head">
+                <button type="button" class="folder-nav" id="folderBackBtn" onclick="folderGoBack()"
+                        aria-label="返回上一层" hidden>‹</button>
+                <span class="folder-icon" id="folderIcon" aria-hidden="true">📁</span>
+                <strong id="folderTitle">文件夹</strong>
+                <button type="button" class="folder-nav" onclick="closeFolder()" aria-label="关闭">✕</button>
+            </div>
+            <div class="folder-grid" id="folderGrid"></div>
+            <p class="menu-hint" id="folderHint"></p>
+        </div>
+    </div>
+
+    <div class="folder-overlay" id="folderPicker" hidden>
+        <div class="folder-panel" role="dialog" aria-modal="true" aria-label="选择文件夹">
+            <div class="folder-head">
+                <span class="folder-icon" aria-hidden="true">📁</span>
+                <strong>放到哪个文件夹</strong>
+                <button type="button" class="folder-nav" onclick="closeFolderPicker()" aria-label="关闭">✕</button>
+            </div>
+            <div class="folder-picker-list" id="folderPickerList"></div>
+            <p class="menu-hint" id="folderPickerHint"></p>
+        </div>
+    </div>
 </body>
 </html>
