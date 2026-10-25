@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1555">
+    <meta name="app-version" content="20261025-1606">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2736,6 +2736,46 @@
             throw new Error(errors.join(' | '));
         }
 
+        /* 攀爬贴墙、贴天花板时锚点落在这条边线上，而精灵是以锚点为基准画的：
+           shime12/13/14 的 ImageAnchor 是 54,128，GrabCeiling 一类是 64,52，
+           所以贴到边线就会有一截探出视口。引擎靠"锚点正好落在边线上"判定
+           BorderType，挪逻辑坐标会让攀爬直接断掉，于是在渲染之后把整块贴图
+           平移回可视范围内——只动画面，不动坐标。 */
+        function keepSpriteVisible(engine) {
+            if (!engine || typeof engine.render !== 'function' || engine.spriteVisibleGuard) return;
+            engine.spriteVisibleGuard = true;
+            const render = engine.render.bind(engine);
+            const readTranslate = /translate3d\((-?[\d.]+)px,\s*(-?[\d.]+)px/;
+            engine.render = function (interpolate) {
+                render(interpolate);
+                try {
+                    const root = this.elRoot;
+                    const image = this.elImg;
+                    const pose = this.currentPose && this.currentPose();
+                    if (!root || !image || !pose || !pose.image) return;
+                    const scale = this.spriteScale || 1;
+                    const width = (image.naturalWidth || 128) * scale;
+                    const height = (image.naturalHeight || 128) * scale;
+                    const anchorX = ((pose.imageAnchor && pose.imageAnchor.x) || 64) * scale;
+                    const anchorY = ((pose.imageAnchor && pose.imageAnchor.y) || 128) * scale;
+                    const found = readTranslate.exec(root.style.transform || '');
+                    if (!found) return;
+                    const baseX = parseFloat(found[1]);
+                    const baseY = parseFloat(found[2]);
+                    const left = this.lookRight ? baseX + anchorX - width : baseX - anchorX;
+                    const top = baseY - anchorY;
+                    const limitX = Math.max(0, window.innerWidth - width);
+                    const limitY = Math.max(0, window.innerHeight - height);
+                    const fixX = Math.min(Math.max(0, left), limitX) - left;
+                    const fixY = Math.min(Math.max(0, top), limitY) - top;
+                    if (!fixX && !fixY) return;
+                    root.style.transform = `translate3d(${baseX + fixX}px, ${baseY + fixY}px, 0)`;
+                } catch (error) {
+                    // 量不到就按原样显示
+                }
+            };
+        }
+
         async function mountMascots() {
             if (mascotBusy) return;
             mascotBusy = true;
@@ -2745,6 +2785,7 @@
                 if (mascotState.enabled) created.push(await createMascotByPack(mascotState.pack));
                 if (mascotState.second) created.push(await createMascotByPack(otherPack(mascotState.pack)));
                 mascotInstances = created;
+                created.forEach(item => keepSpriteVisible(item.instance && item.instance.engine));
                 const viaCdn = created.some(item => item.source === 'cdn');
                 if (created.length > 1) {
                     setMascotHint(viaCdn
@@ -2808,11 +2849,16 @@
             await remountMascots();
         }
 
-        /* 抱抱的"靠近"判定：两只脚底中心的水平差/高度差都在门限内，才算贴在一起 */
+        /* 抱抱的前提：两只都站在地上、没在攀爬/挂墙，而且彼此靠得够近 */
         const HUG_NEAR_PX = 200;
         const HUG_NEAR_HEIGHT_PX = 140;
         const HUG_NEAR_POLL_MS = 1500;
         const HUG_NEAR_PATIENCE_MS = 30000;
+        /** 攀爬、抓墙、贴墙、贴天花板这类动作期间不抱抱 */
+        const HUG_CLIMB_BEHAVIOR = /climb|wall|grab|ceiling|hold/i;
+        /** 腾空期间不抱抱：跳跃、被抛、被甩、坠落、被拖着。
+            末尾的 (?![a-z]) 是为了放过 NoticeFallingTutel 这种名字里带 Fall 的地面行为。 */
+        const HUG_AIR_BEHAVIOR = /jump|throw|hurl|drag|fall(?![a-z])/i;
 
         /** 两只桌宠脚底中心的间距；不足两只时返回 null。 */
         function hugGap() {
@@ -2822,10 +2868,33 @@
             return { dx: Math.abs(first.x - last.x), dy: Math.abs(first.y - last.y) };
         }
 
-        /** 只有靠在一起时才允许抱抱。 */
+        /** 这一只此刻能不能抱：站在地面上，没在攀爬/挂墙，也没在飞。 */
+        function hugReady(engine) {
+            const name = (engine.currentBehavior && engine.currentBehavior.name) || '';
+            if (HUG_CLIMB_BEHAVIOR.test(name)) return false;
+            if (HUG_AIR_BEHAVIOR.test(name)) return false;
+            try {
+                const env = engine.environment();
+                if (env && env.floor && !env.floor.isOn({ x: engine.x, y: engine.y })) return false;
+            } catch (error) {
+                // 环境读不到就不拿它当拦截理由
+            }
+            return true;
+        }
+
+        /** 两只靠在一起。 */
         function hugIsNear() {
             const gap = hugGap();
             return Boolean(gap) && gap.dx <= HUG_NEAR_PX && gap.dy <= HUG_NEAR_HEIGHT_PX;
+        }
+
+        /** 能自动抱抱：靠得够近，并且两只都站在地上、没在攀爬。 */
+        function hugIsAllowed() {
+            if (!hugIsNear()) return false;
+            return mascotInstances.every(item => {
+                const engine = item.instance && item.instance.engine;
+                return Boolean(engine) && hugReady(engine);
+            });
         }
 
         function scheduleRandomHug(delayMs, waitedMs) {
@@ -2841,8 +2910,8 @@
             hugTimer = 0;
             if (mascotInstances.length < 2 || hugPlaying) return;
             const waited = waitedMs || 0;
-            if (!hugIsNear()) {
-                // 没贴在一起：再给一阵子让它们自己走到一块，等太久就退回常规间隔
+            if (!hugIsAllowed()) {
+                // 没凑到一块儿、或还在攀爬：再给一阵子，等太久就退回常规间隔
                 if (waited < HUG_NEAR_PATIENCE_MS) scheduleRandomHug(HUG_NEAR_POLL_MS, waited + HUG_NEAR_POLL_MS);
                 else scheduleRandomHug();
                 return;
