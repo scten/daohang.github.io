@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261025-1722">
+    <meta name="app-version" content="20261025-1840">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2736,140 +2736,51 @@
             throw new Error(errors.join(' | '));
         }
 
-        /* 攀爬贴墙、贴天花板时锚点落在这条边线上，而精灵是以锚点为基准画的：
-           shime12/13/14 的 ImageAnchor 是 54,128，GrabCeiling 一类是 64,52。
-           引擎靠"锚点正好落在边线上"判定 BorderType，挪逻辑坐标会让攀爬断掉，
-           所以只在渲染这一层做修正——但要按"不透明像素"算，不能按整块画布，
-           否则会把贴图整体往页面里推，看着就不贴着页边了。 */
-        const spriteBoxCache = new Map();
-        const spriteBoxPending = new Set();
+        /* 桌宠的活动矩形（自适应）：
+           引擎自己用 area() 算地板、天花板、左右墙和走路目标（TargetX 也会被夹在里头），
+           所以把 area() 换成这块矩形，宠物的移动范围就锁在这里，窗口缩放时自动跟着变。
 
-        /** 贴边时允许压出页边的像素数，四个方向单独设置：
-            正数＝压出页边（切掉这么多），0＝一丝不切地贴住，负数＝往里退（留出空隙）。 */
-        const EDGE_CLIP_PX = { left: 10, right: 10, top: 26, bottom: 0 };
+           四边内缩量保证"贴边时至少露出 2/3"：精灵以锚点为基准绘制，锚点落在矩形边上时
+           身体还会往外探头，所以要按"最坏的那个姿态"往里收一点。数字实测自两套素材：
+             左 25px（最吃紧 Neuron/shime24：身体宽 111px，锚点外伸 62px）
+             右 27px（最吃紧 Eviling/shime12：身体宽 89px，锚点外伸 56px）
+             上 4px （最吃紧 Eviling/shime25：身体高 106px，锚点外伸 37px；收 2px 只剩 67%，收 4px 约 69%）
+             下 0px （站立/走路的脚掌正好在锚点上，不用收）
+           这样各姿态露出比例都在 69%~95%。素材整体缩放变了要同比放大这些数字。 */
+        const MASCOT_ZONE_INSET = { left: 25, right: 27, top: 4, bottom: 0 };
+        let mascotZoneBound = false;
 
-        /** 量一张图的透明留白。返回 null＝整张透明，undefined＝取不到像素（跨域被污染）。 */
-        function measureSpriteBox(source, width, height) {
-            let data = null;
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const context = canvas.getContext('2d', { willReadFrequently: true });
-                if (!context) return undefined;
-                context.drawImage(source, 0, 0);
-                data = context.getImageData(0, 0, width, height).data;
-            } catch (error) {
-                return undefined;
-            }
-            let minX = width, maxX = -1, minY = height, maxY = -1;
-            for (let y = 0; y < height; y++) {
-                const row = y * width;
-                for (let x = 0; x < width; x++) {
-                    if (data[(row + x) * 4 + 3] > 8) {
-                        if (x < minX) minX = x;
-                        if (x > maxX) maxX = x;
-                        if (y < minY) minY = y;
-                        if (y > maxY) maxY = y;
-                    }
-                }
-            }
-            if (maxX < minX) return null;
-            return { minX, maxX: maxX + 1, minY, maxY: maxY + 1 };
-        }
-
-        /** 素材走 CDN 时页面里的 <img> 是跨域的，画进 canvas 会被污染、读不出像素。
-            这时改用 fetch 取原始字节再解码（CDN 带 CORS 头），量到后缓存起来。 */
-        function loadSpriteBox(url) {
-            if (spriteBoxCache.has(url) || spriteBoxPending.has(url)) return;
-            if (typeof fetch !== 'function' || typeof createImageBitmap !== 'function') return;
-            spriteBoxPending.add(url);
-            fetch(url, { mode: 'cors', credentials: 'omit' })
-                .then((response) => (response.ok ? response.blob() : null))
-                .then((blob) => (blob ? createImageBitmap(blob) : null))
-                .then((bitmap) => {
-                    if (!bitmap) return;
-                    const box = measureSpriteBox(bitmap, bitmap.width, bitmap.height);
-                    if (box) spriteBoxCache.set(url, box);
-                    if (bitmap.close) bitmap.close();
-                })
-                .catch(() => {
-                    // 取不到就维持原样，不拿它当报错
-                })
-                .then(() => {
-                    spriteBoxPending.delete(url);
-                });
-        }
-
-        /** 取这张贴图不透明像素的包围盒（相对画布，未缩放）；拿不到就返回 null。 */
-        function spriteOpaqueBox(image, poseImage) {
-            const url = image.currentSrc || image.src || '';
-            if (!url) return null;
-            if (spriteBoxCache.has(url)) return spriteBoxCache.get(url);
-            const width = image.naturalWidth;
-            const height = image.naturalHeight;
-            const showsThisPose = !poseImage || url.indexOf(poseImage) >= 0;
-            if (image.complete && width > 0 && height > 0 && showsThisPose && width * height <= 262144) {
-                const measured = measureSpriteBox(image, width, height);
-                if (measured) {
-                    spriteBoxCache.set(url, measured);
-                    return measured;
-                }
-                if (measured === undefined) {
-                    // 跨域读不到像素，换 fetch + createImageBitmap 异步补量
-                    loadSpriteBox(url);
-                    return null;
-                }
-                spriteBoxCache.set(url, null);
-            }
-            return null;
-        }
-
-        /** 让贴图的可见部分留在视口内：贴边时正好贴住页边，只切掉透明留白。 */
-        function keepSpriteVisible(engine) {
-            if (!engine || typeof engine.render !== 'function' || engine.spriteVisibleGuard) return;
-            engine.spriteVisibleGuard = true;
-            const render = engine.render.bind(engine);
-            const readTranslate = /translate3d\((-?[\d.]+)px,\s*(-?[\d.]+)px/;
-            engine.render = function (interpolate) {
-                render(interpolate);
-                try {
-                    const root = this.elRoot;
-                    const image = this.elImg;
-                    const pose = this.currentPose && this.currentPose();
-                    if (!root || !image || !pose || !pose.image) return;
-                    const found = readTranslate.exec(root.style.transform || '');
-                    if (!found) return;
-                    const scale = this.spriteScale || 1;
-                    const naturalWidth = image.naturalWidth || 128;
-                    const naturalHeight = image.naturalHeight || 128;
-                    const box = spriteOpaqueBox(image, pose.image);
-                    const minX = box ? box.minX : 0;
-                    const maxX = box ? box.maxX : naturalWidth;
-                    const minY = box ? box.minY : 0;
-                    const maxY = box ? box.maxY : naturalHeight;
-                    const anchorX = ((pose.imageAnchor && pose.imageAnchor.x) || 64) * scale;
-                    const anchorY = ((pose.imageAnchor && pose.imageAnchor.y) || 128) * scale;
-                    const baseX = parseFloat(found[1]);
-                    const baseY = parseFloat(found[2]);
-                    const left = this.lookRight ? baseX + anchorX - maxX * scale : baseX - anchorX + minX * scale;
-                    const right = this.lookRight ? baseX + anchorX - minX * scale : baseX - anchorX + maxX * scale;
-                    const top = baseY - anchorY + minY * scale;
-                    const bottom = baseY - anchorY + maxY * scale;
-                    const clipLeft = EDGE_CLIP_PX.left;
-                    const clipRight = EDGE_CLIP_PX.right;
-                    const clipTop = EDGE_CLIP_PX.top;
-                    const clipBottom = EDGE_CLIP_PX.bottom;
-                    const fixX = left < -clipLeft ? -(left + clipLeft)
-                        : (right > window.innerWidth + clipRight ? window.innerWidth + clipRight - right : 0);
-                    const fixY = top < -clipTop ? -(top + clipTop)
-                        : (bottom > window.innerHeight + clipBottom ? window.innerHeight + clipBottom - bottom : 0);
-                    if (!fixX && !fixY) return;
-                    root.style.transform = `translate3d(${baseX + fixX}px, ${baseY + fixY}px, 0)`;
-                } catch (error) {
-                    // 量不到就按原样显示
-                }
+        /** 当前的活动矩形，取视口尺寸，随时可调用。 */
+        function mascotZone() {
+            const viewWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+            const viewHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+            return {
+                left: MASCOT_ZONE_INSET.left,
+                right: Math.max(MASCOT_ZONE_INSET.left + 40, viewWidth - MASCOT_ZONE_INSET.right),
+                top: MASCOT_ZONE_INSET.top,
+                bottom: Math.max(MASCOT_ZONE_INSET.top + 40, viewHeight - MASCOT_ZONE_INSET.bottom)
             };
+        }
+
+        /** 把这个引擎的活动区域换成上面那块矩形。 */
+        function applyMascotZone(engine) {
+            if (!engine || engine.mascotZonePatched) return;
+            engine.mascotZonePatched = true;
+            engine.area = mascotZone;
+        }
+
+        /** 窗口尺寸变了，把越界的宠物拉回矩形里。 */
+        function refreshMascotZone() {
+            mascotInstances.forEach(item => {
+                const engine = item && item.instance && item.instance.engine;
+                if (!engine) return;
+                applyMascotZone(engine);
+                try {
+                    if (typeof engine.clampToWorkArea === 'function') engine.clampToWorkArea();
+                } catch (error) {
+                    // 正在拖拽之类的状态下夹不动就下一帧自己会回来
+                }
+            });
         }
 
         async function mountMascots() {
@@ -2881,7 +2792,12 @@
                 if (mascotState.enabled) created.push(await createMascotByPack(mascotState.pack));
                 if (mascotState.second) created.push(await createMascotByPack(otherPack(mascotState.pack)));
                 mascotInstances = created;
-                created.forEach(item => keepSpriteVisible(item.instance && item.instance.engine));
+                created.forEach(item => applyMascotZone(item.instance && item.instance.engine));
+                if (!mascotZoneBound) {
+                    mascotZoneBound = true;
+                    window.addEventListener('resize', refreshMascotZone);
+                    window.addEventListener('orientationchange', refreshMascotZone);
+                }
                 const viaCdn = created.some(item => item.source === 'cdn');
                 if (created.length > 1) {
                     setMascotHint(viaCdn
