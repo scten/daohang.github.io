@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-1720">
+    <meta name="app-version" content="20261026-1745">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2194,13 +2194,97 @@
             .wv-note { bottom: 12px; font-size: 10px; }
             .wv-shard-name { font-size: clamp(9px, 1.6dvh, 11px); letter-spacing: .02em; }
             .wv-panel { top: 10px; right: 10px; bottom: 10px; padding: 16px; }
+            html[data-skin="wuwa"] .wvm { top: 72px; padding-left: 12px; padding-right: 12px; }
             .wa-beams { opacity: .35; }
         }
         @media (max-width: 480px) {
             .wv-brand-sub { display: none; }
         }
+        /* --- 竖屏 / 窄比例专用：星轨列表界面（和宽屏横屏的晶体散列完全两套） --- */
+        html[data-skin="wuwa"] .wvm { display: none; }
+        .wvm {
+            position: fixed; left: 0; right: 0; top: 88px; bottom: 0; z-index: 21;
+            max-width: 720px; margin: 0 auto;
+            flex-direction: column; gap: 0;
+            padding: 2px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+            overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        .wvm-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 11px; }
+        .wvm-filter {
+            position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+            height: 40px; padding: 0 12px; border-radius: 13px;
+            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .26), rgba(var(--wuwa-deep), .76));
+            box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), .18), 0 8px 18px rgba(0, 0, 0, .28);
+            backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+            cursor: text;
+        }
+        .wvm-filter svg { width: 16px; height: 16px; flex: none; fill: none; stroke: rgba(var(--wuwa-glow), .8); stroke-width: 1.9; stroke-linecap: round; }
+        .wvm-filter input {
+            flex: 1; min-width: 0; border: 0; background: none; outline: none;
+            color: #eef3ff; font-size: 13px; letter-spacing: .02em; font-family: inherit;
+        }
+        .wvm-filter input::placeholder { color: rgba(214, 226, 255, .45); }
+        .wvm-filter input::-webkit-search-cancel-button { filter: invert(.65); }
+        .wvm-count { flex: none; margin: 0; font-size: 10px; letter-spacing: .08em; color: rgba(226, 236, 255, .6); font-variant-numeric: tabular-nums; }
+
+        .wvm-rail { position: relative; display: flex; flex-direction: column; padding-left: 4px; }
+        .wvm-rail::before {
+            content: ""; position: absolute; left: 26px; top: 8px; bottom: 8px; width: 1px; pointer-events: none;
+            background: linear-gradient(180deg, transparent, rgba(var(--wuwa-gold), .52) 10%,
+                rgba(var(--wuwa-gold), .18) 62%, transparent);
+        }
+        .wvm-item {
+            position: relative; display: grid; grid-template-columns: 44px 1fr auto; align-items: center;
+            gap: 12px; padding: 8px 4px 8px 0; text-decoration: none; color: inherit;
+            border-bottom: 1px solid rgba(210, 228, 255, .075);
+            animation: wvm-in .5s var(--wuwa-ease) backwards; animation-delay: var(--din, 0s);
+            transition: transform .18s var(--wuwa-ease), border-color .3s var(--wuwa-ease);
+        }
+        @keyframes wvm-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } }
+        .wvm-item:last-child { border-bottom: 0; }
+        .wvm-item:active { transform: scale(.985); border-color: rgba(var(--wuwa-gold), .3); }
+        .wvm-item:focus-visible { outline: 1px solid rgba(var(--wuwa-gold), .55); outline-offset: -2px; border-radius: 12px; }
+        .wvm-gem {
+            position: relative; width: 44px; height: 44px; display: grid; place-items: center;
+            animation: wvm-gem-float 6.5s ease-in-out infinite alternate;
+            animation-delay: var(--din, 0s);
+        }
+        @keyframes wvm-gem-float { from { translate: 0 1.5px; } to { translate: 0 -2.5px; } }
+        .wvm-gem::before {
+            content: ""; position: absolute; inset: 10%; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(var(--wuwa-glow), .34), transparent 68%);
+        }
+        .wvm-gem svg { position: absolute; inset: 0; }
+        .wvm-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .wvm-name {
+            font-size: 14px; font-weight: 600; letter-spacing: .015em; color: rgba(238, 244, 255, .96);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .75);
+        }
+        .wvm-host {
+            font-size: 10px; letter-spacing: .07em; color: rgba(206, 220, 248, .62);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+        }
+        .wvm-idx {
+            font-size: 10.5px; letter-spacing: .06em; color: rgba(var(--wuwa-gold), .68);
+            font-variant-numeric: tabular-nums; text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+        }
+        .wvm-item:active .wvm-name { color: #fff; }
+        .wvm-empty { margin: 0; padding: 30px 4px; text-align: center; font-size: 12px; letter-spacing: .04em; color: rgba(214, 226, 255, .5); }
+        .wvm-foot { margin: 18px 0 0; text-align: center; font-size: 9.5px; letter-spacing: .16em; color: rgba(200, 216, 246, .36); }
+
+        /* 宽屏横屏（宽高都够、不是竖长比例）→ 晶体散列；其余一律走星轨列表 */
+        @media (max-width: 899.98px), (max-height: 559.98px), (max-aspect-ratio: 1/1) {
+            html[data-skin="wuwa"] .wv-dock,
+            html[data-skin="wuwa"] .wv-note { display: none !important; }
+            html[data-skin="wuwa"] .wvm { display: flex; }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
+            .wvm-item, .wvm-gem { animation: none; }
             .wv-shard.wv-pager, .wv-shard.wv-pager::after, .wv-shard.wv-pager::before { animation: none !important; }
             .wv-shard.wv-pager::after { opacity: .4; transform: none; }
             .wv-shard.wv-pager::before { opacity: 0; }
@@ -2639,6 +2723,19 @@
             <span class="sep">|</span>
             <span>My Links · 灵感导航</span>
         </p>
+
+        <!-- 竖屏 / 窄比例用的星轨列表界面（宽屏横屏时用上面的晶体散列） -->
+        <section class="wvm" id="wvmRail" aria-label="星轨站点列表">
+            <div class="wvm-head">
+                <label class="wvm-filter">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.6 15.6 21 21"/></svg>
+                    <input type="search" id="wvmFilter" placeholder="筛选站点…" autocomplete="off" aria-label="筛选站点">
+                </label>
+                <p class="wvm-count" id="wvmCount">收录 0 个站点</p>
+            </div>
+            <div class="wvm-rail" id="wvmList"></div>
+            <p class="wvm-foot">上下滑动浏览 · 点晶体进入</p>
+        </section>
 
         <aside class="wv-panel" id="wvPanel" aria-label="站点清单">
             <div class="wv-panel-head">
@@ -3833,7 +3930,7 @@
             const hint = document.getElementById('skinHint');
             if (hint) {
                 hint.textContent = skin.id === 'wuwa'
-                    ? '当前：星轨导航 —— 整屏壁纸 + 底部三角晶体导航，点晶体打开站点、悬浮看详情，两侧大箭头或 ← → 换组；右上角按钮分别是站点清单 / 音乐 / 全部设置。'
+                    ? '当前：星轨导航 —— 整屏壁纸 + 晶体导航，宽屏横屏是底部三角晶体（悬浮看详情、两端晶体或 ← → 换组），窄屏 / 竖屏自动换成星轨列表；右上角按钮分别是站点清单 / 音乐 / 全部设置。'
                     : '当前：卡片导航 —— 原来的卡片网格，支持文件夹、拖拽排序和尺寸调整。';
             }
             if (skin.id === 'wuwa') {
@@ -4197,9 +4294,54 @@
             }
         }
 
+        /** 竖屏 / 窄比例的星轨列表：整张清单纵向排成一条轨道，不分页 */
+        let wvmQuery = '';
+
+        function renderWuwaRail() {
+            const host = document.getElementById('wvmList');
+            if (!host) return;
+            const query = wvmQuery.trim().toLowerCase();
+            const all = cards.filter(card => !card.hidden);
+            const list = all.filter(card => wvMatch(card, query));
+            host.innerHTML = '';
+            list.forEach((card, index) => {
+                const folder = isFolder(card);
+                const el = document.createElement(folder ? 'button' : 'a');
+                el.className = 'wvm-item';
+                if (folder) {
+                    el.type = 'button';
+                    el.setAttribute('aria-label', `打开文件夹 ${card.title}`);
+                } else {
+                    el.href = card.url || '#';
+                    el.target = '_blank';
+                    el.rel = 'noopener';
+                }
+                el.style.setProperty('--din', Math.min(index * 0.035, 0.45).toFixed(2) + 's');
+                const seed = wvSeed(card.id || card.title || String(index));
+                const gem = wvShardSvg('m' + (seed * 7 + index), wvCrystal(seed, index % 2 === 0));
+                el.innerHTML = `<span class="wvm-gem">${gem}</span>`
+                    + `<span class="wvm-body">`
+                    + `<span class="wvm-name">${wvEscape(card.title || '未命名')}</span>`
+                    + `<span class="wvm-host">${wvEscape(folder ? '文件夹 · 点开看里面' : wvHost(card.url))}</span>`
+                    + `</span>`
+                    + `<span class="wvm-idx">${String(index + 1).padStart(2, '0')}</span>`;
+                if (folder) el.addEventListener('click', () => openFolder(card.id));
+                host.appendChild(el);
+            });
+            if (!list.length) {
+                const empty = document.createElement('p');
+                empty.className = 'wvm-empty';
+                empty.textContent = query ? '没有匹配的站点' : '还没有收录站点';
+                host.appendChild(empty);
+            }
+            const count = document.getElementById('wvmCount');
+            if (count) count.textContent = query ? `匹配 ${list.length} / ${all.length}` : `收录 ${all.length} 个站点`;
+        }
+
         function renderWuwaView() {
             if (document.documentElement.dataset.skin !== 'wuwa') return;
             renderWuwaShards();
+            renderWuwaRail();
             renderWuwaPanel();
         }
 
@@ -4265,6 +4407,19 @@
                     filter.value = '';
                     wvFilterText = '';
                     renderWuwaPanel();
+                });
+            }
+            const railFilter = document.getElementById('wvmFilter');
+            if (railFilter) {
+                railFilter.addEventListener('input', () => {
+                    wvmQuery = railFilter.value.trim();
+                    renderWuwaRail();
+                });
+                railFilter.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Escape') return;
+                    railFilter.value = '';
+                    wvmQuery = '';
+                    renderWuwaRail();
                 });
             }
             const musicBtn = document.getElementById('wvMusicBtn');
@@ -4335,6 +4490,7 @@
                 wvResizeTimer = setTimeout(() => {
                     wvTipHide();
                     renderWuwaShards();
+                    renderWuwaRail();
                 }, 160);
             });
 
