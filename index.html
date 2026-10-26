@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-1555">
+    <meta name="app-version" content="20261026-1720">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -1798,25 +1798,7 @@
         .wv-tool[aria-expanded="true"] { border-color: rgba(var(--wuwa-accent), .8); color: rgb(var(--wuwa-glow)); }
         .wv-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
-        /* --- 两侧翻页箭头 --- */
-        .wv-edge {
-            position: fixed; top: 22vh; bottom: 30vh; width: 90px; z-index: 35;
-            display: grid; place-items: center; padding: 0; border: 0; background: none;
-            cursor: pointer; -webkit-tap-highlight-color: transparent;
-        }
-        .wv-edge.prev { left: 6px; }
-        .wv-edge.next { right: 6px; }
-        .wv-edge svg {
-            width: 26px; height: 40px; overflow: visible;
-            fill: rgba(255, 255, 255, .22); stroke: rgba(255, 255, 255, .34); stroke-width: 1; stroke-linejoin: round;
-            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .45));
-            transition: fill .45s var(--wuwa-ease), stroke .45s var(--wuwa-ease), transform .55s var(--wuwa-ease), filter .55s var(--wuwa-ease);
-        }
-        .wv-edge:hover svg, .wv-edge:focus-visible svg {
-            fill: #fff; stroke: #fff; transform: translateY(-8px) scale(1.1);
-            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .45)) drop-shadow(0 0 10px rgba(var(--wuwa-glow), .85));
-        }
-        .wv-edge:active svg { transform: translateY(-2px) scale(.96); }
+        /* 两侧的白色大翻页箭头已去掉：翻组只靠两端的翻页晶体 + 方向键 + 左右滑动 */
 
         /* --- 底部晶体 dock --- */
         .wv-dock {
@@ -1917,8 +1899,32 @@
         @keyframes wv-pager-sway-prev { 0%, 100% { translate: 0 0; } 50% { translate: -7px 0; } }
         @keyframes wv-pager-sway-next { 0%, 100% { translate: 0 0; } 50% { translate: 7px 0; } }
         .wv-shard.wv-pager:hover .wv-shard-3d,
-        .wv-shard.wv-pager:focus-visible .wv-shard-3d { --k: 1.22; }
-        .wv-shard.wv-pager:hover::after { animation-duration: 1.6s; opacity: .8; }
+        .wv-shard.wv-pager:focus-visible .wv-shard-3d { --k: 1.28; }
+        /* 悬停：光晕换成更快更亮的脉冲，摆幅也再往外顶一点，手感更足 */
+        .wv-shard.wv-pager:hover::after,
+        .wv-shard.wv-pager:focus-visible::after {
+            animation: wv-pager-hover 1.1s ease-in-out infinite;
+        }
+        @keyframes wv-pager-hover {
+            0%, 100% { opacity: .55; transform: scale(.98); }
+            50% { opacity: 1; transform: scale(1.14); }
+        }
+        /* 悬停再加一圈向外扩散的金色涟漪，指向感更强 */
+        .wv-shard.wv-pager::before {
+            content: ""; position: absolute; inset: 8%;
+            border-radius: 50%; border: 1px solid rgba(var(--wuwa-gold), .6);
+            opacity: 0; pointer-events: none;
+        }
+        .wv-shard.wv-pager:hover::before,
+        .wv-shard.wv-pager:focus-visible::before {
+            animation: wv-pager-ripple 1.7s cubic-bezier(.22, .8, .24, 1) infinite;
+        }
+        @keyframes wv-pager-ripple {
+            0% { opacity: .75; transform: scale(.68); }
+            70% { opacity: .18; transform: scale(1.18); }
+            100% { opacity: 0; transform: scale(1.34); }
+        }
+        .wv-shard.wv-pager:hover, .wv-shard.wv-pager:focus-visible { cursor: pointer; }
         .wv-shard-name em { font-style: normal; color: rgba(var(--wuwa-gold), .95); }
         .wv-shard:hover .wv-shard-name, .wv-shard:focus-visible .wv-shard-name { color: #fff; }
 
@@ -2185,8 +2191,6 @@
             .wv-tool { width: 38px; height: 38px; }
             .wv-tools { gap: 6px; }
             .wv-dock { height: min(38dvh, 330px); bottom: 46px; }
-            .wv-edge { width: 44px; top: 16vh; bottom: 60vh; }
-            .wv-edge svg { width: 18px; height: 28px; }
             .wv-note { bottom: 12px; font-size: 10px; }
             .wv-shard-name { font-size: clamp(9px, 1.6dvh, 11px); letter-spacing: .02em; }
             .wv-panel { top: 10px; right: 10px; bottom: 10px; padding: 16px; }
@@ -2197,8 +2201,9 @@
         }
         @media (prefers-reduced-motion: reduce) {
             .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
-            .wv-shard.wv-pager, .wv-shard.wv-pager::after { animation: none; }
+            .wv-shard.wv-pager, .wv-shard.wv-pager::after, .wv-shard.wv-pager::before { animation: none !important; }
             .wv-shard.wv-pager::after { opacity: .4; transform: none; }
+            .wv-shard.wv-pager::before { opacity: 0; }
             .wv-svg .sh-glit { animation: none; opacity: .5; }
             .wv-tip, .wv-panel, .wv-shard-3d { transition: none; }
         }
@@ -2617,13 +2622,6 @@
                 </button>
             </nav>
         </header>
-
-        <button type="button" class="wv-edge prev" id="wvPrevEdge" aria-label="上一组">
-            <svg viewBox="0 0 26 40" aria-hidden="true"><path d="M20 4 6 20l14 16z"/></svg>
-        </button>
-        <button type="button" class="wv-edge next" id="wvNextEdge" aria-label="下一组">
-            <svg viewBox="0 0 26 40" aria-hidden="true"><path d="M6 4l14 16L6 36z"/></svg>
-        </button>
 
         <main class="wv-dock" id="wvDock" aria-label="站点晶体导航">
             <div class="wv-shard-layer" id="wvShards"></div>
@@ -4275,10 +4273,6 @@
             if (menuBtn) {
                 menuBtn.addEventListener('click', (event) => { event.stopPropagation(); toggleMenu(true); });
             }
-            const prevEdge = document.getElementById('wvPrevEdge');
-            if (prevEdge) prevEdge.addEventListener('click', () => setWuwaPage(wvPage - 1));
-            const nextEdge = document.getElementById('wvNextEdge');
-            if (nextEdge) nextEdge.addEventListener('click', () => setWuwaPage(wvPage + 1));
             const add = document.getElementById('wvAdd');
             if (add) add.addEventListener('click', (event) => { event.stopPropagation(); openCardForm(); });
             const settings = document.getElementById('wvSettings');
