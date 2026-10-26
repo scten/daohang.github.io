@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-1900">
+    <meta name="app-version" content="20261026-2120">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -1727,17 +1727,39 @@
             font-family: var(--wuwa-serif); font-weight: 700;
             font-size: clamp(22px, 2.1vw, 32px); letter-spacing: .14em; white-space: nowrap;
             color: #fff;
-            background: linear-gradient(100deg, #fff 20%, rgb(var(--wuwa-glow)) 40%, #fff 55%, rgb(var(--wuwa-accent)) 80%);
-            background-size: 250% 100%;
+            /* 两个周期铺在 200% 宽的底图上，等于一个周期正好一个字宽；底图整体横向滑动 = 光带扫过且首尾无缝 */
+            background: linear-gradient(100deg,
+                rgb(72, 104, 192) 0%,
+                rgb(var(--wuwa-accent)) 13%,
+                rgb(var(--wuwa-glow)) 25%,
+                rgb(var(--wuwa-accent)) 37%,
+                rgb(72, 104, 192) 50%,
+                rgb(var(--wuwa-accent)) 63%,
+                rgb(var(--wuwa-glow)) 75%,
+                rgb(var(--wuwa-accent)) 87%,
+                rgb(72, 104, 192) 100%);
+            background-size: 200% 100%;
+            background-position: 0% 0;
+            background-repeat: repeat-x;
             -webkit-background-clip: text; background-clip: text;
             -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 0 14px rgba(var(--wuwa-accent), .55));
-            animation: wv-name-sheen 7s linear infinite;
+            /* ① 加载时从纯白淡入到渐变（只跑一次）  ② 之后蓝色光带一直往右扫，永不回到纯白 */
+            animation:
+                wv-name-fill 1.7s var(--wuwa-ease) .15s 1 both,
+                wv-name-sweep 4.2s linear infinite;
         }
         @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
-            .wv-brand-name { background: none; color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .6); }
+            .wv-brand-name { background: none; color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .6); animation: none; }
         }
-        @keyframes wv-name-sheen { to { background-position: -250% 0; } }
+        @keyframes wv-name-fill {
+            from { -webkit-text-fill-color: #fff; }
+            to { -webkit-text-fill-color: transparent; }
+        }
+        @keyframes wv-name-sweep {
+            from { background-position: 0% 0; }
+            to { background-position: 100% 0; }
+        }
         .wv-brand-sub {
             margin-top: 6px; font-style: normal; font-size: 10px; letter-spacing: .5em;
             color: rgba(var(--wuwa-gold), .92); white-space: nowrap;
@@ -1839,14 +1861,25 @@
         .wv-svg .st-b { stop-color: rgb(var(--wuwa-accent)); }
         .wv-svg .st-c { stop-color: rgb(var(--wuwa-accent2)); }
         .wv-svg .st-deep { stop-color: rgb(var(--wuwa-deep)); }
-        .wv-svg .pc {
-            --q: 0; transform-box: fill-box; transform-origin: center;
-            transform: translate(calc(var(--dx) * var(--q) * 1px), calc(var(--dy) * var(--q) * 1px)) rotate(calc(var(--r) * var(--q) * 1deg));
-            transition: transform .55s var(--wuwa-ease);
+        /* --q 由整块晶体上的循环动画驱动（慢慢张开 → 停一下 → 慢慢合拢），--qo 是鼠标悬停时额外开的那一层 */
+        @property --q { syntax: '<number>'; inherits: true; initial-value: 0; }
+        @property --qo { syntax: '<number>'; inherits: false; initial-value: 0; }
+        .wv-svg {
+            animation: wv-bloom 9s ease-in-out infinite;
+            animation-delay: calc(var(--sd, 0) * -1s);
         }
-        .wv-svg .pc.center { transform: scale(calc(1 - var(--q) * .26)); }
+        @keyframes wv-bloom {
+            0%, 100% { --q: 0; }
+            46%, 54% { --q: .52; }
+        }
+        .wv-svg .pc {
+            --qo: 0; transform-box: fill-box; transform-origin: center;
+            transform: translate(calc((var(--q) + var(--qo)) * var(--dx) * 1px), calc((var(--q) + var(--qo)) * var(--dy) * 1px)) rotate(calc((var(--q) + var(--qo)) * var(--r) * 1deg));
+            transition: --qo .5s var(--wuwa-ease);
+        }
+        .wv-svg .pc.center { transform: scale(calc(1 - (var(--q) + var(--qo)) * .26)); }
         .wv-shard:hover .wv-svg .pc,
-        .wv-shard:focus-visible .wv-svg .pc { --q: 1; }
+        .wv-shard:focus-visible .wv-svg .pc { --qo: 1; }
         .wv-svg .pc-facet { fill: rgba(255, 255, 255, .24); mix-blend-mode: screen; }
         .wv-svg .pc.center .pc-facet { fill: rgba(255, 255, 255, .12); }
         .wv-svg .pc-edge { fill: none; stroke: rgba(var(--wuwa-glow), .95); stroke-width: 1.1; stroke-linejoin: round; }
@@ -2410,7 +2443,7 @@
             .wvn-hint { display: none; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
+            .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark, .wv-svg { animation: none; }
             .wvn-gem, .wvn-gem::before, .wvn-gem::after,
             .wvn-gem-in, .wvn-gem-in::before, .wvn-gem-in::after,
             .wvn-info { animation: none; }
@@ -4164,7 +4197,8 @@
             const glits = crystal.glits
                 .map(g => `<circle class="sh-glit" cx="${g[0].toFixed(1)}" cy="${g[1].toFixed(1)}" r="${g[2].toFixed(1)}" style="animation-delay:-${g[3].toFixed(1)}s"/>`)
                 .join('');
-            return `<svg class="wv-svg" viewBox="-14 -14 128 128" aria-hidden="true"><defs>`
+            const phase = String(uid).split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 9;
+            return `<svg class="wv-svg" viewBox="-14 -14 128 128" aria-hidden="true" style="--sd:${phase}"><defs>`
                 + `<linearGradient id="${id}f" x1="0" y1="0" x2=".9" y2="1">`
                 + `<stop offset="0" class="st-a" stop-opacity=".62"/>`
                 + `<stop offset=".45" class="st-b" stop-opacity=".34"/>`
@@ -4557,7 +4591,9 @@
                     el.style.setProperty('--s', delta < 0 ? '-1' : '1');
                 }
             });
-            const slot = Math.max(0, Math.min(Math.max(0, wvnSlots.length - 1), Math.round(track.scrollLeft / stride)));
+            const slot = track.clientWidth
+                ? Math.max(0, Math.min(Math.max(0, wvnSlots.length - 1), Math.round(track.scrollLeft / stride)))
+                : wvnSlot;
             wvnSlot = slot;
             if (!wvnLock) {
                 const real = wvnSlots[slot] ? Number(wvnSlots[slot].dataset.real) : 0;
@@ -4582,7 +4618,7 @@
         /** 停在复制品上时悄悄跳回等价的那颗，视觉完全一样（这就是无缝绕圈） */
         function wvnNormalize() {
             const track = document.getElementById('wvnTrack');
-            if (!track || wvnReal < 2) return;
+            if (!track || wvnReal < 2 || !track.clientWidth) return;
             const stride = wvnStride(track);
             const slot = Math.round(track.scrollLeft / stride);
             if (slot <= 0) track.scrollLeft = wvnReal * stride;
