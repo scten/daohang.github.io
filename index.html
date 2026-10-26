@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-1815">
+    <meta name="app-version" content="20261026-1830">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2199,96 +2199,158 @@
         @media (max-width: 480px) {
             .wv-brand-sub { display: none; }
         }
-        /* --- 竖屏 / 窄比例专用：星轨轮盘（一次一颗大晶体，左右滑动切换） --- */
+        /* --- 竖屏 / 窄比例专用：星轨轮盘（大晶体 + 3D 轮转 + 可点刻度，滑动/箭头/刻度三种操作） --- */
         html[data-skin="wuwa"] .wvn { display: none; }
-        .wvn { position: fixed; inset: 0; z-index: 21; flex-direction: column; --sw: min(88vw, 420px); }
+        .wvn {
+            position: fixed; inset: 0; z-index: 21; flex-direction: column;
+            --sw: min(80vw, 360px);
+            touch-action: pan-x;
+        }
         .wvn-track {
             position: absolute; inset: 0;
             display: flex; overflow-x: auto; overflow-y: hidden;
             scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
             scrollbar-width: none; -webkit-overflow-scrolling: touch;
             padding: 0 calc((100% - var(--sw)) / 2);
-            perspective: 1100px;
+            perspective: 1200px; perspective-origin: 50% 46%;
         }
         .wvn-track::-webkit-scrollbar { display: none; }
+        .wvn.is-drag .wvn-track { scroll-snap-type: none; }
+        .wvn.is-drag { cursor: grabbing; }
         .wvn-slide {
-            flex: 0 0 var(--sw); height: 100%; scroll-snap-align: center; scroll-snap-stop: always;
+            position: relative; flex: 0 0 var(--sw); height: 100%;
+            scroll-snap-align: center;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 3px; padding: 76px 20px 104px;
+            gap: 3px; padding: 74px 20px 108px;
             text-decoration: none; color: inherit; border: 0; background: none; font: inherit;
-            transform: translateY(calc(var(--d, 0) * 12px))
-                       rotateY(calc(var(--s, 0) * var(--d, 0) * 18deg))
-                       scale(calc(1 - var(--d, 0) * .26));
-            opacity: calc(1 - var(--d, 0) * .62);
-            filter: blur(calc(var(--d, 0) * 2.4px)) brightness(calc(1 - var(--d, 0) * .3)) saturate(calc(1 - var(--d, 0) * .4));
-            will-change: transform, opacity, filter;
+            transform:
+                translate3d(0, calc(var(--d, 0) * 20px), 0)
+                rotateY(calc(var(--s, 0) * var(--d, 0) * 32deg))
+                scale(calc(1 - var(--d, 0) * .26));
+            opacity: calc(1 - var(--d, 0) * .72);
+            transform-origin: 50% 50%;
+            backface-visibility: hidden;
+            will-change: transform, opacity;
+        }
+        /* 非当前这颗压暗（用一层渐变冒充模糊，省掉逐帧 blur 的性能开销） */
+        .wvn-slide::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(circle at 50% 44%, rgba(5, 9, 20, .72), rgba(5, 9, 20, .55) 62%, transparent 88%);
+            opacity: var(--d, 0);
         }
         .wvn-gem {
-            position: relative; flex: none; width: min(60vw, 234px); aspect-ratio: 1; margin-bottom: 6px;
-            animation: wvn-float 7s ease-in-out infinite alternate;
+            position: relative; flex: none; width: min(60vw, 234px); aspect-ratio: 1; margin-bottom: 4px;
+            transform: translateZ(0) scale(calc(.93 + var(--a, 0) * .07));
+            transition: transform .42s var(--wuwa-ease);
         }
-        @keyframes wvn-float { from { translate: 0 4px; } to { translate: 0 -7px; } }
-        .wvn-gem::before {
-            content: ""; position: absolute; inset: -28%; border-radius: 50%; pointer-events: none;
-            background: radial-gradient(circle, rgba(var(--wuwa-glow), .44), rgba(var(--wuwa-gold), .16) 46%, transparent 72%);
-            animation: wvn-halo 3.8s ease-in-out infinite;
-        }
-        @keyframes wvn-halo { 0%, 100% { opacity: .4; transform: scale(.9); } 50% { opacity: .95; transform: scale(1.07); } }
+        .wvn-gem-in { position: absolute; inset: 0; animation: wvn-float 6.5s ease-in-out infinite alternate; }
+        @keyframes wvn-float { from { translate: 0 5px; } to { translate: 0 -8px; } }
         .wvn-gem svg { position: absolute; inset: 0; }
+        .wvn-gem::before {
+            content: ""; position: absolute; inset: -26%; border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle, rgba(var(--wuwa-glow), .5), rgba(var(--wuwa-gold), .18) 46%, transparent 72%);
+            opacity: calc(.22 + var(--a, 0) * .78);
+            transform: scale(calc(.9 + var(--a, 0) * .12));
+            animation: wvn-halo 3.6s ease-in-out infinite;
+        }
+        @keyframes wvn-halo { 0%, 100% { opacity: calc(.22 + var(--a, 0) * .5); } 50% { opacity: calc(.34 + var(--a, 0) * .66); } }
         .wvn-gem::after {
-            content: ""; position: absolute; left: 14%; right: 14%; bottom: -7%; height: 15%;
+            content: ""; position: absolute; left: 14%; right: 14%; bottom: -8%; height: 15%;
             border-radius: 50%; pointer-events: none;
-            background: radial-gradient(ellipse at center, rgba(var(--wuwa-glow), .5), transparent 72%);
-            filter: blur(7px);
+            background: radial-gradient(ellipse at center, rgba(var(--wuwa-glow), .55), transparent 72%);
+            filter: blur(7px); opacity: calc(.15 + var(--a, 0) * .85);
         }
         .wvn-info {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
-            min-width: 72%; max-width: 90%; margin-top: 16px; padding: 15px 22px 17px;
+            min-width: 88%; max-width: 100%; margin-top: 14px; padding: 15px 20px 17px;
             border-radius: 20px; text-align: center;
-            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .32), rgba(var(--wuwa-deep), .82) 62%);
-            box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), .22), 0 18px 40px rgba(0, 0, 0, .48);
-            backdrop-filter: blur(18px) saturate(1.5); -webkit-backdrop-filter: blur(18px) saturate(1.5);
+            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .34), rgba(var(--wuwa-deep), .84) 62%);
+            box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), calc(.16 + var(--a, 0) * .2)),
+                        0 18px 40px rgba(0, 0, 0, calc(.3 + var(--a, 0) * .22)),
+                        0 0 calc(var(--a, 0) * 26px) rgba(var(--wuwa-gold), calc(var(--a, 0) * .3));
+            transform: translate3d(0, calc(var(--d, 0) * 12px), 0);
         }
-        .wvn-name {
-            font-size: 20px; font-weight: 700; letter-spacing: .03em; color: #f4f7ff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, .9);
-        }
+        .wvn-name { font-size: 20px; font-weight: 700; letter-spacing: .03em; color: #f4f7ff; text-shadow: 0 2px 10px rgba(0, 0, 0, .9); }
         .wvn-host { font-size: 10px; letter-spacing: .18em; color: rgba(var(--wuwa-gold), .88); }
         .wvn-desc {
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-            max-width: 100%; margin-top: 5px; font-size: 11.5px; line-height: 1.6;
-            color: rgba(214, 228, 255, .68);
+            max-width: 100%; margin-top: 5px; font-size: 11.5px; line-height: 1.6; color: rgba(214, 228, 255, .68);
         }
         .wvn-go {
             display: inline-flex; align-items: center; gap: 7px; margin-top: 13px;
             height: 36px; padding: 0 20px; border-radius: 999px;
             font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #14100a;
             background: linear-gradient(152deg, rgba(var(--wuwa-gold), .98), rgba(255, 246, 224, .92));
-            box-shadow: 0 10px 22px rgba(0, 0, 0, .42), 0 0 0 1px rgba(255, 255, 255, .5), 0 0 22px rgba(var(--wuwa-gold), .4);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, .42), 0 0 0 1px rgba(255, 255, 255, .5),
+                        0 0 calc(14px + var(--a, 0) * 18px) rgba(var(--wuwa-gold), calc(.3 + var(--a, 0) * .45));
             transition: transform .2s var(--wuwa-ease);
         }
         .wvn-go b { font-size: 13px; font-weight: 700; }
-        .wvn-slide:active .wvn-go { transform: scale(.96); }
+        .wvn-slide:active .wvn-go { transform: scale(.95); }
         .wvn-slide:focus-visible { outline: 1px solid rgba(var(--wuwa-gold), .65); outline-offset: -8px; border-radius: 20px; }
+
+        /* 左右切换按钮（不用滑动也能翻，点一下就走） */
+        .wvn-side {
+            position: absolute; top: 46%; z-index: 5; transform: translateY(-50%);
+            width: 40px; height: 40px; padding: 0; display: grid; place-items: center;
+            border: 0; border-radius: 50%; cursor: pointer; color: rgba(240, 245, 255, .82);
+            background: radial-gradient(120% 120% at 32% 26%, rgba(var(--wuwa-accent), .4), rgba(8, 12, 22, .6));
+            box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), .28), 0 8px 18px rgba(0, 0, 0, .38);
+            transition: transform .22s var(--wuwa-ease), color .22s var(--wuwa-ease), box-shadow .22s var(--wuwa-ease), opacity .22s var(--wuwa-ease);
+        }
+        .wvn-side:hover, .wvn-side:focus-visible {
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(var(--wuwa-gold), .65), 0 0 24px rgba(var(--wuwa-gold), .55);
+        }
+        .wvn-side:active { transform: translateY(-50%) scale(.9); }
+        .wvn-side:disabled { opacity: 0; pointer-events: none; }
+        .wvn-side.prev { left: 8px; }
+        .wvn-side.next { right: 8px; }
+        .wvn-side svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
         .wvn-bar {
-            position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
-            display: flex; flex-direction: column; align-items: center; gap: 9px;
-            padding: 28px 24px calc(18px + env(safe-area-inset-bottom, 0px));
-            background: linear-gradient(180deg, transparent, rgba(4, 8, 18, .68) 58%);
+            position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            padding: 22px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+            background: linear-gradient(180deg, transparent, rgba(4, 8, 18, .7) 56%);
             pointer-events: none;
         }
         .wvn-count {
-            font-size: 11px; letter-spacing: .2em; color: rgba(var(--wuwa-gold), .95);
+            font-size: 11px; letter-spacing: .22em; color: rgba(var(--wuwa-gold), .95);
             font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0, 0, 0, .92);
         }
-        .wvn-line { position: relative; width: min(240px, 62%); height: 2px; border-radius: 2px; background: rgba(206, 224, 255, .16); overflow: hidden; }
-        .wvn-line i {
-            position: absolute; left: 0; top: 0; width: var(--p, 8%); height: 100%; border-radius: 2px;
-            background: linear-gradient(90deg, rgba(var(--wuwa-gold), .22), rgba(var(--wuwa-gold), .98));
-            box-shadow: 0 0 10px rgba(var(--wuwa-gold), .85);
-            transition: width .38s var(--wuwa-ease);
+        /* 底部：编号 + 可拖动的刻度尺（点哪儿就跳到哪儿）+ 提示 */
+        .wvn-ruler {
+            position: relative; display: flex; align-items: center; justify-content: space-between;
+            width: min(78vw, 320px); height: 22px; padding: 0 4px;
+            pointer-events: auto; touch-action: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
-        .wvn-hint { font-size: 9.5px; letter-spacing: .2em; color: rgba(206, 220, 248, .45); text-shadow: 0 1px 6px rgba(0, 0, 0, .92); }
+        .wvn-ruler::before {
+            content: ""; position: absolute; left: 4px; right: 4px; top: 50%; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(var(--wuwa-glow), .3) 12%, rgba(var(--wuwa-glow), .3) 88%, transparent);
+        }
+        .wvn-ruler i {
+            position: relative; flex: none; width: 1.5px; height: 6px; border-radius: 1px;
+            background: rgba(214, 228, 255, .34);
+            transition: height .26s var(--wuwa-ease), background .26s var(--wuwa-ease);
+        }
+        .wvn-ruler i.past { background: rgba(var(--wuwa-gold), .42); }
+        .wvn-thumb {
+            position: absolute; top: 50%; left: 0; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+            transform: rotate(45deg); border-radius: 1px; pointer-events: none;
+            background: rgba(var(--wuwa-gold), 1);
+            box-shadow: 0 0 10px rgba(var(--wuwa-gold), .95), 0 0 22px rgba(var(--wuwa-gold), .55);
+            transition: left .34s var(--wuwa-ease);
+        }
+        .wvn.is-scrub .wvn-thumb { transition: none; }
+        .wvn.is-scrub .wvn-ruler i { transition: none; }
+        .wvn-hint { font-size: 9.5px; letter-spacing: .18em; color: rgba(206, 220, 248, .42); text-shadow: 0 1px 6px rgba(0, 0, 0, .92); }
+
+        /* 进场：晶体先淡入抬起，卡片随后跟上 */
+        @keyframes wvn-rise { from { opacity: 0; translate: 0 16px; } to { opacity: 1; translate: 0 0; } }
+        .wvn-gem { animation: wvn-rise .46s var(--wuwa-ease) both; animation-delay: calc(var(--i, 0) * 42ms); }
+        .wvn-info { animation: wvn-rise .52s var(--wuwa-ease) both; animation-delay: calc(var(--i, 0) * 42ms + 60ms); }
 
         /* 宽屏横屏（宽高都够、不是竖长比例）→ 晶体散列；其余一律走星轨轮盘 */
         @media (max-width: 899.98px), (max-height: 559.98px), (max-aspect-ratio: 1/1) {
@@ -2297,18 +2359,22 @@
             html[data-skin="wuwa"] .wvn { display: flex; }
         }
         @media (max-width: 899.98px) {
-            .wvn-slide { padding: 72px 18px 100px; }
+            .wvn-slide { padding: 70px 18px 104px; }
             .wvn-name { font-size: 19px; }
         }
-        @media (max-height: 520px) {
-            .wvn-gem { width: min(32vh, 172px); }
-            .wvn-slide { padding: 58px 18px 84px; gap: 1px; }
-            .wvn-info { margin-top: 8px; padding: 9px 16px 11px; border-radius: 15px; min-width: 60%; }
+        @media (max-height: 560px) {
+            .wvn-gem { width: min(30vh, 168px); }
+            .wvn-slide { padding: 54px 18px 86px; gap: 1px; }
+            .wvn-info { margin-top: 8px; padding: 9px 16px 11px; border-radius: 15px; min-width: 58%; }
             .wvn-name { font-size: 16px; }
             .wvn-desc { display: none; }
-            .wvn-go { margin-top: 8px; height: 30px; padding: 0 16px; font-size: 11px; }
+            .wvn-go { margin-top: 7px; height: 28px; padding: 0 15px; font-size: 11px; }
+            .wvn-side { width: 34px; height: 34px; top: 42%; }
+            .wvn-bar { padding: 14px 14px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 5px; }
+            .wvn-ruler { width: min(84vw, 320px); height: 18px; }
+            .wvn-ruler i { height: 5px; }
+            .wvn-hint { display: none; }
         }
-
         @media (prefers-reduced-motion: reduce) {
             .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
             .wvn-gem, .wvn-gem::before { animation: none; }
@@ -2754,10 +2820,16 @@
         <!-- 竖屏 / 窄比例用的星轨轮盘（宽屏横屏时用上面的晶体散列） -->
         <section class="wvn" id="wvnRail" aria-label="星轨站点轮盘">
             <div class="wvn-track" id="wvnTrack"></div>
-            <div class="wvn-bar" aria-hidden="true">
+            <button type="button" class="wvn-side prev" id="wvnPrev" aria-label="上一颗">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+            </button>
+            <button type="button" class="wvn-side next" id="wvnNext" aria-label="下一颗">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <div class="wvn-bar">
                 <span class="wvn-count" id="wvnCount">01 / 01</span>
-                <span class="wvn-line"><i id="wvnProg"></i></span>
-                <span class="wvn-hint">左右滑动 · 点晶体进入</span>
+                <div class="wvn-ruler" id="wvnRuler"><span class="wvn-thumb" id="wvnThumb"></span></div>
+                <span class="wvn-hint">左右滑动 · 拖刻度直达 · 点晶体进入</span>
             </div>
         </section>
 
@@ -3954,7 +4026,7 @@
             const hint = document.getElementById('skinHint');
             if (hint) {
                 hint.textContent = skin.id === 'wuwa'
-                    ? '当前：星轨导航 —— 整屏壁纸 + 晶体导航，宽屏横屏是底部三角晶体（悬浮看详情、两端晶体或 ← → 换组），窄屏 / 竖屏自动换成星轨列表；右上角按钮分别是站点清单 / 音乐 / 全部设置。'
+                    ? '当前：星轨导航 —— 整屏壁纸 + 晶体导航，宽屏横屏是底部三角晶体（悬浮看详情、两端晶体或 ← → 换组），窄屏 / 竖屏自动换成星轨轮盘（可左右滑动、拖底部刻度尺直达、点两侧箭头翻一颗，点晶体进入）；右上角按钮分别是站点清单 / 音乐 / 全部设置。'
                     : '当前：卡片导航 —— 原来的卡片网格，支持文件夹、拖拽排序和尺寸调整。';
             }
             if (skin.id === 'wuwa') {
@@ -4318,10 +4390,13 @@
             }
         }
 
-        /** 竖屏 / 窄比例的星轨轮盘：一次一颗大晶体，左右滑动（原生 scroll-snap）切换 */
+        /** 竖屏 / 窄比例的星轨轮盘：滑动 / 两侧箭头 / 底部刻度 三种方式切换 */
         let wvnIndex = 0;
         let wvnSlides = [];
+        let wvnTicks = [];
+        let wvnLock = false;
         let wvnRaf = 0;
+        let wvnWheelAt = 0;
 
         function renderWuwaRail() {
             const track = document.getElementById('wvnTrack');
@@ -4334,7 +4409,12 @@
                 const folder = isFolder(card);
                 const el = document.createElement(folder ? 'button' : 'a');
                 el.className = 'wvn-slide';
-                el.style.setProperty('--d', '1');
+                el.dataset.index = String(index);
+                el.dataset.d = index === keep ? '0' : '1';
+                el.style.setProperty('--d', index === keep ? '0' : '1');
+                el.style.setProperty('--a', index === keep ? '1' : '0');
+                el.style.setProperty('--s', index < keep ? '-1' : '1');
+                el.style.setProperty('--i', String(Math.min(index, 6)));
                 if (folder) {
                     el.type = 'button';
                     el.setAttribute('aria-label', `打开文件夹 ${card.title}`);
@@ -4345,56 +4425,129 @@
                 }
                 const seed = wvSeed(card.id || card.title || String(index));
                 const gem = wvShardSvg('c' + (seed * 11 + index), wvCrystal(seed, index % 2 === 0));
-                el.innerHTML = `<span class="wvn-gem">${gem}</span>`
+                el.innerHTML = `<span class="wvn-gem"><span class="wvn-gem-in">${gem}</span></span>`
                     + `<span class="wvn-info">`
                     + `<span class="wvn-name">${wvEscape(card.title || '未命名')}</span>`
                     + `<span class="wvn-host">${wvEscape(folder ? '文件夹 · 点开看里面' : wvHost(card.url))}</span>`
                     + (card.desc ? `<span class="wvn-desc">${wvEscape(card.desc)}</span>` : '')
                     + `<span class="wvn-go">${folder ? '打开文件夹' : '进入站点'} <b>↗</b></span>`
                     + `</span>`;
-                if (folder) el.addEventListener('click', () => openFolder(card.id));
+                // 没对准的那颗先「转过来」，对准了才「进去」
+                el.addEventListener('click', (event) => {
+                    const target = Number(el.dataset.index);
+                    if (target !== wvnIndex) {
+                        event.preventDefault();
+                        wvnGo(target);
+                        return;
+                    }
+                    if (folder) {
+                        event.preventDefault();
+                        openFolder(card.id);
+                    }
+                });
                 track.appendChild(el);
                 wvnSlides.push(el);
             });
+            wvnBuildRuler(wvnSlides.length);
             if (track.clientWidth) track.scrollLeft = keep * wvnStride(track);
             wvnIndex = keep;
             wvnSync();
         }
 
-        /** 按每颗晶体离视口中心的距离写 --d（0 = 正中），CSS 用它做缩放 / 旋转 / 模糊 */
+        function wvnBuildRuler(count) {
+            const box = document.getElementById('wvnRuler');
+            if (!box) return;
+            const thumb = document.getElementById('wvnThumb');
+            box.innerHTML = '';
+            if (thumb) box.appendChild(thumb);
+            wvnTicks = [];
+            for (let i = 0; i < count; i += 1) {
+                const tick = document.createElement('i');
+                box.appendChild(tick);
+                wvnTicks.push(tick);
+            }
+            if (thumb) box.appendChild(thumb);
+        }
+
         function wvnStride(track) {
             if (wvnSlides.length > 1) return Math.max(1, wvnSlides[1].offsetLeft - wvnSlides[0].offsetLeft);
             if (wvnSlides.length) return Math.max(1, wvnSlides[0].offsetWidth);
             return Math.max(1, track.clientWidth);
         }
 
+        /** 写 --d（0 = 正中）与 --a（1 = 正中），CSS 用它们做 3D 轮转 / 压暗 / 发光 */
         function wvnSync() {
             const track = document.getElementById('wvnTrack');
-            const bar = document.getElementById('wvnProg');
             if (!track) return;
             const stride = wvnStride(track);
             const mid = track.scrollLeft + track.clientWidth / 2;
             wvnSlides.forEach((el) => {
                 const delta = (el.offsetLeft + el.offsetWidth / 2) - mid;
                 const d = Math.min(1, Math.abs(delta) / stride);
-                el.style.setProperty('--d', d.toFixed(3));
-                el.style.setProperty('--s', delta < 0 ? '-1' : '1');
+                if (Math.abs(Number(el.dataset.d || -1) - d) > 0.004) {
+                    el.dataset.d = d.toFixed(3);
+                    el.style.setProperty('--d', d.toFixed(3));
+                    el.style.setProperty('--a', (1 - d).toFixed(3));
+                    el.style.setProperty('--s', delta < 0 ? '-1' : '1');
+                }
             });
-            wvnIndex = Math.max(0, Math.min(wvnSlides.length - 1, Math.round(track.scrollLeft / stride)));
-            const count = document.getElementById('wvnCount');
-            if (count) {
-                count.textContent = `${String(wvnIndex + 1).padStart(2, '0')} / ${String(wvnSlides.length || 1).padStart(2, '0')}`;
+            if (!wvnLock) {
+                const next = Math.max(0, Math.min(wvnSlides.length - 1, Math.round(track.scrollLeft / stride)));
+                if (next !== wvnIndex) {
+                    wvnIndex = next;
+                    if (navigator.vibrate) { try { navigator.vibrate(8); } catch (error) {} }
+                }
             }
-            if (bar) bar.style.setProperty('--p', (((wvnIndex + 1) / Math.max(1, wvnSlides.length)) * 100).toFixed(1) + '%');
+            const count = document.getElementById('wvnCount');
+            if (count) count.textContent = `${String(wvnIndex + 1).padStart(2, '0')} / ${String(wvnSlides.length || 1).padStart(2, '0')}`;
+            const total = Math.max(1, wvnSlides.length - 1);
+            const thumb = document.getElementById('wvnThumb');
+            if (thumb) thumb.style.left = `calc(${((wvnIndex / total) * 100).toFixed(3)}% + ${(4 - (wvnIndex / total) * 8).toFixed(2)}px)`;
+            wvnTicks.forEach((tick, i) => tick.classList.toggle('past', i <= wvnIndex));
+            const prev = document.getElementById('wvnPrev');
+            const nxt = document.getElementById('wvnNext');
+            if (prev) prev.disabled = wvnIndex <= 0;
+            if (nxt) nxt.disabled = wvnIndex >= wvnSlides.length - 1;
+        }
+
+        /** 自己算缓动：比原生 smooth 更快更跟手，跳到任意一颗都在 ~0.5s 内停稳 */
+        let wvnTween = 0;
+
+        function wvnAnimateTo(left, ms) {
+            const track = document.getElementById('wvnTrack');
+            const rail = document.getElementById('wvnRail');
+            if (!track) return;
+            const from = track.scrollLeft;
+            const delta = left - from;
+            cancelAnimationFrame(wvnTween);
+            if (Math.abs(delta) < 1.5) {
+                track.scrollLeft = left;
+                wvnSync();
+                return;
+            }
+            const dur = ms || Math.min(460, 230 + Math.abs(delta) / 2.6);
+            const start = performance.now();
+            if (rail) rail.classList.add('is-drag');
+            const step = (now) => {
+                const t = Math.min(1, (now - start) / dur);
+                const eased = 1 - Math.pow(1 - t, 3);
+                track.scrollLeft = from + delta * eased;
+                wvnSync();
+                if (t < 1) {
+                    wvnTween = requestAnimationFrame(step);
+                } else if (rail) {
+                    rail.classList.remove('is-drag');
+                }
+            };
+            wvnTween = requestAnimationFrame(step);
         }
 
         function wvnGo(target) {
             const track = document.getElementById('wvnTrack');
             if (!track || !wvnSlides.length) return;
             const next = Math.max(0, Math.min(wvnSlides.length - 1, target));
-            track.scrollTo({ left: next * wvnStride(track), behavior: 'smooth' });
             wvnIndex = next;
-            wvnSync();
+            wvnAnimateTo(next * wvnStride(track));
         }
 
         function wvnVisible() {
@@ -4479,6 +4632,80 @@
                     if (wvnRaf) return;
                     wvnRaf = requestAnimationFrame(() => { wvnRaf = 0; wvnSync(); });
                 }, { passive: true });
+                // 鼠标滚轮 / 触控板横滑也能翻
+                wvnTrack.addEventListener('wheel', (event) => {
+                    if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+                    event.preventDefault();
+                    const now = Date.now();
+                    if (now - wvnWheelAt < 320) return;
+                    wvnWheelAt = now;
+                    wvnGo(wvnIndex + (event.deltaY > 0 ? 1 : -1));
+                }, { passive: false });
+                // 鼠标拖拽（手机上交给原生惯性）
+                const rail = document.getElementById('wvnRail');
+                let dragFrom = 0, dragLeft = 0, dragging = false;
+                wvnTrack.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType !== 'mouse') return;
+                    dragging = true;
+                    dragFrom = event.clientX;
+                    dragLeft = wvnTrack.scrollLeft;
+                    if (rail) rail.classList.add('is-drag');
+                });
+                window.addEventListener('pointermove', (event) => {
+                    if (!dragging) return;
+                    wvnTrack.scrollLeft = dragLeft - (event.clientX - dragFrom);
+                });
+                window.addEventListener('pointerup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    if (rail) rail.classList.remove('is-drag');
+                    wvnGo(Math.round(wvnTrack.scrollLeft / wvnStride(wvnTrack)));
+                });
+            }
+            const wvnPrev = document.getElementById('wvnPrev');
+            if (wvnPrev) wvnPrev.addEventListener('click', () => wvnGo(wvnIndex - 1));
+            const wvnNext = document.getElementById('wvnNext');
+            if (wvnNext) wvnNext.addEventListener('click', () => wvnGo(wvnIndex + 1));
+            // 底部刻度尺：点哪儿跳哪儿，按住拖动可以一路扫过去
+            const wvnRuler = document.getElementById('wvnRuler');
+            if (wvnRuler) {
+                let scrubbing = false;
+                const shell = document.getElementById('wvnRail');
+                const pickIndex = (event) => {
+                    const box = wvnRuler.getBoundingClientRect();
+                    const frac = Math.max(0, Math.min(1, (event.clientX - box.left - 4) / Math.max(1, box.width - 8)));
+                    return Math.round(frac * Math.max(0, wvnSlides.length - 1));
+                };
+                const scale = (event) => {
+                    const index = pickIndex(event);
+                    const strip = document.getElementById('wvnTrack');
+                    if (!strip) return;
+                    if (index !== wvnIndex) {
+                        wvnIndex = index;
+                        const left = index * wvnStride(strip);
+                        cancelAnimationFrame(wvnTween);
+                        strip.scrollLeft = left;
+                    }
+                    wvnSync();
+                };
+                wvnRuler.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType === 'mouse' && event.button !== 0) return;
+                    scrubbing = true;
+                    wvnLock = true;
+                    if (shell) shell.classList.add('is-scrub');
+                    try { wvnRuler.setPointerCapture(event.pointerId); } catch (error) {}
+                    scale(event);
+                });
+                wvnRuler.addEventListener('pointermove', (event) => { if (scrubbing) scale(event); });
+                const endScrub = (event) => {
+                    if (!scrubbing) return;
+                    scrubbing = false;
+                    wvnLock = false;
+                    if (shell) shell.classList.remove('is-scrub');
+                    if (event && typeof event.clientX === 'number') scale(event);
+                };
+                wvnRuler.addEventListener('pointerup', endScrub);
+                wvnRuler.addEventListener('pointercancel', endScrub);
             }
             const musicBtn = document.getElementById('wvMusicBtn');
             if (musicBtn) musicBtn.addEventListener('click', () => toggleLyricsWidget());
