@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-skin="default">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0905">
+    <meta name="app-version" content="20261026-1555">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -848,104 +848,233 @@
             .btn-row { flex-direction: column; }
         }
         /* --- 桌面歌词挂件 --- */
+        /* --- 音乐播放器 / 桌面歌词挂件（玻璃胶囊版） --- */
         .lyrics-fab {
             position: fixed; top: 16px; right: 18px; z-index: 1004;
-            width: 48px; height: 48px;
-            display: flex; align-items: center; justify-content: center;
-            border: 2px solid var(--primary-color);
+            width: 46px; height: 46px;
+            display: grid; place-items: center;
+            border: 1px solid rgba(var(--primary-rgb), .5);
             border-radius: 50%;
-            background: rgba(255, 255, 255, .92);
+            background: radial-gradient(120% 120% at 30% 18%, rgba(255, 255, 255, .97), rgba(255, 255, 255, .8));
             color: var(--primary-strong);
-            font-size: 1.15rem; font-weight: 700;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, .15);
+            font-size: 1.05rem; line-height: 1;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, .16), inset 0 1px 0 rgba(255, 255, 255, .9);
             cursor: pointer;
+            transition: transform .3s cubic-bezier(.22, .8, .24, 1), box-shadow .3s, background .3s, color .3s;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
-        .lyrics-fab.on { background: var(--primary-color); color: var(--primary-contrast); }
+        .lyrics-fab:hover {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 14px 32px rgba(0, 0, 0, .2), 0 0 0 6px rgba(var(--primary-rgb), .14);
+        }
+        .lyrics-fab.on {
+            background: linear-gradient(145deg, rgb(var(--primary-rgb)), var(--primary-strong));
+            color: var(--primary-contrast);
+            border-color: transparent;
+            box-shadow: 0 12px 30px rgba(var(--primary-rgb), .52);
+        }
 
+        /* 主体：深色玻璃 + 主题色顶光，透明度滑条直接吃 --lw-alpha */
         .lyrics-widget {
+            --lw-ink: #f2f5ff;
+            --lw-ink-dim: rgba(226, 232, 250, .62);
+            --lw-ease: cubic-bezier(.22, .8, .24, 1);
             position: fixed; right: 20px; bottom: 92px; z-index: 1005;
-            width: 320px; max-width: calc(100vw - 24px);
+            width: 340px; max-width: calc(100vw - 24px);
             display: flex; flex-direction: column;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, var(--lw-alpha, .85));
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(var(--primary-rgb), .4);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, .16);
-            overflow: hidden;
-            color: var(--text-main);
+            border-radius: 24px; overflow: hidden;
+            isolation: isolate;
+            background-image:
+                radial-gradient(130% 80% at 10% 0%, rgba(var(--primary-rgb), calc(.55 * var(--lw-alpha, .85))), transparent 62%),
+                linear-gradient(162deg, rgba(28, 32, 52, var(--lw-alpha, .85)), rgba(8, 10, 20, var(--lw-alpha, .85)) 72%);
+            border: 1px solid rgba(255, 255, 255, .13);
+            box-shadow: 0 26px 64px rgba(0, 0, 0, .48), 0 0 0 1px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .14);
+            backdrop-filter: blur(26px) saturate(1.7);
+            -webkit-backdrop-filter: blur(26px) saturate(1.7);
+            color: var(--lw-ink);
             font-family: var(--lw-font, 'Segoe UI', 'Microsoft YaHei', sans-serif);
         }
         .lyrics-widget[hidden] { display: none; }
+
+        /* 顶栏：拖动条 */
         .lyrics-widget-head {
             display: flex; align-items: center; justify-content: space-between;
-            gap: 6px; padding: 8px 10px;
-            background: rgba(var(--primary-rgb), .16);
-            cursor: grab;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
+            gap: 8px; padding: 13px 12px 9px 14px;
+            cursor: grab; touch-action: none;
+            user-select: none; -webkit-user-select: none;
         }
         .lyrics-widget.pinned .lyrics-widget-head { cursor: default; }
-        .lw-title { font-size: .78rem; font-weight: 700; color: var(--primary-strong); }
-        .lw-tools { display: flex; align-items: center; gap: 4px; }
+        .lw-title {
+            display: flex; align-items: center; gap: 7px;
+            font-size: .62rem; font-weight: 700;
+            letter-spacing: .26em; text-transform: uppercase;
+            color: var(--lw-ink-dim);
+            white-space: nowrap;
+        }
+        .lw-title::before {
+            content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%;
+            background: rgb(var(--primary-rgb));
+            box-shadow: 0 0 10px rgba(var(--primary-rgb), .95);
+            animation: lwPulse 2.6s ease-in-out infinite;
+        }
+        @keyframes lwPulse { 50% { opacity: .3; transform: scale(.8); } }
+        .lw-tools { display: flex; align-items: center; gap: 2px; }
         .lw-tools button {
             min-width: 26px; height: 26px; padding: 0 6px;
-            border: none; border-radius: 8px;
-            background: rgba(255, 255, 255, .8);
-            color: var(--text-sub);
-            font-size: .72rem; cursor: pointer;
+            display: inline-grid; place-items: center;
+            border: 0; border-radius: 9px;
+            background: transparent; color: var(--lw-ink-dim);
+            font: inherit; font-size: .68rem; line-height: 1;
+            cursor: pointer;
+            transition: background .25s, color .25s, transform .25s var(--lw-ease);
             -webkit-tap-highlight-color: transparent;
         }
-        .lw-tools button:hover { background: #fff; color: var(--primary-strong); }
-        .lw-tools button.on { background: var(--primary-color); color: var(--primary-contrast); }
-        .lw-player { padding: 10px 12px 2px; }
+        .lw-tools button:hover { background: rgba(255, 255, 255, .12); color: #fff; transform: translateY(-1px); }
+        .lw-tools button.on { background: rgba(var(--primary-rgb), .92); color: #17110f; }
+
+        /* 播放区 */
+        .lw-player { display: flex; flex-direction: column; gap: 10px; padding: 2px 14px 13px; }
         .lw-track {
-            margin-bottom: 8px;
-            font-size: .8rem; font-weight: 600;
-            color: var(--text-main);
+            font-size: .93rem; font-weight: 700; letter-spacing: .01em;
+            color: var(--lw-ink);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
         }
         .lw-progress {
-            height: 6px; border-radius: 3px;
-            background: #eee; overflow: hidden;
-            cursor: pointer;
-            touch-action: none;
+            position: relative; height: 5px; border-radius: 99px;
+            background: rgba(255, 255, 255, .13);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45);
+            cursor: pointer; touch-action: none;
         }
         .lw-progress > div {
-            height: 100%; width: calc(var(--progress, 0) * 100%);
-            background: var(--primary-color);
+            position: relative; height: 100%; border-radius: inherit;
+            width: calc(var(--progress, 0) * 100%);
+            background: linear-gradient(90deg, rgba(var(--primary-rgb), .9), #ffffff);
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), .8);
         }
+        .lw-progress > div::after {
+            content: ""; position: absolute; right: -5px; top: 50%;
+            width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(var(--primary-rgb), .95), 0 1px 3px rgba(0, 0, 0, .5);
+            transform: scale(.8);
+            transition: transform .25s var(--lw-ease);
+        }
+        .lw-progress:hover > div::after { transform: scale(1); }
         .lw-times {
             display: flex; justify-content: space-between;
-            margin-top: 4px;
-            font-size: .66rem; color: #a99b9b;
+            font-size: .6rem; letter-spacing: .06em; color: var(--lw-ink-dim);
+            font-variant-numeric: tabular-nums;
         }
-        .lw-controls { display: flex; justify-content: center; gap: 16px; padding: 4px 0 0; }
+        .lw-controls { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 2px; }
         .lw-controls button {
-            border: none; background: none;
-            color: var(--text-main); font-size: 1rem;
-            cursor: pointer; padding: 4px 8px;
+            position: relative;
+            width: 32px; height: 32px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 0; border-radius: 50%;
+            background: rgba(255, 255, 255, .07);
+            color: rgba(242, 245, 255, .84);
+            font-size: 0;                       /* 图标全部用 CSS 画，不依赖 emoji */
+            cursor: pointer;
+            transition: background .25s, color .25s, transform .25s var(--lw-ease), box-shadow .25s;
             -webkit-tap-highlight-color: transparent;
         }
-        .lw-controls button:hover { color: var(--primary-strong); }
-        .lw-controls button.on { color: var(--primary-strong); font-weight: 700; }
-
-        /* 四个角都能拖：右下/左上是一组斜纹，左下/右上反过来 */
-        /* 四个角都能拖，但不画斜纹了：只是一块透明的可拖区域，鼠标移上去会变成缩放光标 */
-        .lw-resize {
-            position: absolute;
-            width: 18px; height: 18px;
-            z-index: 4;
-            background: none;
-            touch-action: none;
+        .lw-controls button:hover { background: rgba(255, 255, 255, .16); color: #fff; transform: translateY(-1px); }
+        .lw-controls button.on { background: rgba(var(--primary-rgb), .22); color: #fff; }
+        /* 所有图标都是绝对定位 + clip-path：几何精确、不会偏心、边缘干净 */
+        .lw-controls button::before,
+        .lw-controls button::after {
+            content: ""; position: absolute; top: 50%; background: currentColor;
         }
-        .lw-resize.is-se { right: 0; bottom: 0; cursor: nwse-resize; }
-        .lw-resize.is-nw { left: 0; top: 0; cursor: nwse-resize; }
-        .lw-resize.is-sw { left: 0; bottom: 0; cursor: nesw-resize; }
-        .lw-resize.is-ne { right: 0; top: 0; cursor: nesw-resize; }
+        /* 上一首 / 下一首：双三角，两个三角的合起来正好居中 */
+        .lw-controls button[onclick="prevTrack()"]::before,
+        .lw-controls button[onclick="nextTrack()"]::before {
+            width: 7px; height: 11px; left: 8.5px; margin-top: -5.5px;
+        }
+        .lw-controls button[onclick="prevTrack()"]::after,
+        .lw-controls button[onclick="nextTrack()"]::after {
+            width: 7px; height: 11px; left: 16.5px; margin-top: -5.5px;
+        }
+        .lw-controls button[onclick="prevTrack()"]::before,
+        .lw-controls button[onclick="prevTrack()"]::after { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+        .lw-controls button[onclick="nextTrack()"]::before,
+        .lw-controls button[onclick="nextTrack()"]::after { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+        .lw-controls button[onclick="prevTrack()"]::after,
+        .lw-controls button[onclick="nextTrack()"]::after { opacity: .55; }
+
+        /* 主按钮：主题色「深->更深」的玻璃糖圆 + 白色图标
+           深浅必须拉够，否则浅粉色底上的白图标几乎看不见（旧版就是这个毛病） */
+        #lwPlayBtn {
+            width: 48px; height: 48px;
+            background-image:
+                radial-gradient(120% 120% at 30% 14%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
+                linear-gradient(158deg, var(--primary-strong), #1a1020);
+            background-image:
+                radial-gradient(120% 120% at 30% 14%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
+                linear-gradient(158deg, var(--primary-strong),
+                    color-mix(in srgb, var(--primary-strong) 36%, #0a0d16));
+            color: #fff;
+            box-shadow: 0 10px 22px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .24),
+                        0 0 20px rgba(var(--primary-rgb), .26),
+                        inset 0 1px 0 rgba(255, 255, 255, .5);
+        }
+        #lwPlayBtn::before {
+            content: ""; position: absolute; top: 50%; left: 50%;
+            width: 15px; height: 18px; margin: -9px 0 0 -6.5px;
+            background: currentColor;
+            clip-path: polygon(2% 0, 100% 50%, 2% 100%);
+            transform: translateX(1.5px);      /* 三角形视觉重量偏左，右移一点点才像居中 */
+        }
+        #lwPlayBtn.is-playing::before {
+            width: 5px; height: 16px; margin: -8px 0 0 -2.5px;
+            border-radius: 2px;
+            clip-path: none;
+            box-shadow: 9px 0 0 currentColor;
+            transform: translateX(-4.5px);     /* 两根竖条合起来的中心对齐圆心 */
+        }
+        #lwPlayBtn:hover {
+            box-shadow: 0 14px 26px rgba(0, 0, 0, .48), 0 0 0 1px rgba(255, 255, 255, .34),
+                        0 0 26px rgba(var(--primary-rgb), .44),
+                        inset 0 1px 0 rgba(255, 255, 255, .58);
+            transform: translateY(-1px) scale(1.05);
+        }
+        /* 歌词开关：胶囊 */
+        #lwLyricsBtn {
+            width: auto; min-width: 42px; padding: 0 11px;
+            border-radius: 99px;
+            font-size: .68rem; letter-spacing: .1em;
+        }
+        #lwLyricsBtn::before,
+        #lwLyricsBtn::after { content: none; }
+        #lwLyricsBtn.on {
+            background: rgba(var(--primary-rgb), .95);
+            color: #17110f; font-weight: 700;
+            box-shadow: 0 0 20px rgba(var(--primary-rgb), .5);
+        }
+
+        /* 歌词正文 */
+        .lw-body {
+            flex: 1 1 auto; min-height: 0;
+            padding: 14px 16px;
+            max-height: 220px; overflow-y: auto;
+            font-size: var(--lw-font-size, 22px);
+            line-height: 1.9;
+            text-align: center;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            color: rgba(238, 242, 255, .8);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, .22) transparent;
+        }
+        .lw-body::-webkit-scrollbar { width: 5px; }
+        .lw-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .22); border-radius: 99px; }
+        .lw-body::-webkit-scrollbar-track { background: none; }
+        .lw-line { min-height: 1.4em; color: rgba(238, 242, 255, .48); transition: color .25s, text-shadow .25s; }
+        .lw-line.active {
+            color: #fff; font-weight: 700;
+            text-shadow: 0 0 20px rgba(var(--primary-rgb), .8);
+        }
         .lw-body.qq-lyrics {
             display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px;
             flex: 1; min-height: 0;
@@ -961,48 +1090,45 @@
             font-size: var(--lw-font-size, 22px);
             font-weight: 800;
             line-height: 1.35;
-            color: var(--lw-lyrics-color, #b9a9a9);
-            text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
+            color: var(--lw-lyrics-color, #dfe6ff);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .72), 0 0 26px rgba(var(--primary-rgb), .32);
         }
-        .qq-base { opacity: .45; }
+        .qq-base { opacity: .42; }
         .qq-text { white-space: nowrap; }
         .qq-fill {
             position: absolute; left: 0; top: 0;
             width: calc(var(--progress, 0) * 100%); overflow: hidden;
             color: var(--lw-lyrics-color, var(--primary-strong));
-            text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, .6), 0 0 28px rgba(var(--primary-rgb), .6);
             pointer-events: none;
         }
         .qq-fill .qq-text { display: block; width: max-content; }
         .qq-next {
             font-size: calc(var(--lw-font-size, 22px) * .72);
             line-height: 1.4;
-            color: var(--lw-lyrics-color, #c4b6b6);
-            opacity: .55;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, .85);
+            color: var(--lw-lyrics-color, #c8d2f0);
+            opacity: .45;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, .6);
         }
         @keyframes qqPop {
             from { opacity: .2; transform: translateY(6px) scale(.98); }
             to { opacity: 1; transform: none; }
         }
         .qq-cur.qq-pop { animation: qqPop .28s ease; }
-        .lyrics-widget.lyrics-mode { background: rgba(255, 255, 255, var(--lw-lyrics-alpha, .35)); }
-        .lyrics-widget.lyrics-mode .lw-player { display: none; }
 
-        .lw-clean-exit {
-            position: absolute; top: 2px; right: 2px; z-index: 3;
-            width: 22px; height: 22px;
-            border: none; border-radius: 50%;
-            background: rgba(255, 255, 255, .6);
-            color: var(--primary-strong); font-size: .7rem;
-            cursor: pointer; opacity: 0;
-            transition: opacity .2s;
+        /* 歌词模式：整块变歌词看板 */
+        .lyrics-widget.lyrics-mode {
+            background-image:
+                radial-gradient(130% 90% at 18% 0%, rgba(var(--primary-rgb), calc(.5 * var(--lw-lyrics-alpha, .35))), transparent 60%),
+                linear-gradient(166deg, rgba(16, 20, 36, var(--lw-lyrics-alpha, .35)), rgba(4, 6, 14, var(--lw-lyrics-alpha, .35)) 74%);
         }
-        .lyrics-widget:hover .lw-clean-exit { opacity: .55; }
-        .lw-clean-exit:hover { opacity: 1; }
-        /* 只看歌词：外壳透明，歌词那一层用它自己的透明度铺底 */
+        .lyrics-widget.lyrics-mode .lw-player { display: none; }
+        .lyrics-widget.lyrics-mode .lw-body { max-height: none; }
+
+        /* 只看歌词：外壳只留一层可调的深色底 */
         .lyrics-widget.clean-mode {
-            background: rgba(255, 255, 255, var(--lw-lyrics-alpha, .35)) !important;
+            background-image: none !important;
+            background-color: rgba(6, 8, 16, var(--lw-lyrics-alpha, .35)) !important;
             border-color: transparent;
             box-shadow: none;
             backdrop-filter: none;
@@ -1010,48 +1136,81 @@
         }
         .lyrics-widget.clean-mode .lyrics-widget-head,
         .lyrics-widget.clean-mode .lw-settings { display: none; }
-        .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; }
+        .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; max-height: none; }
         .lyrics-widget.clean-mode .qq-base { opacity: .5; }
         .lyrics-widget.clean-mode .qq-base,
-        .lyrics-widget.clean-mode .qq-next {
-            text-shadow: 0 0 6px rgba(255, 255, 255, .95), 0 1px 3px rgba(90, 60, 60, .35);
+        .lyrics-widget.clean-mode .qq-next { text-shadow: 0 1px 6px rgba(0, 0, 0, .85); }
+        .lw-clean-exit {
+            position: absolute; top: 6px; right: 6px; z-index: 3;
+            width: 22px; height: 22px;
+            display: grid; place-items: center;
+            border: 0; border-radius: 50%;
+            background: rgba(255, 255, 255, .14);
+            color: rgba(238, 242, 255, .9);
+            font-size: .66rem; cursor: pointer; opacity: 0;
+            transition: opacity .2s, background .2s;
+        }
+        .lyrics-widget:hover .lw-clean-exit { opacity: .6; }
+        .lw-clean-exit:hover { opacity: 1; background: rgba(255, 255, 255, .26); }
+
+        /* 底部设置条 */
+        .lw-settings {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 9px 14px 11px;
+            border-top: 1px solid rgba(255, 255, 255, .09);
+            font-size: .62rem; letter-spacing: .04em; color: var(--lw-ink-dim);
         }
         .lw-settings [hidden] { display: none; }
-
-        .lw-body {
-            padding: 12px 14px;
-            max-height: 220px; overflow-y: auto;
-            font-size: var(--lw-font-size, 22px);
-            line-height: 1.9;
-            text-align: center;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            color: #7a6f6f;
+        .lw-settings label { display: flex; align-items: center; gap: 5px; }
+        .lw-settings input[type="range"] {
+            width: 66px; height: 14px;
+            -webkit-appearance: none; appearance: none;
+            background: none; cursor: pointer;
         }
-        .lw-line { min-height: 1.4em; transition: color .2s; }
-        .lw-line.active { color: var(--primary-strong); font-weight: 700; }
-        .lw-settings {
-            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-            padding: 7px 10px;
-            border-top: 1px solid rgba(var(--primary-rgb), .25);
-            font-size: .66rem; color: #a99b9b;
+        .lw-settings input[type="range"]::-webkit-slider-runnable-track {
+            height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .17);
         }
-        .lw-settings label { display: flex; align-items: center; gap: 4px; }
-        .lw-settings input[type="range"] { width: 74px; }
-
+        .lw-settings input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 11px; height: 11px; margin-top: -3.5px;
+            border: 0; border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), .9);
+        }
+        .lw-settings input[type="range"]::-moz-range-track {
+            height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .17);
+        }
+        .lw-settings input[type="range"]::-moz-range-thumb {
+            width: 11px; height: 11px; border: 0; border-radius: 50%; background: #fff;
+        }
         .lw-settings input[type="color"] {
-            width: 36px; height: 24px; padding: 0;
-            border: 1px solid #eee; border-radius: 6px;
-            background: #fff; cursor: pointer;
+            width: 28px; height: 20px; padding: 0;
+            border: 1px solid rgba(255, 255, 255, .22); border-radius: 6px;
+            background: transparent; cursor: pointer;
         }
         .lw-settings select {
-            border: 1px solid #eee; border-radius: 8px;
-            background: #fff; font-size: .66rem; padding: 2px 4px;
-            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, .16); border-radius: 8px;
+            background: rgba(255, 255, 255, .08); color: var(--lw-ink);
+            font-size: .62rem; padding: 2px 5px; cursor: pointer;
         }
+        .lw-settings select option { background: #14182a; color: #eef3ff; }
+
+        /* 四角拖拽调整大小 */
+        .lw-resize {
+            position: absolute;
+            width: 18px; height: 18px;
+            z-index: 4;
+            background: none;
+            touch-action: none;
+        }
+        .lw-resize.is-se { right: 0; bottom: 0; cursor: nwse-resize; }
+        .lw-resize.is-nw { left: 0; top: 0; cursor: nwse-resize; }
+        .lw-resize.is-sw { left: 0; bottom: 0; cursor: nesw-resize; }
+        .lw-resize.is-ne { right: 0; top: 0; cursor: nesw-resize; }
+
         @media (max-width: 480px) {
-            .lyrics-widget { width: calc(100vw - 24px); right: 12px; bottom: 84px; }
+            .lyrics-widget { width: calc(100vw - 28px); right: 14px; bottom: 84px; border-radius: 20px; }
             .lw-body { max-height: 26vh; }
+            #lwPlayBtn { width: 46px; height: 46px; }
         }
 
         /* --- 卡片系统：尺寸 / 编辑 / 拖拽 --- */
@@ -1386,12 +1545,682 @@
             .card-tools { top: 6px; right: 6px; gap: 3px; }
             .card-tool { width: 26px; height: 26px; font-size: .74rem; }
         }
+        /* ==================================================================
+           界面二：星轨导航 —— 皮肤基座
+           详细样式在下面「界面二：星轨导航」整块里；这里只补三件新块不重复的事：
+             1) 菜单 / 面板里的文字色（主题写在行内，所以必须 !important）
+             2) 没设壁纸时也要有深底，否则浅色主题下白字会糊
+             3) 壁纸保留原色，只压一层很淡的暗调
+           ================================================================== */
+        html[data-skin="wuwa"] {
+            --text-main: #eef3ff !important;
+            --text-sub: rgba(226, 234, 255, .66) !important;
+            --card-bg: rgba(10, 16, 34, .5) !important;
+            --shadow: 0 18px 44px rgba(0, 0, 0, .42) !important;
+            --bg-overlay-color: rgba(5, 9, 20, calc(.34 * var(--bg-overlay-alpha, .8)));
+        }
+        html[data-skin="wuwa"] body {
+            background-color: #0a1020;
+            color: var(--wuwa-ink);
+            font-family: 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
+            scrollbar-color: rgba(var(--wuwa-glow), .5) transparent;
+        }
+        html[data-skin="wuwa"] ::selection { background: rgba(var(--wuwa-accent), .45); color: #fff; }
+        /* ==================================================================
+           界面二：星轨导航
+           整屏彩色壁纸 + 顶部品牌条 / 搜索胶囊 / 圆形工具
+           + 底部三角晶体碎片 dock（左右留翻页位）+ 右侧玻璃面板
+           碎片坐标沿用参考站排布公式，随视口自适应
+           ================================================================== */
+        .wuwa-view { display: none; }
+        html[data-skin="wuwa"] .container { display: none; }
+        html[data-skin="wuwa"] .wuwa-view { display: block; }
+        /* 这套界面里原来的悬浮按钮由顶部工具栏接管，避免和品牌条打架 */
+        html[data-skin="wuwa"] #menuBtn,
+        html[data-skin="wuwa"] .simple-mode-toggle,
+        html[data-skin="wuwa"] #lyricsFab { display: none; }
+
+        html[data-skin="wuwa"] {
+            --wuwa-deep: 6, 10, 22;
+            --wuwa-ink: #eef3ff;
+            --wuwa-ink-dim: rgba(226, 234, 255, .72);
+            --wuwa-glow: 214, 234, 255;
+            --wuwa-accent: 132, 168, 255;
+            --wuwa-accent2: 176, 148, 255;
+            --wuwa-gold: 205, 176, 118;
+            --wuwa-ease: cubic-bezier(.22, .8, .24, 1);
+            --wuwa-serif: 'Songti SC', 'STSong', 'Source Han Serif SC', 'Noto Serif SC', 'SimSun', serif;
+            /* 壁纸保留原色：只压一层很淡的暗调，跟着用户自己的透明度滑条走 */
+            --bg-overlay-color: rgba(5, 9, 20, calc(.34 * var(--bg-overlay-alpha, .8)));
+        }
+
+        /* --- 氛围层：底部压暗 + 暗角 + 星云光束（不再盖住壁纸颜色） --- */
+        .wuwa-atmo, .wuwa-frame { display: none; }
+        html[data-skin="wuwa"] .wuwa-atmo,
+        html[data-skin="wuwa"] .wuwa-frame { display: block; }
+
+        .wuwa-atmo { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+        .wa-nebula {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(125% 75% at 50% 24%, rgba(6, 10, 22, 0) 40%, rgba(6, 10, 22, .46) 100%),
+                linear-gradient(to bottom,
+                    rgba(6, 10, 22, .14) 0%,
+                    rgba(6, 10, 22, .04) 32%,
+                    rgba(6, 10, 22, .36) 66%,
+                    rgba(6, 10, 22, .74) 88%,
+                    rgba(6, 10, 22, .86) 100%);
+        }
+        .wa-floor {
+            position: absolute; left: 50%; bottom: -26vh; width: 120vw; height: 56vh;
+            transform: translateX(-50%);
+            background: radial-gradient(closest-side, rgba(var(--wuwa-accent), .18), transparent);
+            filter: blur(14px); mix-blend-mode: screen;
+        }
+        .wa-beams { position: absolute; inset: 0; mix-blend-mode: screen; opacity: .5; }
+        .wa-beams i {
+            position: absolute; left: 50%; bottom: -8%; width: 120vmax; height: 26vh;
+            transform-origin: 0 50%;
+            background:
+                repeating-linear-gradient(90deg, rgba(var(--wuwa-glow), 0) 0 22px, rgba(var(--wuwa-glow), .05) 22px 23px),
+                linear-gradient(to bottom, transparent, rgba(var(--wuwa-accent), .24) 45%, rgba(var(--wuwa-glow), .4) 50%, rgba(var(--wuwa-accent), .24) 55%, transparent);
+            -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 22%, rgba(0, 0, 0, .5) 62%, transparent 94%);
+            mask-image: linear-gradient(90deg, transparent 2%, #000 22%, rgba(0, 0, 0, .5) 62%, transparent 94%);
+            filter: blur(1.5px);
+            opacity: .45;
+            animation: wf-beam-shimmer 9s ease-in-out infinite alternate, wf-beam-flow 18s linear infinite;
+        }
+        .wa-beams i:nth-child(1) { transform: rotate(-160deg); }
+        .wa-beams i:nth-child(2) { transform: rotate(-22deg); animation-delay: -4s, -3s; }
+        .wa-beams i:nth-child(3) { transform: rotate(-150deg) scaleY(.45); height: 14vh; opacity: .26; animation-delay: -2s, -8s; }
+        .wa-beams i:nth-child(4) { transform: rotate(-32deg) scaleY(.45); height: 14vh; opacity: .26; animation-delay: -6s, -5s; }
+        @keyframes wf-beam-shimmer { 0% { opacity: .3; } 50% { opacity: .62; } 100% { opacity: .44; } }
+        @keyframes wf-beam-flow { to { background-position: 460px 0, 0 0; } }
+
+        /* --- 金色画框：外细边 + 内细边 + 四角折线 + 两侧菱形 --- */
+        .wuwa-frame {
+            position: fixed; inset: 10px; z-index: 30; pointer-events: none;
+            border: 1px solid rgba(var(--wuwa-gold), .3);
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .3), inset 0 0 60px rgba(0, 0, 0, .26);
+        }
+        .wuwa-frame::before {
+            content: ""; position: absolute; inset: 5px;
+            border: 1px solid rgba(var(--wuwa-gold), .12);
+        }
+        .wf-corner { position: absolute; width: 58px; height: 58px; filter: drop-shadow(0 0 6px rgba(var(--wuwa-gold), .4)); }
+        .wf-corner::before, .wf-corner::after {
+            content: ""; position: absolute;
+            background: rgba(var(--wuwa-gold), .85);
+            box-shadow: 0 0 8px rgba(var(--wuwa-gold), .5);
+        }
+        .wf-corner.tl::before { left: 0; top: 0; width: 100%; height: 1px; }
+        .wf-corner.tl::after { left: 0; top: 0; width: 1px; height: 100%; }
+        .wf-corner.tr::before { right: 0; top: 0; width: 100%; height: 1px; }
+        .wf-corner.tr::after { right: 0; top: 0; width: 1px; height: 100%; }
+        .wf-corner.bl::before { left: 0; bottom: 0; width: 100%; height: 1px; }
+        .wf-corner.bl::after { left: 0; bottom: 0; width: 1px; height: 100%; }
+        .wf-corner.br::before { right: 0; bottom: 0; width: 100%; height: 1px; }
+        .wf-corner.br::after { right: 0; bottom: 0; width: 1px; height: 100%; }
+        .wf-corner.tl { left: -3px; top: -3px; }
+        .wf-corner.tr { right: -3px; top: -3px; }
+        .wf-corner.bl { left: -3px; bottom: -3px; }
+        .wf-corner.br { right: -3px; bottom: -3px; }
+        .wf-gem {
+            position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -4.5px;
+            background: rgba(var(--wuwa-gold), .92); transform: rotate(45deg);
+            box-shadow: 0 0 10px rgba(var(--wuwa-gold), .65);
+        }
+        .wf-gem.l { left: -5px; }
+        .wf-gem.r { right: -5px; }
+
+        /* --- 界面切换按钮（个性化里） --- */
+        .skin-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+        .skin-chip {
+            flex: 1 1 122px; display: flex; flex-direction: column; gap: 5px;
+            padding: 8px 9px; border: 1px solid rgba(var(--primary-rgb), .36);
+            border-radius: 12px; background: rgba(255, 255, 255, .66);
+            color: var(--text-main); font: inherit; text-align: left; cursor: pointer;
+            transition: border-color .2s, box-shadow .2s, transform .15s, background .2s;
+            -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+        }
+        .skin-chip:hover { transform: translateY(-1px); border-color: var(--primary-color); }
+        .skin-chip.on { border-color: var(--primary-strong); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), .32); }
+        .skin-prev { position: relative; display: block; height: 30px; border-radius: 8px; border: 1px solid rgba(var(--primary-rgb), .25); overflow: hidden; }
+        .skin-prev.is-default { background: linear-gradient(135deg, #fdf6f0 0%, #ffe9e6 46%, #ffb7b2 100%); }
+        .skin-prev.is-wuwa { background: linear-gradient(150deg, #1b2f6b 0%, #4c7ad6 42%, #9fc0ff 70%, #0b1130 100%); }
+        .skin-prev.is-wuwa::after {
+            content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 11px;
+            background:
+                linear-gradient(155deg, rgba(255,255,255,.9), rgba(150,180,255,.5)),
+                radial-gradient(circle at 30% 120%, rgba(255,255,255,.7), transparent);
+            clip-path: polygon(6% 100%, 18% 12%, 30% 100%, 50% 100%, 62% 12%, 74% 100%, 82% 30%, 94% 100%);
+            opacity: .9;
+        }
+        .skin-prev.is-wuwa::before {
+            content: ""; position: absolute; inset: 3px;
+            border: 1px solid rgba(205, 176, 118, .7); border-radius: 5px;
+        }
+        .skin-chip b { font-size: .78rem; font-weight: 700; letter-spacing: .04em; }
+        .skin-chip i { font-size: .64rem; font-style: normal; color: var(--text-sub); }
+
+        /* --- 顶部：品牌 + 搜索胶囊 + 圆形工具 --- */
+        .wv-top {
+            position: fixed; top: 22px; left: 43px; right: 43px; z-index: 40;
+            display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center; gap: 18px; pointer-events: none;
+        }
+        .wv-brand {
+            justify-self: start; display: flex; align-items: center; gap: 12px;
+            min-width: 0; pointer-events: auto; text-decoration: none; color: inherit;
+        }
+        .wv-mark {
+            flex: 0 0 auto; width: 40px; height: 40px;
+            filter: drop-shadow(0 0 10px rgba(var(--wuwa-accent), .85));
+            animation: wv-mark-float 6s ease-in-out infinite;
+        }
+        .wv-mark .wm-a { fill: rgba(var(--wuwa-glow), .16); stroke: rgba(var(--wuwa-glow), .95); stroke-width: 1.4; }
+        .wv-mark .wm-b { fill: rgba(var(--wuwa-accent), .32); stroke: rgba(255, 255, 255, .6); stroke-width: 1; }
+        .wv-mark .wm-c { stroke: rgba(255, 255, 255, .55); stroke-width: 1; }
+        @keyframes wv-mark-float { 50% { transform: translateY(-3px) rotate(3deg); } }
+        .wv-brand-text { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
+        .wv-brand-name {
+            font-family: var(--wuwa-serif); font-weight: 700;
+            font-size: clamp(22px, 2.1vw, 32px); letter-spacing: .14em; white-space: nowrap;
+            color: #fff;
+            background: linear-gradient(100deg, #fff 20%, rgb(var(--wuwa-glow)) 40%, #fff 55%, rgb(var(--wuwa-accent)) 80%);
+            background-size: 250% 100%;
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 14px rgba(var(--wuwa-accent), .55));
+            animation: wv-name-sheen 7s linear infinite;
+        }
+        @supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+            .wv-brand-name { background: none; color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 2px 10px rgba(0, 0, 0, .6); }
+        }
+        @keyframes wv-name-sheen { to { background-position: -250% 0; } }
+        .wv-brand-sub {
+            margin-top: 6px; font-style: normal; font-size: 10px; letter-spacing: .5em;
+            color: rgba(var(--wuwa-gold), .92); white-space: nowrap;
+            text-shadow: 0 1px 6px rgba(0, 0, 0, .65);
+        }
+
+        .wv-search {
+            justify-self: center; display: flex; align-items: center;
+            width: min(440px, 36vw); height: 42px; padding: 0 6px 0 4px; border-radius: 999px;
+            pointer-events: auto;
+            background: rgba(10, 16, 34, .42);
+            border: 1px solid rgba(var(--wuwa-glow), .2);
+            backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .07);
+            transition: border-color .3s, box-shadow .3s, width .5s var(--wuwa-ease);
+        }
+        .wv-search:focus-within {
+            width: min(520px, 42vw);
+            border-color: rgba(var(--wuwa-accent), .72);
+            box-shadow: 0 0 0 4px rgba(var(--wuwa-accent), .14), 0 8px 30px rgba(0, 0, 0, .32);
+        }
+        .wv-engine {
+            flex: none; height: 32px; padding: 0 12px; margin-right: 6px; border: 0; cursor: pointer;
+            border-radius: 999px; font: inherit; font-size: 13px; letter-spacing: .04em;
+            color: rgb(var(--wuwa-glow)); background: rgba(var(--wuwa-accent), .16);
+            transition: background .3s, color .3s;
+        }
+        .wv-engine:hover { background: rgba(var(--wuwa-accent), .3); color: #fff; }
+        .wv-search input {
+            flex: 1 1 auto; min-width: 0; height: 100%; border: 0; outline: 0; background: none;
+            color: var(--wuwa-ink); font: inherit; font-size: 14px; letter-spacing: .02em;
+            -webkit-appearance: none; appearance: none;
+        }
+        .wv-search input::placeholder { color: rgba(226, 234, 255, .55); }
+        .wv-search input::-webkit-search-cancel-button { display: none; }
+        .wv-go {
+            flex: none; width: 32px; height: 32px; display: grid; place-items: center;
+            border: 0; border-radius: 50%; background: none; cursor: pointer;
+            color: rgba(226, 234, 255, .8); transition: color .25s, background .25s;
+        }
+        .wv-go:hover { color: #fff; background: rgba(var(--wuwa-accent), .24); }
+        .wv-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+
+        .wv-tools { justify-self: end; display: flex; gap: 8px; pointer-events: auto; }
+        .wv-tool {
+            width: 40px; height: 40px; display: grid; place-items: center; cursor: pointer;
+            border-radius: 999px; color: var(--wuwa-ink);
+            background: rgba(10, 16, 34, .42);
+            border: 1px solid rgba(var(--wuwa-glow), .18);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            transition: background .3s, border-color .3s, transform .3s var(--wuwa-ease), box-shadow .3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .wv-tool:hover {
+            background: rgba(var(--wuwa-accent), .28); border-color: rgba(var(--wuwa-accent), .62);
+            transform: translateY(-1px); box-shadow: 0 0 20px rgba(var(--wuwa-accent), .28);
+        }
+        .wv-tool[aria-expanded="true"] { border-color: rgba(var(--wuwa-accent), .8); color: rgb(var(--wuwa-glow)); }
+        .wv-tool svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* --- 两侧翻页箭头 --- */
+        .wv-edge {
+            position: fixed; top: 22vh; bottom: 30vh; width: 90px; z-index: 35;
+            display: grid; place-items: center; padding: 0; border: 0; background: none;
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .wv-edge.prev { left: 6px; }
+        .wv-edge.next { right: 6px; }
+        .wv-edge svg {
+            width: 26px; height: 40px; overflow: visible;
+            fill: rgba(255, 255, 255, .22); stroke: rgba(255, 255, 255, .34); stroke-width: 1; stroke-linejoin: round;
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .45));
+            transition: fill .45s var(--wuwa-ease), stroke .45s var(--wuwa-ease), transform .55s var(--wuwa-ease), filter .55s var(--wuwa-ease);
+        }
+        .wv-edge:hover svg, .wv-edge:focus-visible svg {
+            fill: #fff; stroke: #fff; transform: translateY(-8px) scale(1.1);
+            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, .45)) drop-shadow(0 0 10px rgba(var(--wuwa-glow), .85));
+        }
+        .wv-edge:active svg { transform: translateY(-2px) scale(.96); }
+
+        /* --- 底部晶体 dock --- */
+        .wv-dock {
+            position: fixed; left: 0; right: 0; bottom: 0; height: min(50vh, 560px);
+            z-index: 32; pointer-events: none; perspective: 1200px;
+        }
+        .wv-shard-layer { position: absolute; inset: 0; }
+        .wv-shard {
+            position: absolute; left: 0; top: 0;
+            width: var(--sz); height: var(--sz); display: block;
+            pointer-events: auto; outline: none; text-decoration: none; border: 0; padding: 0; background: none;
+            transform: translate(calc(var(--x) - var(--sz) / 2), calc(var(--y) - var(--sz) / 2)) rotate(var(--rz));
+            transform-origin: 50% 50%;
+            animation: wv-shard-in .7s var(--wuwa-ease) both;
+            animation-delay: var(--din, 0s);
+            -webkit-tap-highlight-color: transparent;
+        }
+        @keyframes wv-shard-in { from { opacity: 0; translate: 0 48px; } to { opacity: 1; translate: 0 0; } }
+        .wv-shard-3d {
+            position: absolute; inset: 0; transform-style: preserve-3d;
+            transform: rotateX(8deg) scale(var(--k, 1));
+            transition: transform .5s var(--wuwa-ease);
+            animation: wv-float 7s ease-in-out infinite alternate;
+            animation-delay: var(--fd, 0s);
+        }
+        @keyframes wv-float { from { translate: 0 0; } to { translate: 0 -7px; } }
+        .wv-shard:hover .wv-shard-3d,
+        .wv-shard:focus-visible .wv-shard-3d { --k: 1.16; }
+        .wv-shard-layer:has(.wv-shard:hover) .wv-shard:not(:hover) { filter: saturate(.85) brightness(.76); }
+
+        .wv-svg {
+            position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+            filter:
+                drop-shadow(0 8px 10px rgba(0, 0, 0, .45))
+                drop-shadow(0 0 calc(6px + var(--h, .5) * 22px) rgba(var(--wuwa-accent), calc(.35 + var(--h, .5) * .5)));
+        }
+        .wv-svg .st-a { stop-color: rgb(var(--wuwa-glow)); }
+        .wv-svg .st-b { stop-color: rgb(var(--wuwa-accent)); }
+        .wv-svg .st-c { stop-color: rgb(var(--wuwa-accent2)); }
+        .wv-svg .st-deep { stop-color: rgb(var(--wuwa-deep)); }
+        .wv-svg .pc {
+            --q: 0; transform-box: fill-box; transform-origin: center;
+            transform: translate(calc(var(--dx) * var(--q) * 1px), calc(var(--dy) * var(--q) * 1px)) rotate(calc(var(--r) * var(--q) * 1deg));
+            transition: transform .55s var(--wuwa-ease);
+        }
+        .wv-svg .pc.center { transform: scale(calc(1 - var(--q) * .26)); }
+        .wv-shard:hover .wv-svg .pc,
+        .wv-shard:focus-visible .wv-svg .pc { --q: 1; }
+        .wv-svg .pc-facet { fill: rgba(255, 255, 255, .24); mix-blend-mode: screen; }
+        .wv-svg .pc.center .pc-facet { fill: rgba(255, 255, 255, .12); }
+        .wv-svg .pc-edge { fill: none; stroke: rgba(var(--wuwa-glow), .95); stroke-width: 1.1; stroke-linejoin: round; }
+        .wv-svg .pc.center .pc-edge { stroke: rgba(255, 255, 255, .52); stroke-width: .7; }
+        .wv-svg .sh-glit { fill: #fff; animation: wv-glit 3.4s ease-in-out infinite; }
+        @keyframes wv-glit { 0%, 100% { opacity: .16; } 50% { opacity: .92; } }
+
+        .wv-shard-name {
+            position: absolute; left: 50%; top: calc(100% - 8px);
+            max-width: calc(var(--sz) * 1.25);
+            transform: translateX(-50%) rotate(calc(var(--rz) * -1));
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-family: 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Microsoft YaHei UI', 'Microsoft YaHei', system-ui, sans-serif;
+            font-weight: 600; font-size: 12.5px; letter-spacing: .1em;
+            color: rgba(240, 245, 255, .96); text-align: center;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 10px rgba(0, 0, 0, .9), 0 0 18px rgba(6, 10, 22, .9);
+            pointer-events: none;
+        }
+        .wv-shard.wv-pager .wv-shard-name { font-size: 11.5px; letter-spacing: .06em; color: rgba(240, 245, 255, .88); }
+        /* 翻页晶体：金色呼吸光 + 朝翻页方向的轻摆，比站点晶体多一层「可以点」的提示 */
+        .wv-shard.wv-pager::after {
+            content: ""; position: absolute; inset: -55%; z-index: -1;
+            border-radius: 50%; pointer-events: none;
+            background: radial-gradient(circle,
+                rgba(var(--wuwa-gold), .5) 0%,
+                rgba(var(--wuwa-gold), .2) 40%,
+                rgba(var(--wuwa-gold), 0) 74%);
+            animation: wv-pager-halo 3.6s ease-in-out infinite;
+        }
+        @keyframes wv-pager-halo {
+            0%, 100% { opacity: .22; transform: scale(.86); }
+            50% { opacity: .9; transform: scale(1.08); }
+        }
+        .wv-shard.wv-pager .wv-shard-3d {
+            animation: wv-float 7s ease-in-out infinite alternate,
+                       wv-pager-breath 3.6s ease-in-out infinite;
+        }
+        @keyframes wv-pager-breath {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.26) saturate(1.15); }
+        }
+        .wv-shard.wv-pager.is-prev {
+            animation: wv-shard-in .7s var(--wuwa-ease) both,
+                       wv-pager-sway-prev 4.6s ease-in-out .7s infinite;
+        }
+        .wv-shard.wv-pager.is-next {
+            animation: wv-shard-in .7s var(--wuwa-ease) both,
+                       wv-pager-sway-next 4.6s ease-in-out .7s infinite;
+        }
+        @keyframes wv-pager-sway-prev { 0%, 100% { translate: 0 0; } 50% { translate: -7px 0; } }
+        @keyframes wv-pager-sway-next { 0%, 100% { translate: 0 0; } 50% { translate: 7px 0; } }
+        .wv-shard.wv-pager:hover .wv-shard-3d,
+        .wv-shard.wv-pager:focus-visible .wv-shard-3d { --k: 1.22; }
+        .wv-shard.wv-pager:hover::after { animation-duration: 1.6s; opacity: .8; }
+        .wv-shard-name em { font-style: normal; color: rgba(var(--wuwa-gold), .95); }
+        .wv-shard:hover .wv-shard-name, .wv-shard:focus-visible .wv-shard-name { color: #fff; }
+
+        /* --- 悬浮站点卡片 --- */
+        .wv-tip {
+            position: absolute; left: 0; top: 0; z-index: 95;
+            min-width: 190px; max-width: 280px; padding: 13px 15px 11px; border-radius: 14px;
+            pointer-events: none; opacity: 0;
+            transform: translate(calc(var(--tx, 50%) - 50%), calc(var(--ty, 0px) - 100%));
+            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .3), rgba(var(--wuwa-deep), .84) 60%);
+            border: 1px solid rgba(var(--wuwa-glow), .38);
+            backdrop-filter: blur(16px) saturate(1.5); -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, .5), 0 0 30px rgba(var(--wuwa-accent), .25), inset 0 1px 0 rgba(255, 255, 255, .14);
+            transition: opacity .28s, transform .4s var(--wuwa-ease);
+        }
+        .wv-tip.show { opacity: 1; }
+        .wv-tip::before {
+            content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgb(var(--wuwa-glow)), transparent);
+        }
+        .wv-tip::after {
+            content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; margin-left: -5px;
+            transform: rotate(45deg); background: rgba(var(--wuwa-deep), .92);
+            border-right: 1px solid rgba(var(--wuwa-glow), .38); border-bottom: 1px solid rgba(var(--wuwa-glow), .38);
+        }
+        .wv-tip-name { font-family: var(--wuwa-serif); font-weight: 700; font-size: 17px; letter-spacing: .12em; color: #fff; }
+        .wv-tip-desc { margin-top: 5px; font-size: 12.5px; line-height: 1.5; color: rgba(226, 234, 255, .8); }
+        .wv-tip-foot {
+            display: flex; justify-content: space-between; gap: 12px; margin-top: 9px; padding-top: 7px;
+            border-top: 1px solid rgba(255, 255, 255, .12);
+            font-size: 11px; letter-spacing: .06em; color: rgba(226, 234, 255, .62);
+        }
+
+        /* --- 底部说明行 --- */
+        .wv-note {
+            position: fixed; left: 50%; bottom: 20px; z-index: 35; transform: translateX(-50%);
+            width: max-content; max-width: calc(100% - 32px);
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 5px 8px;
+            font-size: 10.5px; letter-spacing: .05em; color: rgba(226, 234, 255, .8);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, .85); pointer-events: none;
+        }
+        .wv-note .sep { opacity: .45; }
+
+        /* --- 右侧站点面板 --- */
+        .wv-panel {
+            position: fixed; top: 12px; right: 12px; bottom: 12px; z-index: 60;
+            width: min(380px, calc(100vw - 24px));
+            display: flex; flex-direction: column; gap: 12px; padding: 20px;
+            border-radius: 18px; overflow: hidden;
+            background: linear-gradient(170deg, rgba(var(--wuwa-accent), .22), rgba(var(--wuwa-deep), .9) 40%);
+            border: 1px solid rgba(var(--wuwa-glow), .24);
+            backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4);
+            box-shadow: -20px 0 60px rgba(0, 0, 0, .5);
+            transform: translateX(calc(100% + 30px)); visibility: hidden;
+            transition: transform .6s var(--wuwa-ease), visibility .6s;
+        }
+        .wv-panel.open { transform: none; visibility: visible; }
+        .wv-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .wv-panel-head h3 {
+            margin: 0; font-family: var(--wuwa-serif); font-size: 19px; font-weight: 700;
+            letter-spacing: .16em; color: #fff;
+        }
+        .wv-panel-x {
+            width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer;
+            border: 0; border-radius: 50%; background: none; color: var(--wuwa-ink);
+            transition: background .3s;
+        }
+        .wv-panel-x:hover { background: rgba(255, 255, 255, .12); }
+        .wv-panel-x svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+        .wv-filter {
+            display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(var(--wuwa-deep), .5);
+            border: 1px solid rgba(var(--wuwa-glow), .2);
+            transition: border-color .3s;
+        }
+        .wv-filter:focus-within { border-color: rgba(var(--wuwa-accent), .6); }
+        .wv-filter svg { width: 15px; height: 15px; flex: none; fill: none; stroke: rgba(226, 234, 255, .6); stroke-width: 1.8; stroke-linecap: round; }
+        .wv-filter input {
+            flex: 1 1 auto; min-width: 0; height: 100%; border: 0; outline: 0; background: none;
+            color: var(--wuwa-ink); font: inherit; font-size: .8rem;
+        }
+        .wv-filter input::placeholder { color: rgba(226, 234, 255, .45); }
+
+        .wv-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 2px 4px; overscroll-behavior: contain; }
+        .wv-list::-webkit-scrollbar { width: 6px; }
+        .wv-list::-webkit-scrollbar-track { background: none; }
+        .wv-list::-webkit-scrollbar-thumb { background: rgba(var(--wuwa-glow), .28); border-radius: 99px; }
+        .wv-list::-webkit-scrollbar-thumb:hover { background: rgba(var(--wuwa-glow), .55); }
+        .wv-row {
+            display: flex; align-items: center; gap: 10px; width: 100%;
+            padding: 9px 10px; border: 1px solid transparent; border-radius: 11px;
+            background: none; color: var(--wuwa-ink); font: inherit; text-align: left;
+            text-decoration: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: background .25s, border-color .25s, transform .3s var(--wuwa-ease);
+        }
+        .wv-row:hover, .wv-row:focus-visible {
+            background: rgba(var(--wuwa-accent), .18);
+            border-color: rgba(var(--wuwa-accent), .45);
+            transform: translateX(-2px); outline: none;
+        }
+        .wv-icon {
+            flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+            border-radius: 9px; font-size: .9rem; line-height: 1;
+            background: rgba(var(--wuwa-deep), .55);
+            border: 1px solid rgba(var(--wuwa-glow), .18);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+        }
+        img.wv-icon { object-fit: contain; padding: 3px; }
+        .wv-row-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .wv-row-main b {
+            font-size: .8rem; font-weight: 600; letter-spacing: .04em; color: #fff;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .wv-row-main i {
+            font-style: normal; font-size: .62rem; letter-spacing: .06em; color: rgba(226, 234, 255, .5);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .wv-arrow { flex: 0 0 auto; font-size: .66rem; color: rgba(var(--wuwa-gold), .8); opacity: 0; transition: opacity .25s; }
+        .wv-row:hover .wv-arrow, .wv-row:focus-visible .wv-arrow { opacity: 1; }
+        .wv-chev { flex: 0 0 auto; font-size: .58rem; color: rgba(var(--wuwa-glow), .85); transition: transform .3s; }
+        .wv-row-folder[aria-expanded="true"] .wv-chev { transform: rotate(90deg); }
+        .wv-children { margin: 2px 0 4px 20px; padding-left: 14px; border-left: 1px solid rgba(var(--wuwa-glow), .16); }
+        .wv-children[hidden] { display: none; }
+        .wv-empty { padding: 20px 12px; text-align: center; font-size: .72rem; letter-spacing: .06em; color: rgba(226, 234, 255, .45); }
+        .wv-panel-foot { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(var(--wuwa-glow), .14); }
+        .wv-btn {
+            flex: 1 1 0; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+            border: 1px solid rgba(var(--wuwa-glow), .26);
+            background: rgba(var(--wuwa-glow), .08);
+            color: rgb(var(--wuwa-glow)); font: inherit; font-size: .68rem; letter-spacing: .08em;
+            -webkit-tap-highlight-color: transparent;
+            transition: background .25s, border-color .25s;
+        }
+        .wv-btn:hover { background: rgba(var(--wuwa-accent), .22); border-color: rgba(var(--wuwa-accent), .6); }
+
+        /* --- 菜单 / 面板 / 播放器：统一深色玻璃（壁纸是彩色浅调，这些必须自带底） --- */
+        html[data-skin="wuwa"] .nav-menu {
+            background: linear-gradient(172deg, rgba(var(--wuwa-accent), .2), rgba(var(--wuwa-deep), calc(.94 * var(--menu-alpha, .92))) 44%);
+            border-right: 1px solid rgba(var(--wuwa-glow), .22);
+            box-shadow: 14px 0 60px rgba(0, 0, 0, .5);
+            color: var(--wuwa-ink);
+            backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4);
+        }
+        html[data-skin="wuwa"] .nav-menu h3,
+        html[data-skin="wuwa"] #subTitle { font-family: var(--wuwa-serif); letter-spacing: .12em; color: #fff; }
+        html[data-skin="wuwa"] .menu-section h4 { color: rgba(var(--wuwa-gold), .95); letter-spacing: .16em; font-size: .72rem; }
+        html[data-skin="wuwa"] .menu-cat {
+            background: rgba(var(--wuwa-glow), .07);
+            border: 1px solid rgba(var(--wuwa-glow), .18);
+            color: var(--wuwa-ink); letter-spacing: .06em;
+            transition: background .3s, border-color .3s, box-shadow .3s, transform .3s var(--wuwa-ease);
+        }
+        html[data-skin="wuwa"] .menu-cat:hover {
+            background: rgba(var(--wuwa-accent), .22); border-color: rgba(var(--wuwa-accent), .6);
+            box-shadow: 0 0 20px rgba(var(--wuwa-accent), .25); transform: translateY(-1px);
+        }
+        html[data-skin="wuwa"] .menu-gear,
+        html[data-skin="wuwa"] .menu-close,
+        html[data-skin="wuwa"] .menu-back { background: rgba(var(--wuwa-glow), .1); color: rgb(var(--wuwa-glow)); }
+        html[data-skin="wuwa"] .menu-gear:hover,
+        html[data-skin="wuwa"] .menu-close:hover { background: rgba(var(--wuwa-accent), .24); }
+        html[data-skin="wuwa"] .quick-links a { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .quick-links a:hover { color: rgb(var(--wuwa-glow)); }
+        html[data-skin="wuwa"] .menu-hint { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] #navMenu .menu-hint {
+            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .26), rgba(var(--wuwa-deep), .95) 62%);
+            border: 1px solid rgba(var(--wuwa-glow), .3);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .55), 0 0 22px rgba(var(--wuwa-accent), .18);
+            color: var(--wuwa-ink-dim);
+            backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        }
+        html[data-skin="wuwa"] .menu-sub-body::-webkit-scrollbar-thumb { background: rgba(var(--wuwa-glow), calc(.5 * var(--menu-alpha, .92))); }
+        html[data-skin="wuwa"] .menu-sub-body::-webkit-scrollbar-thumb:hover { background: rgba(var(--wuwa-glow), .8); }
+        html[data-skin="wuwa"] .menu-sub-body { scrollbar-color: rgba(var(--wuwa-glow), .5) transparent; }
+        html[data-skin="wuwa"] .skin-chip { background: rgba(var(--wuwa-glow), .08); border-color: rgba(var(--wuwa-glow), .22); color: var(--wuwa-ink); }
+        html[data-skin="wuwa"] .skin-chip.on {
+            border-color: rgba(var(--wuwa-accent), .8);
+            box-shadow: 0 0 0 2px rgba(var(--wuwa-accent), .3), 0 0 20px rgba(var(--wuwa-accent), .25);
+        }
+        html[data-skin="wuwa"] .skin-chip i { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .ghost-btn {
+            background: rgba(var(--wuwa-glow), .08);
+            border: 1px solid rgba(var(--wuwa-glow), .28);
+            color: rgb(var(--wuwa-glow)); letter-spacing: .04em;
+        }
+        html[data-skin="wuwa"] .ghost-btn:hover { background: rgba(var(--wuwa-accent), .2); border-color: rgba(var(--wuwa-accent), .65); }
+        html[data-skin="wuwa"] .ghost-btn.on { background: rgba(var(--primary-rgb), .85); border-color: transparent; color: var(--primary-contrast); }
+        html[data-skin="wuwa"] .apply-btn { box-shadow: 0 0 24px rgba(var(--primary-rgb), .35); }
+        html[data-skin="wuwa"] .file-pick { background: rgba(var(--wuwa-deep), .45); border-color: rgba(var(--wuwa-glow), .3); color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .file-pick:hover { background: rgba(var(--wuwa-accent), .16); border-color: rgba(var(--wuwa-accent), .6); }
+        html[data-skin="wuwa"] .collapse-head { background: rgba(var(--wuwa-glow), .06); border-color: rgba(var(--wuwa-glow), .18); color: var(--wuwa-ink); }
+        html[data-skin="wuwa"] .theme-custom { background: rgba(var(--wuwa-deep), .4); border-color: rgba(var(--wuwa-glow), .3); }
+        html[data-skin="wuwa"] .color-row label,
+        html[data-skin="wuwa"] .range-row label,
+        html[data-skin="wuwa"] .switch-row > span,
+        html[data-skin="wuwa"] .color-row span { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .color-row input[type="color"],
+        html[data-skin="wuwa"] .lw-settings input[type="color"],
+        html[data-skin="wuwa"] .lw-settings select,
+        html[data-skin="wuwa"] .mascot-row select,
+        html[data-skin="wuwa"] .card-form input,
+        html[data-skin="wuwa"] #batchUrls {
+            background: rgba(var(--wuwa-deep), .55);
+            border-color: rgba(var(--wuwa-glow), .24);
+            color: var(--wuwa-ink);
+        }
+        html[data-skin="wuwa"] .switch-btn { background: rgba(var(--wuwa-glow), .16); }
+        html[data-skin="wuwa"] .switch-btn.on { background: rgba(var(--primary-rgb), .9); }
+        html[data-skin="wuwa"] .switch-btn .knob { background: #eef3ff; box-shadow: 0 0 10px rgba(var(--wuwa-glow), .5); }
+        html[data-skin="wuwa"] .hidden-chip { background: rgba(var(--wuwa-deep), .5); border-color: rgba(var(--wuwa-glow), .3); color: rgb(var(--wuwa-glow)); }
+        html[data-skin="wuwa"] .theme-dot { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .85), 0 0 12px rgba(var(--wuwa-glow), .25); }
+        html[data-skin="wuwa"] .theme-dot[aria-checked="true"] {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .9), 0 0 0 2px var(--dot-strong), 0 0 16px rgba(var(--wuwa-glow), .45);
+        }
+        html[data-skin="wuwa"] .update-banner {
+            background: linear-gradient(160deg, rgba(var(--wuwa-accent), .26), rgba(var(--wuwa-deep), .95) 60%);
+            border-color: rgba(var(--wuwa-glow), .32);
+            color: var(--wuwa-ink);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .5);
+        }
+        /* 菜单里那块音乐库面板沿用深色玻璃（浮动播放器现在自带独立配色） */
+        html[data-skin="wuwa"] .music-info { color: #fff; }
+        html[data-skin="wuwa"] .lyrics-panel { background: rgba(var(--wuwa-glow), .06); color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .playlist-container { background: rgba(var(--wuwa-glow), .06); }
+        html[data-skin="wuwa"] .playlist-item.active,
+        html[data-skin="wuwa"] .playlist-item:hover { background: rgba(var(--primary-rgb), .85); color: var(--primary-contrast); }
+        html[data-skin="wuwa"] .lyrics-tools button { background: rgba(var(--wuwa-glow), .08); border-color: rgba(var(--wuwa-glow), .18); color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .mode-btns button { background: rgba(var(--wuwa-deep), .5); border-color: rgba(var(--wuwa-glow), .2); color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .folder-panel {
+            background: linear-gradient(170deg, rgba(var(--wuwa-accent), .2), rgba(var(--wuwa-deep), .96) 42%);
+            border: 1px solid rgba(var(--wuwa-glow), .26);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+            color: var(--wuwa-ink);
+            backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4);
+        }
+        html[data-skin="wuwa"] .folder-head strong { color: rgb(var(--wuwa-glow)); }
+        html[data-skin="wuwa"] .folder-nav,
+        html[data-skin="wuwa"] .folder-app-tools button {
+            background: rgba(var(--wuwa-deep), .6);
+            border-color: rgba(var(--wuwa-glow), .32);
+            color: var(--wuwa-ink);
+        }
+        html[data-skin="wuwa"] .folder-app { background: rgba(var(--wuwa-glow), .08); color: var(--wuwa-ink); }
+        html[data-skin="wuwa"] .folder-app:hover { background: rgba(var(--wuwa-accent), .2); }
+        html[data-skin="wuwa"] .folder-app-icon { background: rgba(var(--wuwa-deep), .55); box-shadow: 0 4px 12px rgba(0, 0, 0, .4); }
+        html[data-skin="wuwa"] .folder-picker-row { background: rgba(var(--wuwa-deep), .5); border-color: rgba(var(--wuwa-glow), .22); color: var(--wuwa-ink); }
+        html[data-skin="wuwa"] .folder-picker-row:hover { background: rgba(var(--wuwa-accent), .18); }
+        html[data-skin="wuwa"] .folder-empty { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .folder-cell { background: rgba(var(--wuwa-deep), .5); }
+        html[data-skin="wuwa"] .folder-cell.empty { background: rgba(var(--wuwa-glow), .08); }
+        html[data-skin="wuwa"] .folder-count { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .folder-overlay { background: rgba(4, 7, 16, .62); }
+        html[data-skin="wuwa"] .folder-preview { background: rgba(var(--wuwa-accent), .14); box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), .18); }
+
+        /* --- 小屏：碎片改成交错网格，搜索收起，面板变整屏抽屉 --- */
+        @media (max-width: 900px) {
+            .wv-top { top: 14px; left: 16px; right: 16px; grid-template-columns: auto 1fr; gap: 10px; }
+            .wv-search { display: none; }
+            .wv-brand-name { font-size: 19px; letter-spacing: .1em; }
+            .wv-brand-sub { font-size: 8.5px; letter-spacing: .3em; margin-top: 4px; }
+            .wv-mark { width: 32px; height: 32px; }
+            .wv-tool { width: 38px; height: 38px; }
+            .wv-tools { gap: 6px; }
+            .wv-dock { height: min(38dvh, 330px); bottom: 46px; }
+            .wv-edge { width: 44px; top: 16vh; bottom: 60vh; }
+            .wv-edge svg { width: 18px; height: 28px; }
+            .wv-note { bottom: 12px; font-size: 10px; }
+            .wv-shard-name { font-size: clamp(9px, 1.6dvh, 11px); letter-spacing: .02em; }
+            .wv-panel { top: 10px; right: 10px; bottom: 10px; padding: 16px; }
+            .wa-beams { opacity: .35; }
+        }
+        @media (max-width: 480px) {
+            .wv-brand-sub { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
+            .wv-shard.wv-pager, .wv-shard.wv-pager::after { animation: none; }
+            .wv-shard.wv-pager::after { opacity: .4; transform: none; }
+            .wv-svg .sh-glit { animation: none; opacity: .5; }
+            .wv-tip, .wv-panel, .wv-shard-3d { transition: none; }
+        }
     </style>
 </head>
 <body id="bg-body">
 
     <video id="bg-video" autoplay muted loop playsinline hidden></video>
     <div class="overlay" id="overlay"></div>
+
+    <!-- 鸣潮风装饰：星云 / 光束 / 地面辉光（只在 data-skin="wuwa" 时显示） -->
+    <div class="wuwa-atmo" aria-hidden="true">
+        <span class="wa-nebula"></span>
+        <span class="wa-beams"><i></i><i></i><i></i><i></i></span>
+        <span class="wa-floor"></span>
+    </div>
+    <!-- 鸣潮风装饰：金色画框 + 四角折线 + 两侧菱形 -->
+    <div class="wuwa-frame" aria-hidden="true">
+        <span class="wf-corner tl"></span><span class="wf-corner tr"></span>
+        <span class="wf-corner bl"></span><span class="wf-corner br"></span>
+        <span class="wf-gem l"></span><span class="wf-gem r"></span>
+    </div>
 
     <button class="simple-mode-toggle" id="simpleModeToggle" onclick="toggleSimpleMode()" aria-label="切换简洁模式">简洁模式</button>
 
@@ -1431,6 +2260,12 @@
             <li><a href="https://notion.so" target="_blank" rel="noopener"><span>📝</span> Notion</a></li>
             <li><a href="https://pinterest.com" target="_blank" rel="noopener"><span>🎨</span> Pinterest</a></li>
         </ul>
+
+        <section class="menu-section" data-panel="skin">
+            <h4>🪟 界面</h4>
+            <div class="skin-row" id="skinRow" role="radiogroup" aria-label="界面切换"></div>
+            <p class="menu-hint" id="skinHint">两套完整界面，随时切换。卡片导航是原来的网格；星轨导航是整屏星海 + 品牌条 + 右侧站点面板。</p>
+        </section>
 
         <section class="menu-section" data-panel="theme">
             <h4>🎨 主题</h4>
@@ -1749,6 +2584,83 @@
         </footer>
     </div>
 
+    <!-- 界面二·星轨导航：整屏壁纸 + 顶部品牌条/搜索/工具 + 底部晶体碎片 dock + 右侧站点面板 -->
+    <div class="wuwa-view" id="wuwaView">
+        <header class="wv-top">
+            <a class="wv-brand" href="#" aria-label="星轨导航">
+                <svg class="wv-mark" viewBox="0 0 40 40" aria-hidden="true">
+                    <path class="wm-a" d="M20 3.5 36 33.5H4z"/>
+                    <path class="wm-b" d="M20 11 29.5 30H10.5z"/>
+                    <path class="wm-c" d="M20 3.5v26.5M20 11 10.5 30M20 11l9.5 19"/>
+                </svg>
+                <span class="wv-brand-text">
+                    <strong class="wv-brand-name">My Links</strong>
+                    <em class="wv-brand-sub">STARGLIDE · NAVIGATION</em>
+                </span>
+            </a>
+            <form class="wv-search" id="wvSearchForm" role="search">
+                <button type="button" class="wv-engine" id="wvEngine" title="切换搜索引擎">必应</button>
+                <input type="search" id="wvSearch" placeholder="搜索 · 按 / 聚焦" autocomplete="off" aria-label="搜索">
+                <button type="submit" class="wv-go" aria-label="搜索">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.6 15.6 21 21"/></svg>
+                </button>
+            </form>
+            <nav class="wv-tools" aria-label="工具">
+                <button type="button" class="wv-tool" id="wvPanelBtn" aria-expanded="false" title="站点清单">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M14 4.5v15M3.5 9.5h10.5"/></svg>
+                </button>
+                <button type="button" class="wv-tool" id="wvMusicBtn" title="音乐播放器">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.6"/><circle cx="17.5" cy="16" r="2.6"/></svg>
+                </button>
+                <button type="button" class="wv-tool" id="wvMenuBtn" title="全部设置">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </nav>
+        </header>
+
+        <button type="button" class="wv-edge prev" id="wvPrevEdge" aria-label="上一组">
+            <svg viewBox="0 0 26 40" aria-hidden="true"><path d="M20 4 6 20l14 16z"/></svg>
+        </button>
+        <button type="button" class="wv-edge next" id="wvNextEdge" aria-label="下一组">
+            <svg viewBox="0 0 26 40" aria-hidden="true"><path d="M6 4l14 16L6 36z"/></svg>
+        </button>
+
+        <main class="wv-dock" id="wvDock" aria-label="站点晶体导航">
+            <div class="wv-shard-layer" id="wvShards"></div>
+            <div class="wv-tip" id="wvTip" aria-hidden="true">
+                <div class="wv-tip-name"></div>
+                <div class="wv-tip-desc"></div>
+                <div class="wv-tip-foot"><span class="wv-tip-host"></span><span>↗</span></div>
+            </div>
+        </main>
+
+        <p class="wv-note">
+            <span id="wvNoteMain">收录 0 个站点</span>
+            <span class="sep">|</span>
+            <span>← → 换组</span>
+            <span class="sep">|</span>
+            <span>My Links · 灵感导航</span>
+        </p>
+
+        <aside class="wv-panel" id="wvPanel" aria-label="站点清单">
+            <div class="wv-panel-head">
+                <h3>站点清单</h3>
+                <button type="button" class="wv-panel-x" id="wvPanelClose" aria-label="关闭清单">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                </button>
+            </div>
+            <label class="wv-filter">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.6 15.6 21 21"/></svg>
+                <input type="search" id="wvFilter" placeholder="筛选本站…" autocomplete="off" aria-label="筛选站点">
+            </label>
+            <div class="wv-list" id="wvList"></div>
+            <div class="wv-panel-foot">
+                <button type="button" class="wv-btn" id="wvAdd">＋ 添加网址</button>
+                <button type="button" class="wv-btn" id="wvSettings">⚙ 更多设置</button>
+            </div>
+        </aside>
+    </div>
+
     <!-- 透明度控制按钮 -->
     <button type="button" class="edit-done" id="editDoneBtn" hidden onclick="toggleEditMode()">✓ 完成编辑</button>
 
@@ -1765,15 +2677,15 @@
     </div>
 
     <button type="button" class="lyrics-fab" id="lyricsFab" onclick="toggleLyricsWidget()"
-            aria-expanded="false" aria-controls="lyricsWidget" title="音乐播放器" aria-label="显示音乐播放器">🎵</button>
+            aria-expanded="false" aria-controls="lyricsWidget" title="音乐播放器" aria-label="显示音乐播放器">♪</button>
 
     <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="音乐播放器">
         <header class="lyrics-widget-head" id="lwHead">
-            <span class="lw-title">🎵 播放器</span>
+            <span class="lw-title">播放器</span>
             <div class="lw-tools">
-                <button type="button" id="lwBackBtn" hidden title="返回播放器" onclick="toggleWidgetLyrics()">▣</button>
+                <button type="button" id="lwBackBtn" hidden title="返回播放器" onclick="toggleWidgetLyrics()">返</button>
                 <button type="button" id="lwHideBtn" hidden title="隐藏界面，只显示歌词" onclick="toggleCleanLyrics()">隐</button>
-                <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">📌</button>
+                <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">钉</button>
                 <button type="button" data-lw="font-dec" title="字号减小">A−</button>
                 <button type="button" data-lw="font-inc" title="字号增大">A+</button>
                 <button type="button" data-lw="close" title="关闭">✕</button>
@@ -1817,6 +2729,12 @@
 
 
     <script>
+        /* 界面风格：先把上次选的挂上，免得刷新时闪一下默认皮肤 */
+        try {
+            const savedSkinId = localStorage.getItem('skinId');
+            if (savedSkinId) document.documentElement.dataset.skin = savedSkinId;
+        } catch (error) {}
+
         document.getElementById('volumePercent').textContent =
             `${Math.round(Number(document.getElementById('volumeSlider').value) * 100)}%`;
         document.getElementById('loopBtn').classList.add('active');
@@ -2483,7 +3401,7 @@
 
             Array.from(document.querySelectorAll('#navMenu > [data-panel], #navMenu > .menu-section')).forEach(section => {
                 if (section.dataset.panel === 'theme' || section.dataset.panel === 'background'
-                    || section.dataset.panel === 'transparency') {
+                    || section.dataset.panel === 'transparency' || section.dataset.panel === 'skin') {
                     personalize.appendChild(section);
                     section.hidden = false;
                 } else {
@@ -2853,6 +3771,7 @@
             if (persist !== false) {
                 try { localStorage.setItem(THEME_KEY, theme.id); } catch (error) {}
             }
+            applySkin(currentSkin, false);
         }
 
         function initTheme() {
@@ -2862,6 +3781,570 @@
             let saved = null;
             try { saved = localStorage.getItem(THEME_KEY); } catch (error) {}
             setTheme(saved || 'sakura', false);
+        }
+
+        /* ---------------- 4.5.1 界面风格（皮肤） ---------------- */
+        const SKIN_KEY = 'skinId';
+        const SKINS = [
+            { id: 'default', name: '卡片导航', desc: '原来的卡片网格' },
+            { id: 'wuwa', name: '星轨导航', desc: '晶体碎片 dock + 玻璃面板' }
+        ];
+        let currentSkin = 'default';
+
+        function renderSkinChips() {
+            const row = document.getElementById('skinRow');
+            if (!row) return;
+            row.innerHTML = '';
+            SKINS.forEach(skin => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'skin-chip';
+                chip.dataset.skin = skin.id;
+                chip.setAttribute('role', 'radio');
+                chip.setAttribute('aria-checked', 'false');
+                const prev = document.createElement('span');
+                prev.className = `skin-prev is-${skin.id}`;
+                const name = document.createElement('b');
+                name.textContent = skin.name;
+                const desc = document.createElement('i');
+                desc.textContent = skin.desc;
+                chip.appendChild(prev);
+                chip.appendChild(name);
+                chip.appendChild(desc);
+                chip.addEventListener('click', () => applySkin(skin.id));
+                row.appendChild(chip);
+            });
+        }
+
+        /** 切皮肤：只在 <html> 上挂一个 data-skin，其余全交给 CSS */
+        function applySkin(id, persist) {
+            const skin = SKINS.find(item => item.id === id) || SKINS[0];
+            currentSkin = skin.id;
+            document.documentElement.dataset.skin = skin.id;
+            document.querySelectorAll('.skin-chip').forEach(chip => {
+                const on = chip.dataset.skin === skin.id;
+                chip.setAttribute('aria-checked', String(on));
+                chip.classList.toggle('on', on);
+            });
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+                meta.setAttribute('content', skin.id === 'wuwa'
+                    ? '#070b18'
+                    : (currentTheme && currentTheme.primary) || '#ffb7b2');
+            }
+            const hint = document.getElementById('skinHint');
+            if (hint) {
+                hint.textContent = skin.id === 'wuwa'
+                    ? '当前：星轨导航 —— 整屏壁纸 + 底部三角晶体导航，点晶体打开站点、悬浮看详情，两侧大箭头或 ← → 换组；右上角按钮分别是站点清单 / 音乐 / 全部设置。'
+                    : '当前：卡片导航 —— 原来的卡片网格，支持文件夹、拖拽排序和尺寸调整。';
+            }
+            if (skin.id === 'wuwa') {
+                try { renderWuwaView(); } catch (error) {}
+            }
+            if (persist !== false) {
+                try { localStorage.setItem(SKIN_KEY, skin.id); } catch (error) {}
+            }
+        }
+
+        function initSkin() {
+            renderSkinChips();
+            let saved = null;
+            try { saved = localStorage.getItem(SKIN_KEY); } catch (error) {}
+            applySkin(saved || document.documentElement.dataset.skin || 'default', false);
+        }
+
+        /* ---------------- 界面二：星轨导航（底部晶体碎片 dock） ---------------- */
+        const WV_PER_PAGE = 7;            // 一组 7 块晶体，左右各留一个翻页位
+        const WV_ENGINE_LABELS = { bing: '必应', google: 'Google', yandex: 'Yandex' };
+        let wvPage = 0;
+        let wvFilterText = '';
+        let wvResizeTimer = 0;
+
+        function wvEscape(text) {
+            return String(text == null ? '' : text)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function wvHost(url) {
+            try { return new URL(url).hostname.replace(/^www\./, ''); } catch (error) { return ''; }
+        }
+
+        function wvSeed(text) {
+            const str = String(text || '');
+            let hash = 0;
+            for (let i = 0; i < str.length; i += 1) hash = (hash * 31 + str.charCodeAt(i)) % 99991;
+            return hash + 7;
+        }
+
+        function wvRng(seed) {
+            let state = Math.floor(Math.abs(seed) * 9301 + 49297) % 233280;
+            return () => { state = (state * 9301 + 49297) % 233280; return state / 233280; };
+        }
+
+        /** 与参考站同款晶体：不规则三角，四片拼合，带厚度与随机抖动 */
+        function wvCrystal(seed, up) {
+            const rand = wvRng(seed * 13 + 7);
+            const jitter = amount => (rand() - 0.5) * amount;
+            const pts = up
+                ? [[50 + jitter(14), 3 + jitter(4)], [96 + jitter(4), 93 + jitter(5)], [4 + jitter(4), 92 + jitter(5)]]
+                : [[4 + jitter(4), 7 + jitter(5)], [96 + jitter(4), 8 + jitter(5)], [50 + jitter(14), 97 + jitter(3)]];
+            const centroid = tri => [(tri[0][0] + tri[1][0] + tri[2][0]) / 3, (tri[0][1] + tri[1][1] + tri[2][1]) / 3];
+            const mid = (a, b) => [(a[0] + b[0]) / 2 + jitter(6), (a[1] + b[1]) / 2 + jitter(6)];
+            const [A, B, C] = pts;
+            const c = centroid(pts);
+            const mAB = mid(A, B), mBC = mid(B, C), mCA = mid(C, A);
+            const raw = [[A, mAB, mCA], [mAB, B, mBC], [mCA, mBC, C], [mAB, mBC, mCA]];
+            const pieces = raw.map((tri, index) => {
+                const pc = centroid(tri);
+                const dx = pc[0] - c[0], dy = pc[1] - c[1];
+                const len = Math.hypot(dx, dy) || 1;
+                const center = index === 3;
+                return {
+                    p: tri, pc, center,
+                    dx: center ? 0 : dx / len * 18,
+                    dy: center ? 0 : dy / len * 18,
+                    rot: center ? 0 : (rand() < 0.5 ? -1 : 1) * (9 + rand() * 12)
+                };
+            });
+            const glits = [];
+            for (let i = 0; i < 9; i += 1) {
+                let a = rand(), b = rand();
+                if (a + b > 1) { a = 1 - a; b = 1 - b; }
+                glits.push([
+                    A[0] + a * (B[0] - A[0]) + b * (C[0] - A[0]),
+                    A[1] + a * (B[1] - A[1]) + b * (C[1] - A[1]),
+                    0.55 + rand() * 1.1,
+                    rand() * 3.4
+                ]);
+            }
+            return { pts, pieces, c, glits };
+        }
+
+        function wvShardSvg(uid, crystal) {
+            const fmt = tri => tri.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+            const id = 'wvsh' + uid;
+            const pieces = crystal.pieces.map(piece => {
+                const pts = fmt(piece.p);
+                return `<g class="pc${piece.center ? ' center' : ''}" style="--dx:${piece.dx.toFixed(2)};--dy:${piece.dy.toFixed(2)};--r:${piece.rot.toFixed(1)}">`
+                    + `<polygon points="${pts}" transform="translate(0 6)" fill="url(#${id}d)"/>`
+                    + `<polygon class="pc-face" points="${pts}" fill="url(#${id}f)"/>`
+                    + `<polygon class="pc-facet" points="${fmt([piece.p[0], piece.p[1], piece.pc])}"/>`
+                    + `<polygon class="pc-edge" points="${pts}"/>`
+                    + '</g>';
+            }).join('');
+            const glits = crystal.glits
+                .map(g => `<circle class="sh-glit" cx="${g[0].toFixed(1)}" cy="${g[1].toFixed(1)}" r="${g[2].toFixed(1)}" style="animation-delay:-${g[3].toFixed(1)}s"/>`)
+                .join('');
+            return `<svg class="wv-svg" viewBox="-14 -14 128 128" aria-hidden="true"><defs>`
+                + `<linearGradient id="${id}f" x1="0" y1="0" x2=".9" y2="1">`
+                + `<stop offset="0" class="st-a" stop-opacity=".62"/>`
+                + `<stop offset=".45" class="st-b" stop-opacity=".34"/>`
+                + `<stop offset="1" class="st-c" stop-opacity=".55"/>`
+                + `</linearGradient>`
+                + `<linearGradient id="${id}d" x1="0" y1="0" x2="0" y2="1">`
+                + `<stop offset="0" class="st-b" stop-opacity=".95"/>`
+                + `<stop offset="1" class="st-deep" stop-opacity=".95"/>`
+                + `</linearGradient>`
+                + `</defs>${pieces}<g class="sh-glits">${glits}</g></svg>`;
+        }
+
+        /** 版位：宽屏走 V 形双翼（中间最大、两侧上扬、正倒交错），窄屏走交错网格 */
+        function wvSlots(count, vw, vh) {
+            const slots = [];
+            const K = 92 / 112;
+            if (vw < 760) {
+                const cols = 3;
+                const rows = Math.ceil(count / cols);
+                const size = Math.min(140, (vw - 24) / (cols * 0.62 + 0.4), (vh - 70) / rows / 0.95);
+                const top = vh - 54 - rows * size * 0.95;
+                const rowH = size * 0.95;
+                const totalW = (cols - 1) * size * 0.62 + size;
+                for (let i = 0; i < count; i += 1) {
+                    const row = Math.floor(i / cols);
+                    const col = i % cols;
+                    const up = (row + col) % 2 === 0;
+                    slots.push({
+                        x: (vw - totalW) / 2 + size / 2 + col * size * 0.62,
+                        y: top + (row + 0.5) * rowH + (up ? 12.7 : -12.7) / 112 * size,
+                        size: size * K, up, rz: 0, z: 10 + row, h: 0.5
+                    });
+                }
+                return slots;
+            }
+            const base = Math.min(205, Math.max(104, vw * 0.1));
+            const half = (count - 1) / 2;
+            for (let i = 0; i < count; i += 1) {
+                const t = half ? (i - half) / half : 0;
+                const at = Math.abs(t);
+                const size = base * (1.12 - at * 0.42);
+                const x = vw / 2 + t * vw * 0.4 + Math.sign(t) * Math.pow(at, 2) * vw * 0.03;
+                const floor = vh - size * 0.62 - 48;
+                const up = i % 2 === 0;
+                const y = floor - Math.pow(at, 1.5) * vh * 0.48 + (i % 2 ? -size * 0.14 : size * 0.1);
+                const rz = t * -16 + (i % 2 ? 5 : -5);
+                slots.push({
+                    x, y, size: size * K, rz, up,
+                    z: Math.round((1 - at * 0.6) * 20) * 2 + 10,
+                    h: 1 - at * 0.55
+                });
+            }
+            return slots;
+        }
+
+        function wvShardSpecs() {
+            const visible = cards.filter(card => !card.hidden);
+            const total = visible.length;
+            const pages = Math.max(1, Math.ceil(total / WV_PER_PAGE));
+            if (wvPage > pages - 1) wvPage = pages - 1;
+            if (wvPage < 0) wvPage = 0;
+            const paged = total > WV_PER_PAGE;
+            const pageCards = visible.slice(wvPage * WV_PER_PAGE, wvPage * WV_PER_PAGE + WV_PER_PAGE);
+            const specs = [];
+            if (paged) specs.push({ pager: -1 });
+            pageCards.forEach(card => specs.push({ card }));
+            if (paged) specs.push({ pager: 1 });
+            return { specs, total, pages, paged };
+        }
+
+        function renderWuwaShards() {
+            const dock = document.getElementById('wvDock');
+            const layer = document.getElementById('wvShards');
+            if (!dock || !layer) return;
+            const vw = dock.clientWidth;
+            if (!vw) return;                       // 界面没显示，等切过来再画
+            const vh = dock.clientHeight || Math.min(window.innerHeight * 0.5, 560);
+            const { specs, total, pages, paged } = wvShardSpecs();
+            const slots = wvSlots(Math.max(1, specs.length), vw, vh);
+            layer.innerHTML = '';
+            specs.forEach((item, index) => {
+                const slot = slots[index] || slots[slots.length - 1];
+                const folder = item.card && isFolder(item.card);
+                const el = document.createElement(item.pager || folder ? 'button' : 'a');
+                if (item.pager) {
+                    el.type = 'button';
+                    el.setAttribute('aria-label', item.pager < 0 ? '上一组站点' : '下一组站点');
+                } else if (folder) {
+                    el.type = 'button';
+                    el.setAttribute('aria-label', `打开文件夹 ${item.card.title}`);
+                } else {
+                    el.href = item.card.url;
+                    el.target = '_blank';
+                    el.rel = 'noopener';
+                }
+                el.className = 'wv-shard'
+                    + (item.pager ? ` wv-pager ${item.pager < 0 ? 'is-prev' : 'is-next'}` : '')
+                    + (slot.up ? '' : ' is-down');
+                el.style.setProperty('--x', slot.x.toFixed(1) + 'px');
+                el.style.setProperty('--y', slot.y.toFixed(1) + 'px');
+                el.style.setProperty('--sz', slot.size.toFixed(1) + 'px');
+                el.style.setProperty('--rz', slot.rz.toFixed(2) + 'deg');
+                el.style.setProperty('--h', (item.pager ? Math.min(1, slot.h + 0.22) : slot.h).toFixed(2));
+                el.style.setProperty('--fd', (-index * 0.7).toFixed(2) + 's');
+                el.style.setProperty('--din', (index * 0.06).toFixed(2) + 's');
+                el.style.zIndex = String(slot.z);
+                const label = item.pager
+                    ? (item.pager < 0
+                        ? `‹ 上一组 <em>${wvPage + 1}/${pages}</em>`
+                        : `<em>${wvPage + 1}/${pages}</em> 下一组 ›`)
+                    : wvEscape(item.card.title);
+                const seed = item.pager ? 900 + index : wvSeed(item.card.id || item.card.title);
+                const crystal = wvCrystal(seed, slot.up);
+                el.innerHTML = `<span class="wv-shard-3d">${wvShardSvg(seed + index * 17, crystal)}</span>`
+                    + `<span class="wv-shard-name">${label}</span>`;
+                if (item.pager) {
+                    el.addEventListener('click', () => setWuwaPage(wvPage + item.pager));
+                } else if (folder) {
+                    el.addEventListener('click', () => openFolder(item.card.id));
+                }
+                if (!item.pager) {
+                    el.addEventListener('mouseenter', () => wvTipShow(el, item.card, slot));
+                    el.addEventListener('mouseleave', wvTipHide);
+                    el.addEventListener('focus', () => wvTipShow(el, item.card, slot));
+                    el.addEventListener('blur', wvTipHide);
+                }
+                layer.appendChild(el);
+            });
+            const note = document.getElementById('wvNoteMain');
+            if (note) {
+                note.textContent = `收录 ${total} 个站点${paged ? ` · 第 ${wvPage + 1}/${pages} 组` : ''}`;
+            }
+        }
+
+        function wvTipShow(el, card, slot) {
+            const tip = document.getElementById('wvTip');
+            if (!tip || !card) return;
+            const host = wvHost(card.url);
+            tip.querySelector('.wv-tip-name').textContent = card.title || '';
+            tip.querySelector('.wv-tip-desc').textContent = card.desc || (isFolder(card) ? '文件夹 · 点开看里面' : '点开就到站点');
+            tip.querySelector('.wv-tip-host').textContent = isFolder(card) ? '文件夹' : host;
+            tip.style.setProperty('--tx', slot.x.toFixed(1) + 'px');
+            tip.style.setProperty('--ty', (slot.y - slot.size * 0.52).toFixed(1) + 'px');
+            tip.classList.add('show');
+        }
+
+        function wvTipHide() {
+            const tip = document.getElementById('wvTip');
+            if (tip) tip.classList.remove('show');
+        }
+
+        function setWuwaPage(next) {
+            const total = cards.filter(card => !card.hidden).length;
+            const pages = Math.max(1, Math.ceil(total / WV_PER_PAGE));
+            let target = next;
+            if (target < 0) target = pages - 1;
+            if (target > pages - 1) target = 0;
+            if (target === wvPage) return;
+            wvPage = target;
+            wvTipHide();
+            renderWuwaShards();
+        }
+
+        /** 面板里的清单（可筛选，文件夹可展开） */
+        function wvIconEl(card) {
+            if (card.iconImage) {
+                const img = document.createElement('img');
+                img.className = 'wv-icon';
+                img.src = card.iconImage;
+                img.alt = '';
+                img.loading = 'lazy';
+                img.addEventListener('error', () => {
+                    const span = document.createElement('span');
+                    span.className = 'wv-icon';
+                    span.textContent = card.icon || '🔗';
+                    if (img.parentNode) img.parentNode.replaceChild(span, img);
+                });
+                return img;
+            }
+            const span = document.createElement('span');
+            span.className = 'wv-icon';
+            span.textContent = card.icon || '🔗';
+            return span;
+        }
+
+        function wvMatch(card, query) {
+            if (!query) return true;
+            const text = `${card.title} ${card.desc || ''} ${card.url || ''}`.toLowerCase();
+            return text.includes(query);
+        }
+
+        function wvTreeMatch(card, query) {
+            if (!query) return true;
+            if (wvMatch(card, query)) return true;
+            return isFolder(card) && card.children.some(child => wvTreeMatch(child, query));
+        }
+
+        function buildWuwaRow(card) {
+            if (isFolder(card)) {
+                const group = document.createElement('div');
+                group.className = 'wv-group';
+                const head = document.createElement('button');
+                head.type = 'button';
+                head.className = 'wv-row wv-row-folder';
+                const main = document.createElement('span');
+                main.className = 'wv-row-main';
+                const name = document.createElement('b');
+                name.textContent = card.title;
+                const meta = document.createElement('i');
+                meta.textContent = `${card.children.filter(child => !child.hidden).length} 个站点`;
+                main.append(name, meta);
+                const chev = document.createElement('span');
+                chev.className = 'wv-chev';
+                chev.textContent = '▸';
+                head.append(wvIconEl(card), main, chev);
+                const box = document.createElement('div');
+                box.className = 'wv-children';
+                card.children.filter(child => !child.hidden).forEach(child => box.appendChild(buildWuwaRow(child)));
+                const open = wvFilterText !== '';
+                head.setAttribute('aria-expanded', String(open));
+                box.hidden = !open;
+                head.addEventListener('click', () => {
+                    const next = head.getAttribute('aria-expanded') !== 'true';
+                    head.setAttribute('aria-expanded', String(next));
+                    box.hidden = !next;
+                });
+                group.append(head, box);
+                return group;
+            }
+            const row = document.createElement('a');
+            row.className = 'wv-row';
+            row.href = card.url;
+            row.target = '_blank';
+            row.rel = 'noopener';
+            const main = document.createElement('span');
+            main.className = 'wv-row-main';
+            const name = document.createElement('b');
+            name.textContent = card.title;
+            const sub = document.createElement('i');
+            sub.textContent = card.desc || wvHost(card.url);
+            main.append(name, sub);
+            const arrow = document.createElement('span');
+            arrow.className = 'wv-arrow';
+            arrow.textContent = '↗';
+            row.append(wvIconEl(card), main, arrow);
+            return row;
+        }
+
+        function renderWuwaPanel() {
+            const list = document.getElementById('wvList');
+            if (!list) return;
+            const visible = cards.filter(card => !card.hidden).filter(card => wvTreeMatch(card, wvFilterText));
+            list.innerHTML = '';
+            visible.forEach(card => list.appendChild(buildWuwaRow(card)));
+            if (!visible.length) {
+                const empty = document.createElement('div');
+                empty.className = 'wv-empty';
+                empty.textContent = wvFilterText ? `没有匹配「${wvFilterText}」的站点` : '还没有站点，点下面「＋ 添加网址」开始。';
+                list.appendChild(empty);
+            }
+        }
+
+        function renderWuwaView() {
+            if (document.documentElement.dataset.skin !== 'wuwa') return;
+            renderWuwaShards();
+            renderWuwaPanel();
+        }
+
+        function setWuwaPanel(open) {
+            const panel = document.getElementById('wvPanel');
+            const btn = document.getElementById('wvPanelBtn');
+            if (!panel) return;
+            panel.classList.toggle('open', !!open);
+            if (btn) btn.setAttribute('aria-expanded', String(!!open));
+            if (open) {
+                const filter = document.getElementById('wvFilter');
+                if (filter) setTimeout(() => filter.focus(), 260);
+            } else {
+                wvTipHide();
+            }
+        }
+
+        function wvEngineLabel() {
+            return WV_ENGINE_LABELS[currentEngine] || ENGINE_NAMES[currentEngine] || 'Bing';
+        }
+
+        function wvRunSearch() {
+            const input = document.getElementById('wvSearch');
+            const query = input ? input.value.trim() : '';
+            if (!query) return;
+            const build = ENGINE_URLS[currentEngine] || ENGINE_URLS.bing;
+            window.open(build(query), '_blank', 'noopener');
+        }
+
+        function initWuwaView() {
+            const form = document.getElementById('wvSearchForm');
+            if (form) {
+                form.addEventListener('submit', (event) => { event.preventDefault(); wvRunSearch(); });
+            }
+            const engineBtn = document.getElementById('wvEngine');
+            if (engineBtn) {
+                engineBtn.textContent = wvEngineLabel();
+                engineBtn.addEventListener('click', () => {
+                    const keys = Object.keys(ENGINE_URLS);
+                    const next = keys[(keys.indexOf(currentEngine) + 1) % keys.length];
+                    setEngine(next);
+                    engineBtn.textContent = wvEngineLabel();
+                });
+            }
+            const panelBtn = document.getElementById('wvPanelBtn');
+            if (panelBtn) {
+                panelBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const panel = document.getElementById('wvPanel');
+                    setWuwaPanel(!(panel && panel.classList.contains('open')));
+                });
+            }
+            const panelClose = document.getElementById('wvPanelClose');
+            if (panelClose) panelClose.addEventListener('click', () => setWuwaPanel(false));
+            const filter = document.getElementById('wvFilter');
+            if (filter) {
+                filter.addEventListener('input', () => {
+                    wvFilterText = filter.value.trim().toLowerCase();
+                    renderWuwaPanel();
+                });
+                filter.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Escape') return;
+                    filter.value = '';
+                    wvFilterText = '';
+                    renderWuwaPanel();
+                });
+            }
+            const musicBtn = document.getElementById('wvMusicBtn');
+            if (musicBtn) musicBtn.addEventListener('click', () => toggleLyricsWidget());
+            const menuBtn = document.getElementById('wvMenuBtn');
+            if (menuBtn) {
+                menuBtn.addEventListener('click', (event) => { event.stopPropagation(); toggleMenu(true); });
+            }
+            const prevEdge = document.getElementById('wvPrevEdge');
+            if (prevEdge) prevEdge.addEventListener('click', () => setWuwaPage(wvPage - 1));
+            const nextEdge = document.getElementById('wvNextEdge');
+            if (nextEdge) nextEdge.addEventListener('click', () => setWuwaPage(wvPage + 1));
+            const add = document.getElementById('wvAdd');
+            if (add) add.addEventListener('click', (event) => { event.stopPropagation(); openCardForm(); });
+            const settings = document.getElementById('wvSettings');
+            if (settings) settings.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleMenu(true);
+                openMenuPanel('settings');
+            });
+
+            // 点空白处收起面板
+            document.addEventListener('click', (event) => {
+                const panel = document.getElementById('wvPanel');
+                if (!panel || !panel.classList.contains('open')) return;
+                if (panel.contains(event.target)) return;
+                if (event.target.closest && event.target.closest('#wvPanelBtn')) return;
+                setWuwaPanel(false);
+            });
+
+            // 键盘：← → 换组，/ 聚焦搜索
+            document.addEventListener('keydown', (event) => {
+                if (document.documentElement.dataset.skin !== 'wuwa') return;
+                const active = document.activeElement;
+                const typing = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+                if (event.key === '/' && !typing) {
+                    const search = document.getElementById('wvSearch');
+                    if (search && search.getBoundingClientRect().width > 0) {
+                        event.preventDefault();
+                        search.focus();
+                        search.select();
+                    }
+                    return;
+                }
+                if (typing) return;
+                if (event.key === 'ArrowLeft') { event.preventDefault(); setWuwaPage(wvPage - 1); }
+                if (event.key === 'ArrowRight') { event.preventDefault(); setWuwaPage(wvPage + 1); }
+            });
+
+            // 触屏左右滑换组
+            const dock = document.getElementById('wvDock');
+            if (dock) {
+                let startX = 0, startY = 0, tracking = false;
+                dock.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType === 'mouse') return;
+                    tracking = true; startX = event.clientX; startY = event.clientY;
+                });
+                dock.addEventListener('pointerup', (event) => {
+                    if (!tracking) return;
+                    tracking = false;
+                    const dx = event.clientX - startX;
+                    const dy = event.clientY - startY;
+                    if (Math.abs(dx) < 46 || Math.abs(dy) > Math.abs(dx)) return;
+                    setWuwaPage(wvPage + (dx < 0 ? 1 : -1));
+                });
+            }
+
+            // 视口变化要重排碎片（坐标是像素）
+            window.addEventListener('resize', () => {
+                if (document.documentElement.dataset.skin !== 'wuwa') return;
+                clearTimeout(wvResizeTimer);
+                wvResizeTimer = setTimeout(() => {
+                    wvTipHide();
+                    renderWuwaShards();
+                }, 160);
+            });
+
+            renderWuwaView();
         }
 
         /** 4.6 卡片系统：拖拽排序 / 尺寸 / 隐藏 / 自定义 **/
@@ -2987,6 +4470,10 @@
             grid.appendChild(buildAddCardTile());
             grid.dataset.rendered = '1';
             renderHiddenCards();
+            // 星轨界面用的是同一份数据，改完卡片顺手刷新它
+            if (document.documentElement.dataset.skin === 'wuwa') {
+                try { renderWuwaView(); } catch (error) {}
+            }
         }
 
         /** 网格最后的「＋ 添加网址」卡片：直接打开添加表单 */
@@ -5678,7 +7165,11 @@
         function updatePlayBtn(isPlaying) {
             document.getElementById('playBtn').textContent = isPlaying ? '⏸️' : '▶️';
             const widgetPlay = document.getElementById('lwPlayBtn');
-            if (widgetPlay) widgetPlay.textContent = isPlaying ? '⏸️' : '▶️';
+            if (widgetPlay) {
+                // 图标由 CSS 画，这里只切状态类
+                widgetPlay.classList.toggle('is-playing', !!isPlaying);
+                widgetPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+            }
         }
 
         function updateWidgetPlayer() {
@@ -5693,7 +7184,10 @@
             const duration = document.getElementById('lwDuration');
             if (duration) duration.textContent = formatTime(audio.duration);
             const play = document.getElementById('lwPlayBtn');
-            if (play) play.textContent = audio.paused ? '▶️' : '⏸️';
+            if (play) {
+                play.classList.toggle('is-playing', !audio.paused);
+                play.setAttribute('aria-label', audio.paused ? '播放' : '暂停');
+            }
         }
 
         function toggleWidgetLyrics(force) {
@@ -5708,7 +7202,7 @@
             const back = document.getElementById('lwBackBtn');
             if (back) back.hidden = !on;
             const title = widget.querySelector('.lw-title');
-            if (title) title.textContent = on ? '🎵 桌面歌词' : '🎵 播放器';
+            if (title) title.textContent = on ? '桌面歌词' : '播放器';
             const alphaRow = document.getElementById('lwAlphaRow');
             const bgRow = document.getElementById('lwBgRow');
             const colorRow = document.getElementById('lwColorRow');
@@ -6050,7 +7544,7 @@
         }
         // 一步一步来，哪一步炸了都只影响它自己，不会连累后面的（尤其是音乐恢复）
         [
-            initTheme, initCards, initFolders, initLyricsWidget, restoreMusicLibrary,
+            initTheme, initSkin, initCards, initWuwaView, initFolders, initLyricsWidget, restoreMusicLibrary,
             initMascot, initUpdateChecker, initMenuPanels, initMenuHints,
             initTransparencyToggle, initAntiCrawl, initUiPrefs, initBackgroundPool, initPrecache
         ].forEach((step) => {
