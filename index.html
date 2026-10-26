@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-2120">
+    <meta name="app-version" content="20261027-0520">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -933,125 +933,256 @@
         .lw-tools button:hover { background: rgba(255, 255, 255, .12); color: #fff; transform: translateY(-1px); }
         .lw-tools button.on { background: rgba(var(--primary-rgb), .92); color: #17110f; }
 
-        /* 播放区 */
-        .lw-player { display: flex; flex-direction: column; gap: 10px; padding: 2px 14px 13px; }
-        .lw-track {
-            font-size: .93rem; font-weight: 700; letter-spacing: .01em;
-            color: var(--lw-ink);
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            text-shadow: 0 1px 10px rgba(0, 0, 0, .55);
+        /* 播放区：唱片封面 + 曲目 + 进度 + 控制 + 音量（仿鸣潮播放器布局） */
+        .lw-player {
+            display: flex; flex-direction: column; gap: 12px;
+            padding: 0 14px 12px;
+            --lw-key: var(--primary-strong);
+            --lw-key-rgb: var(--primary-rgb);
+            --lw-ink2: rgba(236, 240, 255, .58);
         }
+
+        /* 顶行：当前序号 / 总数 ◆ 文件夹名 */
+        .lw-now {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            min-width: 0;
+            font-size: .62rem; line-height: 1;
+            letter-spacing: .2em;
+            color: rgb(var(--lw-key-rgb));
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .lw-now .lw-total { color: var(--lw-ink2); letter-spacing: .18em; }
+        .lw-now .lw-dia {
+            flex: none; width: 7px; height: 7px;
+            background: linear-gradient(140deg, #fff, rgb(var(--lw-key-rgb)));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+            box-shadow: 0 0 9px rgba(var(--lw-key-rgb), .95);
+        }
+        .lw-now .lw-folder {
+            max-width: 60%; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: .16em; font-weight: 700;
+            color: rgb(var(--lw-key-rgb));
+            text-shadow: 0 0 12px rgba(var(--lw-key-rgb), .45);
+        }
+
+        /* 唱片 + 曲名 */
+        .lw-hero { display: flex; align-items: center; gap: 13px; min-width: 0; }
+        .lw-disc {
+            position: relative; flex: none;
+            width: 86px; height: 86px; border-radius: 50%;
+            display: grid; place-items: center;
+            background:
+                radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 48%),
+                conic-gradient(from 212deg,
+                    rgba(18, 10, 26, .95), rgba(64, 28, 86, .92) 22%, rgba(14, 8, 20, .97) 50%,
+                    rgba(74, 34, 96, .9) 74%, rgba(16, 9, 24, .96));
+            box-shadow: 0 12px 28px rgba(0, 0, 0, .52), inset 0 0 0 1px rgba(255, 255, 255, .15),
+                        0 0 22px rgba(var(--lw-key-rgb), .28);
+        }
+        .lw-disc::after {
+            content: ""; position: absolute; inset: -9px; border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent 0 68%, rgba(var(--lw-key-rgb), .5) 84%, transparent 96%);
+            -webkit-mask-image: radial-gradient(circle, transparent 62%, #000 68%, #000 78%, transparent 84%);
+            mask-image: radial-gradient(circle, transparent 62%, #000 68%, #000 78%, transparent 84%);
+            animation: lwDiscOrbit 9s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes lwDiscOrbit { to { transform: rotate(360deg); } }
+        .lw-disc-art {
+            width: 60px; height: 60px; border-radius: 50%;
+            background-image: linear-gradient(140deg, rgb(var(--lw-key-rgb)), rgba(74, 34, 110, .92));
+            background-size: cover; background-position: center;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 4px 12px rgba(0, 0, 0, .55);
+        }
+        .lw-disc-hole {
+            position: absolute; left: 50%; top: 50%;
+            width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%;
+            background: radial-gradient(circle at 38% 32%, #33203c, #07050b 72%);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 0 7px rgba(0, 0, 0, .7);
+        }
+        .lw-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+        .lw-track {
+            font-size: 1.04rem; font-weight: 800; line-height: 1.3; letter-spacing: .01em;
+            color: #fff;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; overflow-wrap: anywhere;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, .62);
+        }
+        .lw-sub {
+            font-size: .64rem; line-height: 1.5; letter-spacing: .04em;
+            color: var(--lw-ink2);
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; overflow-wrap: anywhere;
+        }
+
+        /* 进度：时间 - 条 - 时间 */
+        .lw-seek { display: flex; align-items: center; gap: 9px; }
+        .lw-time {
+            flex: none; min-width: 30px;
+            font-size: .6rem; letter-spacing: .04em;
+            color: var(--lw-ink2); font-variant-numeric: tabular-nums;
+        }
+        .lw-time.right { text-align: right; }
         .lw-progress {
-            position: relative; height: 5px; border-radius: 99px;
-            background: rgba(255, 255, 255, .13);
+            position: relative; flex: 1 1 auto; height: 4px; border-radius: 99px;
+            background: rgba(255, 255, 255, .16);
             box-shadow: inset 0 1px 2px rgba(0, 0, 0, .45);
             cursor: pointer; touch-action: none;
         }
         .lw-progress > div {
             position: relative; height: 100%; border-radius: inherit;
             width: calc(var(--progress, 0) * 100%);
-            background: linear-gradient(90deg, rgba(var(--primary-rgb), .9), #ffffff);
-            box-shadow: 0 0 12px rgba(var(--primary-rgb), .8);
+            background: linear-gradient(90deg, rgba(var(--lw-key-rgb), .5), rgb(var(--lw-key-rgb)));
+            box-shadow: 0 0 12px rgba(var(--lw-key-rgb), .7);
         }
         .lw-progress > div::after {
-            content: ""; position: absolute; right: -5px; top: 50%;
-            width: 11px; height: 11px; margin-top: -5.5px; border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 0 10px rgba(var(--primary-rgb), .95), 0 1px 3px rgba(0, 0, 0, .5);
-            transform: scale(.8);
+            content: ""; position: absolute; right: -6px; top: 50%;
+            width: 11px; height: 11px; margin-top: -5.5px;
+            background: linear-gradient(150deg, #fff, rgb(var(--lw-key-rgb)));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+            filter: drop-shadow(0 0 6px rgba(var(--lw-key-rgb), .95));
+            transform: scale(.86);
             transition: transform .25s var(--lw-ease);
         }
-        .lw-progress:hover > div::after { transform: scale(1); }
-        .lw-times {
-            display: flex; justify-content: space-between;
-            font-size: .6rem; letter-spacing: .06em; color: var(--lw-ink-dim);
-            font-variant-numeric: tabular-nums;
-        }
-        .lw-controls { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 2px; }
+        .lw-progress:hover > div::after { transform: scale(1.06); }
+
+        /* 控制键 */
+        .lw-controls { display: flex; align-items: center; justify-content: center; gap: 13px; }
         .lw-controls button {
-            position: relative;
-            width: 32px; height: 32px; flex: 0 0 auto;
-            display: inline-flex; align-items: center; justify-content: center;
+            position: relative; flex: 0 0 auto;
+            width: 32px; height: 32px;
+            display: inline-grid; place-items: center;
             border: 0; border-radius: 50%;
-            background: rgba(255, 255, 255, .07);
-            color: rgba(242, 245, 255, .84);
-            font-size: 0;                       /* 图标全部用 CSS 画，不依赖 emoji */
-            cursor: pointer;
+            background: transparent; color: rgba(242, 245, 255, .82);
+            cursor: pointer; padding: 0;
             transition: background .25s, color .25s, transform .25s var(--lw-ease), box-shadow .25s;
             -webkit-tap-highlight-color: transparent;
         }
-        .lw-controls button:hover { background: rgba(255, 255, 255, .16); color: #fff; transform: translateY(-1px); }
-        .lw-controls button.on { background: rgba(var(--primary-rgb), .22); color: #fff; }
-        /* 所有图标都是绝对定位 + clip-path：几何精确、不会偏心、边缘干净 */
-        .lw-controls button::before,
-        .lw-controls button::after {
-            content: ""; position: absolute; top: 50%; background: currentColor;
+        .lw-controls button svg {
+            width: 19px; height: 19px;
+            fill: none; stroke: currentColor; stroke-width: 1.9;
+            stroke-linecap: round; stroke-linejoin: round;
+            transition: opacity .22s;
         }
-        /* 上一首 / 下一首：双三角，两个三角的合起来正好居中 */
-        .lw-controls button[onclick="prevTrack()"]::before,
-        .lw-controls button[onclick="nextTrack()"]::before {
-            width: 7px; height: 11px; left: 8.5px; margin-top: -5.5px;
-        }
-        .lw-controls button[onclick="prevTrack()"]::after,
-        .lw-controls button[onclick="nextTrack()"]::after {
-            width: 7px; height: 11px; left: 16.5px; margin-top: -5.5px;
-        }
-        .lw-controls button[onclick="prevTrack()"]::before,
-        .lw-controls button[onclick="prevTrack()"]::after { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
-        .lw-controls button[onclick="nextTrack()"]::before,
-        .lw-controls button[onclick="nextTrack()"]::after { clip-path: polygon(0 0, 100% 50%, 0 100%); }
-        .lw-controls button[onclick="prevTrack()"]::after,
-        .lw-controls button[onclick="nextTrack()"]::after { opacity: .55; }
+        .lw-controls button:hover { background: rgba(255, 255, 255, .12); color: #fff; transform: translateY(-1px); }
+        .lw-controls button.on { color: rgb(var(--lw-key-rgb)); background: rgba(var(--lw-key-rgb), .16); }
+        .lw-controls button.on svg { stroke-width: 2.2; }
 
-        /* 主按钮：主题色「深->更深」的玻璃糖圆 + 白色图标
-           深浅必须拉够，否则浅粉色底上的白图标几乎看不见（旧版就是这个毛病） */
+        /* 主按钮：菱形晶体 + 细边方框（参考图中间那颗） */
         #lwPlayBtn {
-            width: 48px; height: 48px;
-            background-image:
-                radial-gradient(120% 120% at 30% 14%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
-                linear-gradient(158deg, var(--primary-strong), #1a1020);
-            background-image:
-                radial-gradient(120% 120% at 30% 14%, rgba(255, 255, 255, .42), rgba(255, 255, 255, 0) 58%),
-                linear-gradient(158deg, var(--primary-strong),
-                    color-mix(in srgb, var(--primary-strong) 36%, #0a0d16));
+            width: 48px; height: 48px; border-radius: 14px;
+            border: 1px solid rgba(var(--lw-key-rgb), .5);
+            background: linear-gradient(155deg, rgba(var(--lw-key-rgb), .26), rgba(16, 9, 24, .6));
             color: #fff;
-            box-shadow: 0 10px 22px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .24),
-                        0 0 20px rgba(var(--primary-rgb), .26),
-                        inset 0 1px 0 rgba(255, 255, 255, .5);
+            box-shadow: 0 9px 22px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .22),
+                        0 0 18px rgba(var(--lw-key-rgb), .22);
         }
-        #lwPlayBtn::before {
-            content: ""; position: absolute; top: 50%; left: 50%;
-            width: 15px; height: 18px; margin: -9px 0 0 -6.5px;
-            background: currentColor;
-            clip-path: polygon(2% 0, 100% 50%, 2% 100%);
-            transform: translateX(1.5px);      /* 三角形视觉重量偏左，右移一点点才像居中 */
+        #lwPlayBtn .lw-dia {
+            position: absolute; left: 7px; top: 7px; right: 7px; bottom: 7px;
+            background: linear-gradient(150deg, #fff4f8, var(--lw-key) 44%,
+                        color-mix(in srgb, var(--lw-key) 52%, #40102f));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+            box-shadow: 0 0 16px rgba(var(--lw-key-rgb), .6);
         }
-        #lwPlayBtn.is-playing::before {
-            width: 5px; height: 16px; margin: -8px 0 0 -2.5px;
-            border-radius: 2px;
-            clip-path: none;
-            box-shadow: 9px 0 0 currentColor;
-            transform: translateX(-4.5px);     /* 两根竖条合起来的中心对齐圆心 */
-        }
+        #lwPlayBtn svg { position: relative; width: 17px; height: 17px; fill: currentColor; stroke: none; }
+        #lwPlayBtn .lw-ico-pause { display: none; }
+        #lwPlayBtn.is-playing .lw-ico-play { display: none; }
+        #lwPlayBtn.is-playing .lw-ico-pause { display: block; }
         #lwPlayBtn:hover {
-            box-shadow: 0 14px 26px rgba(0, 0, 0, .48), 0 0 0 1px rgba(255, 255, 255, .34),
-                        0 0 26px rgba(var(--primary-rgb), .44),
-                        inset 0 1px 0 rgba(255, 255, 255, .58);
-            transform: translateY(-1px) scale(1.05);
+            transform: translateY(-1px) scale(1.04);
+            box-shadow: 0 13px 26px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .3),
+                        0 0 24px rgba(var(--lw-key-rgb), .38);
         }
-        /* 歌词开关：胶囊 */
+
+        /* 音量 */
+        .lw-volume { display: flex; align-items: center; gap: 9px; }
+        .lw-volume button {
+            flex: none; width: 26px; height: 26px; padding: 0;
+            display: inline-grid; place-items: center;
+            border: 0; border-radius: 8px; background: transparent;
+            color: rgba(242, 245, 255, .72); cursor: pointer;
+            transition: background .25s, color .25s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lw-volume button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+        .lw-volume button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .lw-volume button .lw-ico-mute { display: none; }
+        .lw-volume button.is-muted .lw-ico-vol { display: none; }
+        .lw-volume button.is-muted .lw-ico-mute { display: block; }
+        .lw-volume input[type="range"] {
+            flex: 1 1 auto; min-width: 0; height: 4px; margin: 0;
+            -webkit-appearance: none; appearance: none;
+            border-radius: 99px; outline: 0; cursor: pointer;
+            --vol: 80%;
+            background-image: linear-gradient(90deg,
+                rgb(var(--lw-key-rgb)) 0 var(--vol),
+                rgba(255, 255, 255, .16) var(--vol) 100%);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, .4);
+        }
+        .lw-volume input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 11px; height: 11px; border: 0; border-radius: 0;
+            background: linear-gradient(150deg, #fff, rgb(var(--lw-key-rgb)));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+            filter: drop-shadow(0 0 6px rgba(var(--lw-key-rgb), .9));
+        }
+        .lw-volume input[type="range"]::-moz-range-thumb {
+            width: 11px; height: 11px; border: 0; border-radius: 0;
+            background: linear-gradient(150deg, #fff, rgb(var(--lw-key-rgb)));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+        }
+        .lw-volume input[type="range"]::-moz-range-track { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .16); }
+        .lw-vol-pct {
+            flex: none; min-width: 30px; text-align: right;
+            font-size: .58rem; color: var(--lw-ink2); font-variant-numeric: tabular-nums;
+        }
+
+        /* 星轨皮肤：换成星轨那套蓝金调 */
+        html[data-skin="wuwa"] .lw-player {
+            --lw-key: rgb(var(--wuwa-accent));
+            --lw-key-rgb: var(--wuwa-accent);
+            --lw-ink2: rgba(226, 234, 255, .6);
+        }
+        html[data-skin="wuwa"] .lw-disc {
+            background:
+                radial-gradient(circle at 34% 26%, rgba(255, 255, 255, .3), rgba(255, 255, 255, 0) 48%),
+                conic-gradient(from 212deg,
+                    rgba(6, 10, 22, .95), rgba(32, 56, 122, .92) 22%, rgba(4, 7, 16, .97) 50%,
+                    rgba(46, 74, 148, .9) 74%, rgba(5, 9, 20, .96));
+        }
+        html[data-skin="wuwa"] .lw-disc-art {
+            background-image: linear-gradient(140deg, rgb(var(--wuwa-accent)), rgba(24, 40, 92, .94));
+        }
+        html[data-skin="wuwa"] #lwPlayBtn {
+            background: linear-gradient(155deg, rgba(var(--wuwa-accent), .26), rgba(4, 8, 20, .62));
+        }
+        html[data-skin="wuwa"] #lwPlayBtn .lw-dia {
+            background: linear-gradient(150deg, #f2f8ff, rgb(var(--wuwa-glow)) 26%,
+                        rgb(var(--wuwa-accent)) 62%, rgb(var(--wuwa-gold)));
+        }
+
+        /* 循环键：列表循环 / 单曲循环两个图标按状态互换 */
+        #lwLoopBtn .lw-ico-loop-one { display: none; }
+        #lwLoopBtn.on .lw-ico-loop-list { display: none; }
+        #lwLoopBtn.on .lw-ico-loop-one { display: block; }
+
+        /* 歌词开关：音量行最右边的细线图标键 */
         #lwLyricsBtn {
-            width: auto; min-width: 42px; padding: 0 11px;
-            border-radius: 99px;
-            font-size: .68rem; letter-spacing: .1em;
+            width: 26px; height: 26px; padding: 0; border-radius: 8px;
+            border: 0; background: transparent;
+            color: rgba(242, 245, 255, .72);
+            display: inline-grid; place-items: center; cursor: pointer;
+            transition: background .25s, color .25s, transform .25s var(--lw-ease);
+            -webkit-tap-highlight-color: transparent;
         }
-        #lwLyricsBtn::before,
-        #lwLyricsBtn::after { content: none; }
-        #lwLyricsBtn.on {
-            background: rgba(var(--primary-rgb), .95);
-            color: #17110f; font-weight: 700;
-            box-shadow: 0 0 20px rgba(var(--primary-rgb), .5);
+        #lwLyricsBtn svg {
+            width: 17px; height: 17px;
+            fill: none; stroke: currentColor; stroke-width: 1.8;
+            stroke-linecap: round; stroke-linejoin: round;
         }
+        #lwLyricsBtn:hover { background: rgba(255, 255, 255, .12); color: #fff; transform: translateY(-1px); }
+        #lwLyricsBtn.on { background: rgba(var(--lw-key-rgb), .95); color: #17110f; }
 
         /* 歌词正文 */
         .lw-body {
@@ -2953,16 +3084,62 @@
             </div>
         </header>
         <div class="lw-player">
-            <div class="lw-track" id="lwTrack">暂无音乐</div>
-            <div class="lw-progress" id="lwProgress" role="slider" tabindex="0" aria-label="播放进度">
-                <div id="lwProgressBar"></div>
+            <div class="lw-now">
+                <span id="lwIndex">00</span>
+                <span class="lw-total" id="lwTotal">/ 00</span>
+                <span class="lw-dia" aria-hidden="true"></span>
+                <span class="lw-folder" id="lwFolder">未选择文件夹</span>
             </div>
-            <div class="lw-times"><span id="lwCurrent">00:00</span><span id="lwDuration">00:00</span></div>
+            <div class="lw-hero">
+                <div class="lw-disc" aria-hidden="true">
+                    <span class="lw-disc-art" id="lwCover"></span>
+                    <span class="lw-disc-hole"></span>
+                </div>
+                <div class="lw-meta">
+                    <div class="lw-track" id="lwTrack">暂无音乐</div>
+                    <div class="lw-sub" id="lwSub">选择音乐文件夹后开始播放</div>
+                </div>
+            </div>
+            <div class="lw-seek">
+                <span class="lw-time" id="lwCurrent">00:00</span>
+                <div class="lw-progress" id="lwProgress" role="slider" tabindex="0" aria-label="播放进度">
+                    <div id="lwProgressBar"></div>
+                </div>
+                <span class="lw-time right" id="lwDuration">00:00</span>
+            </div>
             <div class="lw-controls">
-                <button type="button" onclick="prevTrack()" aria-label="上一首">⏮</button>
-                <button type="button" id="lwPlayBtn" onclick="togglePlay()" aria-label="播放或暂停">▶️</button>
-                <button type="button" onclick="nextTrack()" aria-label="下一首">⏭</button>
-                <button type="button" id="lwLyricsBtn" onclick="toggleWidgetLyrics()" aria-label="显示歌词">词</button>
+                <button type="button" id="lwShuffleBtn" onclick="toggleShuffle()" aria-label="随机播放" aria-pressed="false" title="随机播放">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4.2l9.6 10H21"/><path d="M3 17h4.2l9.6-10H21"/><path d="M17.6 3.6L21 6.5l-3.4 2.9"/><path d="M17.6 14.6L21 17.5l-3.4 2.9"/></svg>
+                </button>
+                <button type="button" onclick="prevTrack()" aria-label="上一首" title="上一首">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 5.2v13.6L8.4 12z"/><path d="M5.6 5v14"/></svg>
+                </button>
+                <button type="button" id="lwPlayBtn" onclick="togglePlay()" aria-label="播放或暂停">
+                    <span class="lw-dia" aria-hidden="true"></span>
+                    <svg class="lw-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.4 5.2l11 6.8-11 6.8z"/></svg>
+                    <svg class="lw-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.2" y="5.4" width="3.6" height="13.2" rx="1.1"/><rect x="13.2" y="5.4" width="3.6" height="13.2" rx="1.1"/></svg>
+                </button>
+                <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.2v13.6L15.6 12z"/><path d="M18.4 5v14"/></svg>
+                </button>
+                <button type="button" id="lwLoopBtn" onclick="toggleLoop()" aria-label="循环模式" aria-pressed="true" title="单曲循环">
+                    <svg class="lw-ico-loop-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/></svg>
+                    <svg class="lw-ico-loop-one" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/><text x="12" y="15.2" text-anchor="middle" font-size="8.6" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">1</text></svg>
+                </button>
+            </div>
+            <div class="lw-volume">
+                <button type="button" id="lwMuteBtn" onclick="toggleMute()" aria-label="静音" title="静音">
+                    <svg class="lw-ico-vol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.6 9.2a4 4 0 010 5.6"/><path d="M18.3 6.6a7.6 7.6 0 010 10.8"/></svg>
+                    <svg class="lw-ico-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.8 10l4 4"/><path d="M19.8 10l-4 4"/></svg>
+                </button>
+                <input type="range" id="lwVolume" min="0" max="1" step="0.01" value="0.8"
+                       oninput="updateVolume(this.value)" aria-label="音量">
+                <span class="lw-vol-pct" id="lwVolPct">80%</span>
+                <!-- LYRICS_BTN_MOVED -->
+                <button type="button" id="lwLyricsBtn" onclick="toggleWidgetLyrics()"
+                        aria-label="歌词模式" aria-pressed="false" title="只看歌词">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.4 6.6h13"/><path d="M5.4 11h9.4"/><path d="M5.4 15.4h11.2"/><path d="M5.4 19.8h6.6"/></svg>
+                </button>
             </div>
         </div>
         <div class="lw-body" id="lwBody" hidden>选好音乐并载入歌词后，这里会同步滚动。</div>
@@ -6099,7 +6276,10 @@
             if (visible) {
                 applyLyricsWidget();
                 renderFloatingLyrics();
+                updateLwTrackInfo();
                 updateWidgetPlayer();
+                syncVolumeControls(audio.volume);
+                syncModeButtons();
             }
         }
 
@@ -7464,6 +7644,7 @@
         const volumeSlider = document.getElementById('volumeSlider');
         const volumePercent = document.getElementById('volumePercent');
         audio.volume = Number(volumeSlider.value);
+        let lastVolume = audio.volume > 0.001 ? audio.volume : 0.8;
 
         const AUDIO_FILE_RE = /\.(mp3|mp2|mpga|wav|m4a|aac|ogg|oga|opus|flac|ape|wma|aiff|aif|alac|wv|amr|mka|mid|midi|weba|webm|3gp)$/i;
         const LYRIC_FILE_RE = /\.(lrc|txt)$/i;
@@ -7490,8 +7671,14 @@
                 return;
             }
             const lyricRaw = files.filter(file => LYRIC_FILE_RE.test(file.name));
+            const coverRaw = files.filter(file => IMAGE_FILE_RE.test(file.name));
 
             // 先用手里的文件立刻建好播放列表，别让用户等存储
+            setTrackCoverFiles(coverRaw.map(file => ({
+                name: file.name,
+                dir: pathDir(file.webkitRelativePath || file.name),
+                blob: file
+            })));
             setTrackLyricFiles(lyricRaw.map(file => ({
                 name: file.name,
                 dir: pathDir(file.webkitRelativePath || file.name),
@@ -7506,7 +7693,7 @@
             loadTrack(0);
 
             setMusicSaveHint(`正在把 ${audioFiles.length} 首存到本机…`);
-            const report = await saveMusicLibrary(audioFiles, lyricRaw);
+            const report = await saveMusicLibrary(audioFiles, lyricRaw, coverRaw);
             await showMusicSaveReport(report);
         }
 
@@ -7553,6 +7740,406 @@
         }
 
         /** 歌词列表：既能接住用户刚选的 File，也能接住文件库里取回的 Blob */
+        /* ================= 音乐元数据：内嵌封面 + 歌手 / 专辑 =================
+           支持 mp3(ID3v2)、flac(PICTURE / VORBIS_COMMENT)、m4a·mp4(covr / ©ART / ©alb)。
+           只读文件头部一小段，FLAC 的图可能很大，所以给足 2MB；mp4 的 moov 有时在尾部，再补读尾部。 */
+        const IMAGE_FILE_RE = /\.(jpe?g|png|webp|gif|bmp|avif)$/i;
+        const COVER_NAME_RE = /^(cover|folder|front|album|albumart|artwork|封面|专辑|poster)/i;
+        const MUSIC_HEAD_BYTES = 2 * 1024 * 1024;
+        const MUSIC_META_CACHE = new Map();
+        const COVER_PERSIST_MAX = 1.2 * 1024 * 1024;
+        let coverFiles = [];
+
+        /** 换音乐库时回收上一批封面的 objectURL，不然切换文件夹会一直漏内存 */
+        function releaseCoverCache() {
+            for (const task of MUSIC_META_CACHE.values()) {
+                Promise.resolve(task).then(record => {
+                    if (record && record.coverUrl) URL.revokeObjectURL(record.coverUrl);
+                }).catch(() => { });
+            }
+            MUSIC_META_CACHE.clear();
+        }
+
+        function setTrackCoverFiles(items) {
+            coverFiles = (items || []).map(item => ({
+                name: item.name,
+                lowerName: String(item.name).toLowerCase(),
+                base: item.base || baseName(item.name).toLowerCase(),
+                dir: typeof item.dir === 'string' ? item.dir : '',
+                file: item.blob || item.file || item
+            }));
+        }
+
+        /** 同一目录下的图片：优先 cover/folder/封面 这种命名，其次用第一张 */
+        function pickFolderCover(dir) {
+            if (!coverFiles.length) return null;
+            const same = coverFiles.filter(item => item.dir === dir);
+            if (!same.length) return null;
+            return same.find(item => COVER_NAME_RE.test(item.base)) || same[0];
+        }
+
+        function asciiAt(bytes, offset, length) {
+            // 长度来自文件里的 4 字节字段，损坏的文件能给到 40 亿：必须先夹住，否则这里会空转
+            const safe = Math.max(0, Math.min(Number(length) || 0, bytes.length - offset));
+            let text = '';
+            for (let i = 0; i < safe; i += 1) text += String.fromCharCode(bytes[offset + i] || 0);
+            return text;
+        }
+
+        function readU32BE(bytes, offset) {
+            return ((bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0;
+        }
+
+        function readU32LE(bytes, offset) {
+            return ((bytes[offset + 3] << 24) | (bytes[offset + 2] << 16) | (bytes[offset + 1] << 8) | bytes[offset]) >>> 0;
+        }
+
+        function readSyncSafe(bytes, offset) {
+            return ((bytes[offset] & 0x7f) << 21) | ((bytes[offset + 1] & 0x7f) << 14)
+                | ((bytes[offset + 2] & 0x7f) << 7) | (bytes[offset + 3] & 0x7f);
+        }
+
+        function decodeText(bytes, encoding) {
+            const list = encoding === 0 ? ['windows-1252', 'utf-8']
+                : encoding === 1 ? ['utf-16le', 'utf-16', 'utf-8']
+                    : encoding === 2 ? ['utf-16be', 'utf-8']
+                        : ['utf-8', 'gbk', 'windows-1252'];
+            for (const label of list) {
+                let text = '';
+                try { text = new TextDecoder(label).decode(bytes).replace(/\u0000+$/, '').trim(); }
+                catch (error) { continue; }                       // 这个编码浏览器不认，换下一个
+                // utf-8 不会抛异常，认不出的字节会变成 U+FFFD；这时别急着返回，让 GBK 再试一次
+                if (text && (label !== 'utf-8' || !text.includes('\ufffd'))) return text;
+            }
+            return '';
+        }
+
+        function sniffImageMime(bytes) {
+            if (bytes[0] === 0xff && bytes[1] === 0xd8) return 'image/jpeg';
+            if (bytes[0] === 0x89 && bytes[1] === 0x50) return 'image/png';
+            if (bytes[0] === 0x47 && bytes[1] === 0x49) return 'image/gif';
+            if (bytes[0] === 0x42 && bytes[1] === 0x4d) return 'image/bmp';
+            if (bytes[8] === 0x57 && bytes[9] === 0x45) return 'image/webp';
+            return 'image/jpeg';
+        }
+
+        function makeCoverBlob(bytes, mime) {
+            if (!bytes || bytes.length < 64) return null;
+            let type = String(mime || '').trim().toLowerCase();
+            if (type === 'image/jpg' || type === 'jpg' || !type.startsWith('image/')) type = sniffImageMime(bytes);
+            try { return new Blob([bytes.slice()], { type }); } catch (error) { return null; }
+        }
+
+        /** 在 APIC / PIC 帧里取出图片：编码字节 + MIME(以 0 结尾) + 图片类型 + 描述(以 0 结尾) + 数据 */
+        function readId3Picture(frame, isV2) {
+            const encoding = frame[0];
+            let pos = 1;
+            let mime = '';
+            if (isV2) {
+                mime = 'image/' + asciiAt(frame, pos, 3).toLowerCase().replace('jpg', 'jpeg');
+                pos += 3;
+            } else {
+                while (pos < frame.length && frame[pos] !== 0) pos += 1;
+                mime = asciiAt(frame, 1, pos - 1);
+                pos += 1;
+            }
+            pos += 1;                                   // 图片类型
+            if (encoding === 1 || encoding === 2) {
+                while (pos + 1 < frame.length && !(frame[pos] === 0 && frame[pos + 1] === 0)) pos += 2;
+                pos += 2;
+            } else {
+                while (pos < frame.length && frame[pos] !== 0) pos += 1;
+                pos += 1;
+            }
+            return makeCoverBlob(frame.subarray(pos), mime);
+        }
+
+        function parseId3(bytes) {
+            const out = { covers: [], artist: '', album: '', title: '' };
+            if (bytes.length < 12) return out;
+            if (!(bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33)) return out;
+            const major = bytes[3];
+            const flags = bytes[5];
+            const end = Math.min(bytes.length, 10 + readSyncSafe(bytes, 6));
+            let pos = 10;
+            if (flags & 0x40) {
+                pos += major >= 4 ? readSyncSafe(bytes, pos) : readU32BE(bytes, pos) + 4;
+            }
+            const idLength = major === 2 ? 3 : 4;
+            const headLength = major === 2 ? 6 : 10;
+            const TEXT_KEYS = { TIT2: 'title', TT2: 'title', TPE1: 'artist', TP1: 'artist', TALB: 'album', TAL: 'album' };
+            while (pos + headLength <= end) {
+                const id = asciiAt(bytes, pos, idLength);
+                if (!/^[A-Z0-9]{3,4}$/.test(id)) break;
+                let size;
+                if (major === 2) size = (bytes[pos + 3] << 16) | (bytes[pos + 4] << 8) | bytes[pos + 5];
+                else if (major === 4) size = readSyncSafe(bytes, pos + 4);
+                else size = readU32BE(bytes, pos + 4);
+                const start = pos + headLength;
+                if (size <= 0 || start + size > end) break;
+                const frame = bytes.subarray(start, start + size);
+                if (id === 'APIC' || id === 'PIC') {
+                    const blob = readId3Picture(frame, id === 'PIC');
+                    if (blob) out.covers.push(blob);
+                } else if (TEXT_KEYS[id]) {
+                    const value = decodeText(frame.subarray(1), frame[0]);
+                    if (value && !out[TEXT_KEYS[id]]) out[TEXT_KEYS[id]] = value;
+                }
+                pos = start + size;
+            }
+            return out;
+        }
+
+        function parseFlac(bytes) {
+            const out = { covers: [], artist: '', album: '', title: '' };
+            if (bytes.length < 8 || asciiAt(bytes, 0, 4) !== 'fLaC') return out;
+            let pos = 4;
+            while (pos + 4 <= bytes.length) {
+                const head = bytes[pos];
+                const last = (head & 0x80) !== 0;
+                const type = head & 0x7f;
+                const end = Math.min(bytes.length, pos + 4 + ((bytes[pos + 1] << 16) | (bytes[pos + 2] << 8) | bytes[pos + 3]));
+                const start = pos + 4;
+                if (end <= start) break;
+                if (type === 6) {                                    // PICTURE
+                    let p = start + 4;
+                    const mimeLength = readU32BE(bytes, p); p += 4;
+                    // 每个长度字段都得先确认没越界，损坏文件里它们可以随便大
+                    if (p + mimeLength + 4 > end) { if (last) break; pos = end; continue; }
+                    const mime = asciiAt(bytes, p, mimeLength); p += mimeLength;
+                    const descLength = readU32BE(bytes, p); p += 4;
+                    if (p + descLength + 20 > end) { if (last) break; pos = end; continue; }
+                    p += descLength + 16;                            // 描述 + 宽 高 色深 索引色
+                    const dataLength = readU32BE(bytes, p); p += 4;
+                    const blob = makeCoverBlob(bytes.subarray(p, Math.min(p + dataLength, end)), mime);
+                    if (blob) out.covers.push(blob);
+                } else if (type === 4) {                             // VORBIS_COMMENT
+                    let p = start;
+                    const vendorLength = readU32LE(bytes, p); p += 4 + vendorLength;
+                    const count = readU32LE(bytes, p); p += 4;
+                    for (let i = 0; i < count && p + 4 <= end; i += 1) {
+                        const length = readU32LE(bytes, p); p += 4;
+                        if (p + length > end) break;
+                        const pair = decodeText(bytes.subarray(p, p + length), 3);
+                        p += length;
+                        const eq = pair.indexOf('=');
+                        if (eq <= 0) continue;
+                        const key = pair.slice(0, eq).toUpperCase();
+                        const value = pair.slice(eq + 1).trim();
+                        if (!value) continue;
+                        if (key === 'ARTIST' && !out.artist) out.artist = value;
+                        else if (key === 'ALBUM' && !out.album) out.album = value;
+                        else if (key === 'TITLE' && !out.title) out.title = value;
+                    }
+                }
+                if (last) break;
+                pos = end;
+            }
+            return out;
+        }
+
+        function parseMp4(bytes) {
+            const out = { covers: [], artist: '', album: '', title: '' };
+            const TEXT_KEYS = { '\u00a9nam': 'title', '\u00a9ART': 'artist', 'aART': 'artist', '\u00a9alb': 'album' };
+            const readIlst = (start, end) => {
+                let pos = start;
+                while (pos + 8 <= end) {
+                    const size = readU32BE(bytes, pos);
+                    const key = asciiAt(bytes, pos + 4, 4);
+                    if (size < 8 || pos + size > end) break;
+                    let inner = pos + 8;
+                    const innerEnd = pos + size;
+                    while (inner + 8 <= innerEnd) {
+                        const dataSize = readU32BE(bytes, inner);
+                        const dataType = asciiAt(bytes, inner + 4, 4);
+                        if (dataSize < 8 || inner + dataSize > innerEnd) break;
+                        if (dataType === 'data') {
+                            const kind = readU32BE(bytes, inner + 8) & 0xffffff;
+                            const payload = bytes.subarray(inner + 16, inner + dataSize);
+                            if (key === 'covr') {
+                                const blob = makeCoverBlob(payload, kind === 14 ? 'image/png' : kind === 13 ? 'image/jpeg' : '');
+                                if (blob) out.covers.push(blob);
+                            } else if (TEXT_KEYS[key] && !out[TEXT_KEYS[key]]) {
+                                out[TEXT_KEYS[key]] = decodeText(payload, 3);
+                            }
+                        }
+                        inner += dataSize;
+                    }
+                    pos += size;
+                }
+            };
+            const walk = (start, end) => {
+                let pos = start;
+                while (pos + 8 <= end) {
+                    let size = readU32BE(bytes, pos);
+                    const type = asciiAt(bytes, pos + 4, 4);
+                    let head = 8;
+                    if (size === 1) { size = readU32BE(bytes, pos + 8) * 4294967296 + readU32BE(bytes, pos + 12); head = 16; }
+                    else if (size === 0) size = end - pos;
+                    if (size < head || pos + size > end) return;
+                    const inner = pos + head;
+                    const innerEnd = pos + size;
+                    if (type === 'moov' || type === 'udta' || type === 'trak') walk(inner, innerEnd);
+                    else if (type === 'meta') walk(inner + 4, innerEnd);
+                    else if (type === 'ilst') readIlst(inner, innerEnd);
+                    pos += size;
+                }
+            };
+            walk(0, bytes.length);
+            return out;
+        }
+
+        async function readMusicMeta(file) {
+            if (!file) return null;
+            const name = String(file.name || '').toLowerCase();
+            const ext = name.slice(name.lastIndexOf('.') + 1);
+            const parse = ext === 'flac' ? parseFlac
+                : (ext === 'm4a' || ext === 'mp4' || ext === 'm4b' || ext === 'aac' || ext === 'alac') ? parseMp4
+                    : parseId3;
+            const slices = [file.slice(0, Math.min(file.size, MUSIC_HEAD_BYTES))];
+            // mp4 的 moov 经常挂在文件尾部，头里找不到就再读一段尾巴
+            if (parse === parseMp4 && file.size > MUSIC_HEAD_BYTES) {
+                slices.push(file.slice(Math.max(0, file.size - MUSIC_HEAD_BYTES)));
+            }
+            for (const slice of slices) {
+                let bytes;
+                try { bytes = new Uint8Array(await slice.arrayBuffer()); } catch (error) { continue; }
+                let meta = null;
+                try { meta = parse(bytes); } catch (error) { meta = null; }
+                if (meta && (meta.covers.length || meta.artist || meta.album || meta.title)) return meta;
+            }
+            return null;
+        }
+
+        /** 取当前曲目的封面：内嵌图 → 同目录图片 → 渐变占位（coverUrl 为空表示用 CSS 渐变） */
+        function resolveTrackCover(track) {
+            if (!track) return Promise.resolve(null);
+            // 缓存里放的是 Promise：同一首并发查两次也只会解析一次
+            const cacheKey = (track.url || '') + '|' + track.name + '|' + (track.dir || '');
+            const cached = MUSIC_META_CACHE.get(cacheKey);
+            if (cached) return cached;
+            const task = (async () => {
+                const record = { coverUrl: '', artist: '', album: '', title: '' };
+                const folder = pickFolderCover(track.dir || '');
+                if (track.blob) {
+                    const meta = await readMusicMeta(track.blob);
+                    if (meta) {
+                        record.artist = meta.artist || '';
+                        record.album = meta.album || '';
+                        record.title = meta.title || '';
+                        if (meta.covers.length) record.coverBlob = meta.covers[0];
+                    }
+                }
+                if (!record.coverBlob && folder && folder.file) record.coverBlob = folder.file;
+                if (record.coverBlob) {
+                    try { record.coverUrl = URL.createObjectURL(record.coverBlob); } catch (error) { record.coverUrl = ''; }
+                }
+                return record;
+            })();
+            MUSIC_META_CACHE.set(cacheKey, task);
+            // 解析失败也别让这一条烂在缓存里，下次切回来还能重试
+            task.catch(() => MUSIC_META_CACHE.delete(cacheKey));
+            return task;
+        }
+
+        function folderLabelOf(track) {
+            const dir = String((track && track.dir) || '');
+            if (!dir) return '根目录';
+            const parts = dir.split('/').filter(Boolean);
+            return parts.length ? parts[parts.length - 1] : '根目录';
+        }
+
+        /** 把曲目信息刷到播放器上：序号 / 总数 / 文件夹 / 曲名 / 歌手·专辑 / 封面 */
+        async function updateLwTrackInfo() {
+            const track = playlist[currentTrackIndex] || null;
+            const indexEl = document.getElementById('lwIndex');
+            const totalEl = document.getElementById('lwTotal');
+            const folderEl = document.getElementById('lwFolder');
+            const trackEl = document.getElementById('lwTrack');
+            const subEl = document.getElementById('lwSub');
+            const artEl = document.getElementById('lwCover');
+            if (indexEl) indexEl.textContent = track ? String(currentTrackIndex + 1).padStart(2, '0') : '00';
+            if (totalEl) totalEl.textContent = `/ ${String(playlist.length).padStart(2, '0')}`;
+            if (trackEl) trackEl.textContent = track ? track.name.replace(/\.[^.]+$/, '') : '暂无音乐';
+            if (folderEl) {
+                folderEl.textContent = track ? folderLabelOf(track) : '未选择文件夹';
+                folderEl.title = track ? (track.dir || '根目录') : '';
+            }
+            if (subEl) subEl.textContent = track ? (track.dir || '根目录') : '选择音乐文件夹后开始播放';
+            if (!artEl) return;
+
+            // 不要在这里 revoke：URL 存在缓存里，切回来还要用；换列表时统一回收（releaseCoverCache）
+            artEl.style.removeProperty('background-image');
+            if (!track) return;
+            const token = String(currentTrackIndex) + '|' + (track.url || track.name);
+            artEl.dataset.coverToken = token;
+            const meta = await resolveTrackCover(track);
+            if (artEl.dataset.coverToken !== token) return;          // 等封面时又切歌了
+            if (meta && meta.coverUrl) {
+                artEl.style.backgroundImage = `url("${meta.coverUrl}")`;
+            }
+            if (subEl && meta) {
+                const bits = [meta.artist, meta.album].filter(Boolean);
+                // 没读到歌手/专辑时别把文件夹名再念一遍，换成格式提示
+                subEl.textContent = bits.length
+                    ? bits.join(' · ')
+                    : `${(track.name.match(/\.([^.]+)$/) || [, ''])[1].toUpperCase() || '音频'} · 本地文件`;
+            }
+        }
+
+        /** 音量：主面板滑条和播放器滑条同源 */
+        function syncVolumeControls(value) {
+            const percent = `${Math.round(value * 100)}%`;
+            const main = document.getElementById('volumeSlider');
+            if (main && Math.abs(Number(main.value) - value) > 0.001) main.value = String(value);
+            const widget = document.getElementById('lwVolume');
+            if (widget && Math.abs(Number(widget.value) - value) > 0.001) widget.value = String(value);
+            if (widget) widget.style.setProperty('--vol', percent);
+            const percentEl = document.getElementById('volumePercent');
+            if (percentEl) percentEl.textContent = percent;
+            const pctEl = document.getElementById('lwVolPct');
+            if (pctEl) pctEl.textContent = percent;
+            const muteBtn = document.getElementById('lwMuteBtn');
+            if (muteBtn) {
+                const muted = value <= 0.001;
+                muteBtn.classList.toggle('is-muted', muted);
+                muteBtn.setAttribute('aria-label', muted ? '取消静音' : '静音');
+                muteBtn.title = muted ? '取消静音' : '静音';
+            }
+        }
+
+        function toggleMute() {
+            const target = audio.volume > 0.001 ? 0 : (Number(lastVolume) || 0.8);
+            if (audio.volume > 0.001) lastVolume = audio.volume;
+            updateVolume(target);
+        }
+
+        /** 随机 / 循环按钮：主面板和播放器两处一起变 */
+        function syncModeButtons() {
+            const shuffleMain = document.getElementById('shuffleBtn');
+            if (shuffleMain) {
+                shuffleMain.classList.toggle('active', isShuffle);
+                shuffleMain.textContent = isShuffle ? '🔀 随机开' : '🔀 随机';
+            }
+            const button = document.getElementById('lwShuffleBtn');
+            if (button) {
+                button.classList.toggle('on', isShuffle);
+                button.setAttribute('aria-pressed', String(isShuffle));
+                button.title = isShuffle ? '随机播放：开' : '随机播放：关';
+            }
+            const loopMain = document.getElementById('loopBtn');
+            if (loopMain) {
+                loopMain.classList.toggle('active', isLoop);
+                loopMain.textContent = isLoop ? '🔂 单曲' : '🔁 列表';
+                loopMain.title = isLoop ? '当前：单曲循环，点击切换为列表循环' : '当前：列表循环，点击切换为单曲循环';
+            }
+            const loopBtn = document.getElementById('lwLoopBtn');
+            if (loopBtn) {
+                loopBtn.classList.toggle('on', isLoop);
+                loopBtn.setAttribute('aria-pressed', String(isLoop));
+                loopBtn.title = isLoop ? '单曲循环' : '列表循环';
+            }
+        }
         function setTrackLyricFiles(items) {
             lyricFiles = (items || []).map(item => ({
                 name: item.name,
@@ -7565,6 +8152,7 @@
 
         function buildPlaylistFrom(items) {
             playlist.forEach(track => { if (track.url) URL.revokeObjectURL(track.url); });
+            releaseCoverCache();      // 上一批曲目的封面缓存跟着一起回收
             playlist = items.map((item, index) => ({
                 name: item.name,
                 base: item.base || baseName(item.name).toLowerCase(),
@@ -7591,14 +8179,16 @@
             } catch (error) {}
         }
 
-        async function saveMusicLibrary(audioFiles, lyricRaw) {
+        async function saveMusicLibrary(audioFiles, lyricRaw, coverRaw) {
             const stamp = Date.now().toString(36);
             // 旧的先留着：新的要是全没存下，至少别把原来能用的弄丢了
             const previousTracks = await filesGetByKind('music');
             const previousLyrics = await filesGetByKind('lyric');
+            const previousCovers = await filesGetByKind('cover');
 
             const tracks = [];
             const lyrics = [];
+            const covers = [];
             let bytes = 0;
             let failed = 0;
             let error = '';
@@ -7654,13 +8244,37 @@
                 }
             }
 
+            // 封面图（cover.jpg / folder.jpg 这种）也存一份，下次打开直接就有
+            for (let i = 0; i < (coverRaw || []).length; i += 1) {
+                const file = coverRaw[i];
+                if (Number(file.size) > COVER_PERSIST_MAX) continue;
+                const path = file.webkitRelativePath || file.name;
+                const id = `c-${stamp}-${i}`;
+                const ok = await filesPut({
+                    id,
+                    kind: 'cover',
+                    order: i,
+                    name: file.name,
+                    dir: pathDir(path),
+                    base: baseName(file.name).toLowerCase(),
+                    type: file.type || '',
+                    size: file.size,
+                    savedAt: Date.now(),
+                    blob: file
+                });
+                if (ok) covers.push({ id, name: file.name });
+            }
+
             // 新的都写好了，再清掉不属于这一批的旧记录
-            const keep = new Set(tracks.map(track => track.id).concat(lyrics.map(item => item.id)));
-            const stale = previousTracks.concat(previousLyrics).filter(record => record && !keep.has(record.id));
+            const keep = new Set(tracks.map(track => track.id)
+                .concat(lyrics.map(item => item.id))
+                .concat(covers.map(item => item.id)));
+            const stale = previousTracks.concat(previousLyrics, previousCovers)
+                .filter(record => record && !keep.has(record.id));
             for (const record of stale) await filesDelete(record.id);
 
             if (!tracks.length) writeMusicManifest(tracks, lyrics);
-            return { saved: tracks.length, failed, bytes, lyrics: lyrics.length, error };
+            return { saved: tracks.length, failed, bytes, lyrics: lyrics.length, covers: covers.length, error };
         }
 
         /** 打开网页时把上次的音乐找回来（不自动播放，等用户点） */
@@ -7701,6 +8315,13 @@
                 blob: record.blob
             })));
 
+            const coverRecords = await filesGetByKind('cover');
+            setTrackCoverFiles(coverRecords.map(record => ({
+                name: record.name,
+                dir: typeof record.dir === 'string' ? record.dir : '',
+                blob: record.blob
+            })));
+
             buildPlaylistFrom(tracks);
             const storedIndex = Number(safeLocalGet(MUSIC_INDEX_KEY));
             const index = Number.isFinite(storedIndex) && storedIndex >= 0
@@ -7721,8 +8342,7 @@
             currentTrackIndex = index;
             audio.src = playlist[index].url;
             musicName.textContent = playlist[index].name;
-            const widgetTrack = document.getElementById('lwTrack');
-            if (widgetTrack) widgetTrack.textContent = playlist[index].name;
+            updateLwTrackInfo();
             updateWidgetPlayer();
             renderPlaylist();
             lyrics = [];
@@ -7759,8 +8379,7 @@
             saveMusicIndex(index);
             audio.src = playlist[index].url;
             musicName.textContent = playlist[index].name;
-            const widgetTrack = document.getElementById('lwTrack');
-            if (widgetTrack) widgetTrack.textContent = playlist[index].name;
+            updateLwTrackInfo();
             updateWidgetPlayer();
             renderPlaylist();
             lyrics = [];
@@ -7880,23 +8499,20 @@
 
         function updateVolume(val) {
             const volume = Math.max(0, Math.min(1, Number(val)));
+            if (volume > 0.001) lastVolume = volume;
             audio.volume = volume;
             volumePercent.textContent = `${Math.round(volume * 100)}%`;
+            syncVolumeControls(volume);
         }
 
         function toggleShuffle() {
             isShuffle = !isShuffle;
-            const btn = document.getElementById('shuffleBtn');
-            btn.classList.toggle('active', isShuffle);
-            btn.textContent = isShuffle ? '🔀 随机开' : '🔀 随机';
+            syncModeButtons();
         }
 
         function toggleLoop() {
             isLoop = !isLoop;
-            const btn = document.getElementById('loopBtn');
-            btn.classList.toggle('active', isLoop);
-            btn.textContent = isLoop ? '🔂 单曲' : '🔁 列表';
-            btn.title = isLoop ? '当前：单曲循环，点击切换为列表循环' : '当前：列表循环，点击切换为单曲循环';
+            syncModeButtons();
         }
 
         function formatTime(seconds) {
