@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-0849">
+    <meta name="app-version" content="20261026-0905">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -19,7 +19,8 @@
             --primary-contrast: #ffffff;
             --bg-color: #fdf6f0;
             --bg-rgb: 253, 246, 240;
-            --bg-overlay-color: rgba(var(--bg-rgb), 0.8);
+            --bg-overlay-alpha: 0.8;
+            --bg-overlay-color: rgba(var(--bg-rgb), var(--bg-overlay-alpha));
             --card-bg: rgba(255, 255, 255, 0.85);
             --text-main: #5d5d5d;
             --text-sub: #888;
@@ -41,7 +42,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: var(--bg-color);
+            background-color: var(--page-bg, var(--bg-color));
+            background-image: var(--bg-image, none);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -53,8 +55,9 @@
         #bg-video {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: -2; display: none;
+            object-fit: cover; z-index: -2; display: block;
         }
+        #bg-video[hidden] { display: none; }
 
         .overlay {
             position: fixed;
@@ -265,7 +268,7 @@
             -webkit-user-select: none;
         }
         #progress-bar {
-            width: 0%;
+            width: calc(var(--progress, 0) * 100%);
             height: 100%;
             background: var(--primary-color);
             border-radius: 8px;
@@ -412,7 +415,21 @@
         }
 
         .hidden-grid { display: none !important; }
-        #footer { transition: opacity 0.3s; }
+        #footer {
+            margin-top: 60px;
+            color: #888;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        body.simple-mode #footer { opacity: 0; visibility: hidden; }
+
+        /* 小工具类：HTML 里原来那些内联样式改成类 */
+        .mt-8 { margin-top: 8px; }
+        .mt-12 { margin-top: 12px; }
+        .full-btn { width: 100%; }
+        .form-title { font-size: .8rem; color: var(--primary-strong); }
+
+        /* 合抱动画期间把宠物本体让给演出帧（原来靠 JS 写 opacity/pointer-events） */
+        .mascot-hugging { opacity: 0 !important; pointer-events: none !important; }
 
         @media (max-width: 768px) {
             .nav-menu { width: 85%; }
@@ -898,7 +915,7 @@
             touch-action: none;
         }
         .lw-progress > div {
-            height: 100%; width: 0;
+            height: 100%; width: calc(var(--progress, 0) * 100%);
             background: var(--primary-color);
         }
         .lw-times {
@@ -951,7 +968,7 @@
         .qq-text { white-space: nowrap; }
         .qq-fill {
             position: absolute; left: 0; top: 0;
-            width: 0%; overflow: hidden;
+            width: calc(var(--progress, 0) * 100%); overflow: hidden;
             color: var(--lw-lyrics-color, var(--primary-strong));
             text-shadow: 0 1px 2px rgba(255, 255, 255, .9);
             pointer-events: none;
@@ -1373,7 +1390,7 @@
 </head>
 <body id="bg-body">
 
-    <video id="bg-video" autoplay muted loop playsinline></video>
+    <video id="bg-video" autoplay muted loop playsinline hidden></video>
     <div class="overlay" id="overlay"></div>
 
     <button class="simple-mode-toggle" id="simpleModeToggle" onclick="toggleSimpleMode()" aria-label="切换简洁模式">简洁模式</button>
@@ -1454,7 +1471,7 @@
                 <button type="button" class="apply-btn" onclick="applyFileBackground()">应用背景</button>
                 <button type="button" class="ghost-btn" onclick="restoreRandomBackground()">恢复随机</button>
             </div>
-            <div class="btn-row" style="margin-top:8px;">
+            <div class="btn-row mt-8">
                 <button type="button" class="ghost-btn" id="bgPoolAutoBtn" onclick="setBgPoolMode('auto')">自动识别</button>
                 <button type="button" class="ghost-btn" id="bgPoolABtn" onclick="setBgPoolMode('a')">横图 A</button>
                 <button type="button" class="ghost-btn" id="bgPoolBBtn" onclick="setBgPoolMode('b')">竖图 B</button>
@@ -1503,7 +1520,7 @@
                 <button type="button" class="ghost-btn" onclick="createFolder()">📁 文件夹</button>
             </div>
             <div class="card-form" id="cardForm" hidden>
-                <strong id="cardFormTitle" style="font-size:.8rem; color:var(--primary-strong);">添加卡片</strong>
+                <strong id="cardFormTitle" class="form-title">添加卡片</strong>
                 <input type="text" id="cardTitle" placeholder="名称，例如 豆瓣" maxlength="20">
                 <input type="text" id="cardUrl" placeholder="粘贴网址，名称和图标会自动补上" maxlength="300"
                        onblur="autoFillCardMeta()" onchange="autoFillCardMeta()">
@@ -1538,11 +1555,11 @@
                 <button type="button" class="ghost-btn" onclick="exportCards()">⬇ 导出备份</button>
                 <button type="button" class="ghost-btn" onclick="document.getElementById('importCardsFile').click()">⬆ 导入备份</button>
             </div>
-            <input type="file" id="importCardsFile" accept="application/json,.json" style="display:none"
+            <input type="file" id="importCardsFile" accept="application/json,.json" hidden
                    onchange="importCards(this)">
             <p class="menu-hint">备份是 JSON 文件：换设备、清理缓存前先导出一份，之后可以导回来（同网址会跳过）。</p>
 
-            <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="resetCards()">恢复默认卡片</button>
+            <button type="button" class="ghost-btn full-btn mt-8" onclick="resetCards()">恢复默认卡片</button>
         </section>
 
         <section class="menu-section" data-panel="music">
@@ -1584,15 +1601,16 @@
                     <button type="button" onclick="document.getElementById('lyricsFile').click()">载入 LRC 歌词</button>
                     <button type="button" onclick="toggleLyrics()">显示 / 隐藏歌词</button>
                 </div>
-                <input type="file" id="lyricsFile" accept=".lrc,.txt" style="display:none" onchange="handleLyricsFile(this)">
+                <input type="file" id="lyricsFile" accept=".lrc,.txt" hidden onchange="handleLyricsFile(this)">
                 <div class="playlist-container" id="playlist">
                     <!-- 动态加载列表 -->
                 </div>
 
                 <input type="file" id="musicFolder" webkitdirectory multiple
-                       style="display:none; margin-top:10px;" onchange="handleFolderSelect(this)">
+                       hidden onchange="handleFolderSelect(this)">
                 <button type="button" class="ghost-btn"
                         onclick="document.getElementById('musicFolder').click()">📁 选择音乐文件夹</button>
+                <button type="button" class="ghost-btn full-btn mt-8" onclick="saveCurrentPlaylist()">💾 保存当前列表到本机</button>
                 <p class="menu-hint" id="musicSaveHint">选过的文件夹会存到本机：刷新、换版本后自动恢复，不用重选。要清掉它，用设置里的「清理用户数据」。</p>
             </div>
         </section>
@@ -1656,7 +1674,7 @@
                 </button>
             </div>
             <p class="menu-hint" id="precacheHint">开启后把页面外壳、图标和宠物素材提前存到本机，第二次打开更快，断网也能看。</p>
-            <button type="button" class="ghost-btn" style="width:100%; margin-top:8px;" onclick="precacheNow()">📦 立即预缓存</button>
+            <button type="button" class="ghost-btn full-btn mt-8" onclick="precacheNow()">📦 立即预缓存</button>
 
             <p class="menu-hint" data-hint-static="1">🔒 防扒保护已内置：右键、复制、拖图、调试/保存快捷键均已禁用。</p>
 
@@ -1682,12 +1700,12 @@
                 </button>
             </div>
             <p class="menu-hint" id="mascot2Hint">两只同时在场时，会按几率自己抱抱（随机一边发起）。</p>
-            <button type="button" class="ghost-btn" id="hugNowBtn" style="width:100%; margin-top:8px;"
+            <button type="button" class="ghost-btn full-btn mt-8" id="hugNowBtn"
                     onclick="playHug(true)" disabled>🫂 让它们抱一下</button>
 
             <p class="menu-hint" id="mascotHint">开启后小宠物会在页面里走动；本地没有 mascot/ 时会自动从 CDN 加载（约 3MB）。</p>
 
-            <button type="button" class="ghost-btn" style="width:100%; margin-top:12px;" onclick="forceUpdate()">🔄 强制更新</button>
+            <button type="button" class="ghost-btn full-btn mt-12" onclick="forceUpdate()">🔄 强制更新</button>
             <p class="menu-hint">清掉网页缓存后绕过浏览器和 CDN 缓存拉最新版本，个人数据不动。</p>
         </section>
     </nav>
@@ -1726,7 +1744,7 @@
 
         <main class="nav-grid" id="mainGrid" aria-label="站点卡片"></main>
 
-        <footer id="footer" style="margin-top: 60px; color: #888;">
+        <footer id="footer">
             <p>Made with ❤️ | 灵感导航站</p>
         </footer>
     </div>
@@ -1827,7 +1845,7 @@
             const video = document.getElementById('bg-video');
             video.pause();
             video.removeAttribute('src');
-            video.style.display = 'none';
+            video.hidden = true;
         }
 
         function updateBgColorValue(color) {
@@ -1836,7 +1854,11 @@
         }
 
         function setPageBaseColor(color) {
-            document.body.style.backgroundColor = color || '';
+            if (color) {
+                document.body.style.setProperty('--page-bg', color);
+            } else {
+                document.body.style.removeProperty('--page-bg');
+            }
             document.documentElement.style.setProperty('--bg-rgb', hexToRgb(color || currentTheme.bg));
             const opacitySlider = document.getElementById('opacitySlider');
             if (opacitySlider) applyOpacity(opacitySlider.value);
@@ -1957,7 +1979,7 @@
             hideBackgroundVideo();
             setPageBaseColor(null);
             const selectedImg = sourceFolder[Math.floor(Math.random() * sourceFolder.length)];
-            document.body.style.backgroundImage = `url('${selectedImg}')`;
+            document.body.style.setProperty('--bg-image', `url('${selectedImg}')`);
             backgroundIsRandom = true;
             // 先让这一张显示出来，剩下的等页面空下来再补
             scheduleBackgroundPrefetch(selectedImg);
@@ -2014,7 +2036,7 @@
         function applySolidBackground(color) {
             backgroundIsRandom = false;
             hideBackgroundVideo();
-            document.body.style.backgroundImage = 'none';
+            document.body.style.removeProperty('--bg-image');
             setPageBaseColor(color);
         }
 
@@ -2023,13 +2045,13 @@
             setPageBaseColor(color);
             const video = document.getElementById('bg-video');
             if (isVideo) {
-                document.body.style.backgroundImage = 'none';
-                video.style.display = 'block';
+                document.body.style.removeProperty('--bg-image');
+                video.hidden = false;
                 video.src = source;
                 video.play().catch(() => {});
             } else {
                 hideBackgroundVideo();
-                document.body.style.backgroundImage = `url('${source}')`;
+                document.body.style.setProperty('--bg-image', `url('${source}')`);
             }
         }
 
@@ -2493,12 +2515,10 @@
         /** 3. 简洁模式（状态会持久化，刷新后保持） **/
         function applySimpleMode(enabled) {
             const grid = document.getElementById('mainGrid');
-            const footer = document.getElementById('footer');
             const on = Boolean(enabled);
             grid.classList.toggle('hidden-grid', on);
             document.body.classList.toggle('simple-mode', on);
-            footer.style.opacity = on ? '0' : '1';
-            footer.style.visibility = on ? 'hidden' : 'visible';
+
             const switchBtn = document.getElementById('simpleModeBtn');
             switchBtn.setAttribute('aria-checked', String(on));
             switchBtn.classList.toggle('on', on);
@@ -2811,7 +2831,7 @@
             root.setProperty('--bg-rgb', hexToRgb(customColor || theme.bg));
 
             if (!customColor) {
-                document.body.style.backgroundColor = '';
+                document.body.style.removeProperty('--page-bg');
                 updateBgColorValue(theme.bg);
             }
 
@@ -4035,7 +4055,7 @@
             const span = Math.max(0.2, end - start);
             const progress = Math.max(0, Math.min(1, (audio.currentTime - start) / span));
             const fill = document.getElementById('qqFill');
-            if (fill) fill.style.width = `${progress * 100}%`;
+            if (fill) fill.style.setProperty('--progress', String(progress));
         }
 
         function scrollFloatingLine(node) {
@@ -4575,12 +4595,7 @@
                 stage.style.top = `${Math.round(anchorY - sequence.anchor[1])}px`;
                 stage.hidden = false;
 
-                roots.forEach(root => {
-                    root.dataset.hugOpacity = root.style.opacity || '';
-                    root.dataset.hugPointer = root.style.pointerEvents || '';
-                    root.style.opacity = '0';
-                    root.style.pointerEvents = 'none';
-                });
+                roots.forEach(root => root.classList.add('mascot-hugging'));
 
                 for (const [name, ticks] of sequence.frames) {
                     image.src = frameUrl(name);
@@ -4609,12 +4624,7 @@
                 console.warn('[hug]', error);
             } finally {
                 stage.hidden = true;
-                roots.forEach(root => {
-                    root.style.opacity = root.dataset.hugOpacity || '';
-                    root.style.pointerEvents = root.dataset.hugPointer || '';
-                    delete root.dataset.hugOpacity;
-                    delete root.dataset.hugPointer;
-                });
+                roots.forEach(root => root.classList.remove('mascot-hugging'));
                 hugPlaying = false;
                 if (mascotInstances.length >= 2) scheduleRandomHug();
             }
@@ -4693,6 +4703,11 @@
         const FILES_STORE = 'files';
         const MUSIC_LIB_KEY = 'musicLibrary';
         const MUSIC_INDEX_KEY = 'musicLastIndex';
+
+        /** localStorage 可能被浏览器禁掉（抛异常），读不到就当没有 */
+        function safeLocalGet(key) {
+            try { return localStorage.getItem(key); } catch (error) { return null; }
+        }
         let filesDbPromise = null;
 
         function openFilesDb() {
@@ -4726,14 +4741,74 @@
             } catch (error) {}
         }
 
-        async function filesPut(record) {
+        /** 上一次写文件库失败的原因，存不下时直接告诉用户 */
+        let filesLastError = '';
+
+        function describeStorageError(error) {
+            const name = error && error.name || '';
+            if (name === 'QuotaExceededError') return '浏览器空间不够（QuotaExceededError）';
+            if (name === 'DataCloneError') return '文件没法存（DataCloneError）';
+            if (name === 'AbortError') return '写入被中断（AbortError）';
+            if (name === 'InvalidStateError') return '文件库连接已断开（InvalidStateError）';
+            if (name === 'NotReadableError') return '读不到原文件（NotReadableError）';
+            return name || (error && error.message) || '未知原因';
+        }
+
+        async function filesPut(record, retried) {
             await requestPersistentStorage();
+            const db = await openFilesDb();
+            if (!db) {
+                filesLastError = '浏览器不支持或禁用了本地文件库';
+                return false;
+            }
+            let reason = '';
+            const ok = await new Promise((resolve) => {
+                try {
+                    const tx = db.transaction(FILES_STORE, 'readwrite');
+                    const request = tx.objectStore(FILES_STORE).put(record);
+                    request.onerror = () => {
+                        reason = describeStorageError(request.error || tx.error);
+                    };
+                    tx.oncomplete = () => resolve(true);
+                    tx.onerror = () => {
+                        reason = reason || describeStorageError(tx.error);
+                        resolve(false);
+                    };
+                    tx.onabort = () => {
+                        reason = reason || describeStorageError(tx.error);
+                        resolve(false);
+                    };
+                } catch (error) {
+                    reason = describeStorageError(error);
+                    resolve(false);
+                }
+            });
+            if (ok) {
+                filesLastError = '';
+                return true;
+            }
+            // 存 File 句柄时偶尔读不到原文件（移动过、网络盘、权限变化）：
+            // 换成自包含的 Blob 再试一次
+            const blob = record && record.blob;
+            if (!retried && typeof Blob !== 'undefined' && blob instanceof Blob && blob.size > 0
+                && !(typeof File !== 'undefined' && !(blob instanceof File))) {
+                const copy = Object.assign({}, record, {
+                    blob: new Blob([blob], { type: blob.type || record.type || '' })
+                });
+                const again = await filesPut(copy, true);
+                if (again) return true;
+            }
+            filesLastError = reason || filesLastError;
+            return false;
+        }
+
+        async function filesDelete(id) {
             const db = await openFilesDb();
             if (!db) return false;
             return new Promise((resolve) => {
                 try {
                     const tx = db.transaction(FILES_STORE, 'readwrite');
-                    tx.objectStore(FILES_STORE).put(record);
+                    tx.objectStore(FILES_STORE).delete(id);
                     tx.oncomplete = () => resolve(true);
                     tx.onerror = () => resolve(false);
                     tx.onabort = () => resolve(false);
@@ -5116,8 +5191,8 @@
 
         function applyOpacity(value) {
             const alpha = Math.max(0, Math.min(0.9, Number(value)));
-            const rgb = getComputedStyle(document.documentElement).getPropertyValue('--bg-rgb').trim() || '253, 246, 240';
-            overlay.style.backgroundColor = `rgba(${rgb}, ${alpha})`;
+            // 颜色由 CSS 的 --bg-overlay-color 拼，这里只递一个透明度进去
+            document.documentElement.style.setProperty('--bg-overlay-alpha', String(alpha));
             const label = document.getElementById('opacityValue');
             if (label) label.textContent = `${Math.round(alpha * 100)}%`;
         }
@@ -5246,7 +5321,7 @@
                 URL.revokeObjectURL(currentBgObjectUrl);
                 currentBgObjectUrl = null;
             }
-            document.body.style.backgroundImage = 'none';
+            document.body.style.removeProperty('--bg-image');
             document.getElementById('bgFileInput').value = '';
             document.getElementById('bgFileName').textContent = '选择图片或视频';
             updateBgColorValue(currentTheme.bg);
@@ -5281,7 +5356,7 @@
         const volumePercent = document.getElementById('volumePercent');
         audio.volume = Number(volumeSlider.value);
 
-        const AUDIO_FILE_RE = /\.(mp3|wav|m4a|aac|ogg|flac|opus)$/i;
+        const AUDIO_FILE_RE = /\.(mp3|mp2|mpga|wav|m4a|aac|ogg|oga|opus|flac|ape|wma|aiff|aif|alac|wv|amr|mka|mid|midi|weba|webm|3gp)$/i;
         const LYRIC_FILE_RE = /\.(lrc|txt)$/i;
 
         function pathDir(path) {
@@ -5298,7 +5373,13 @@
             const audioFiles = files.filter(file =>
                 file.type.startsWith('audio/') || AUDIO_FILE_RE.test(file.name)
             );
-            if (!audioFiles.length) return;
+            if (!audioFiles.length) {
+                setMusicSaveHint(files.length
+                    ? `这个文件夹里没找到音乐文件（支持 mp3 / flac / m4a / wav / ogg 等），`
+                        + `选了 ${files.length} 个文件都没认出来。`
+                    : '没拿到文件：浏览器没把选中的文件夹交过来，换一个文件夹或直接拖进来试试。');
+                return;
+            }
             const lyricRaw = files.filter(file => LYRIC_FILE_RE.test(file.name));
 
             // 先用手里的文件立刻建好播放列表，别让用户等存储
@@ -5317,15 +5398,44 @@
 
             setMusicSaveHint(`正在把 ${audioFiles.length} 首存到本机…`);
             const report = await saveMusicLibrary(audioFiles, lyricRaw);
-            if (report.saved) {
+            await showMusicSaveReport(report);
+        }
+
+        /** 保存结果统一播报：存了几首、占多少、存不下的原因、本机还剩多少空间 */
+        async function showMusicSaveReport(report) {
+            let quotaText = '';
+            try {
+                if (navigator.storage && navigator.storage.estimate) {
+                    const est = await navigator.storage.estimate();
+                    if (est && Number.isFinite(est.quota)) {
+                        quotaText = `（本机已用 ${formatPrecacheBytes(est.usage || 0)}`
+                            + ` / 上限 ${formatPrecacheBytes(est.quota)}）`;
+                    }
+                }
+            } catch (error) {}
+            if (report && report.saved) {
                 setMusicSaveHint(`已存到本机：${report.saved} 首`
                     + `${report.lyrics ? `、${report.lyrics} 个歌词` : ''}`
                     + ` · ${formatPrecacheBytes(report.bytes)}`
-                    + `${report.failed ? `（${report.failed} 首没存下）` : ''}`
-                    + '，刷新和更新后会自动恢复。');
+                    + `${report.failed ? `（${report.failed} 首没存下：${report.error || '原因不明'}）` : ''}`
+                    + `${quotaText}，刷新和更新后会自动恢复。`);
             } else {
-                setMusicSaveHint('这个环境存不下音乐文件（隐私模式或空间不足），刷新后需要重新选一次文件夹。');
+                setMusicSaveHint(`没存下：${(report && report.error) || '这个环境不让存（隐私模式或空间不足）'}`
+                    + `${quotaText}。刷新后需要重新选一次文件夹。`);
             }
+        }
+
+        /** 手动把当前列表再存一次（自动保存被打断、或想在新浏览器里备一份） */
+        async function saveCurrentPlaylist() {
+            const audioFiles = playlist.map(track => track.blob).filter(Boolean);
+            if (!audioFiles.length) {
+                setMusicSaveHint('列表里没有可保存的音乐，先选一次文件夹。');
+                return;
+            }
+            const lyricRaw = lyricFiles.map(item => item.file).filter(Boolean);
+            setMusicSaveHint(`正在把 ${audioFiles.length} 首存到本机…`);
+            const report = await saveMusicLibrary(audioFiles, lyricRaw);
+            await showMusicSaveReport(report);
         }
 
         function setMusicSaveHint(text) {
@@ -5351,20 +5461,39 @@
                 base: item.base || baseName(item.name).toLowerCase(),
                 dir: typeof item.dir === 'string' ? item.dir : '',
                 url: URL.createObjectURL(item.blob),
+                blob: item.blob || null,
                 id: index
             }));
             renderPlaylist();
         }
 
         /** 把选中的音乐和同目录歌词存进本机文件库 */
+        function writeMusicManifest(tracks, lyrics) {
+            try {
+                if (tracks.length) {
+                    localStorage.setItem(MUSIC_LIB_KEY, JSON.stringify({
+                        savedAt: Date.now(),
+                        tracks,
+                        lyrics
+                    }));
+                } else {
+                    localStorage.removeItem(MUSIC_LIB_KEY);
+                }
+            } catch (error) {}
+        }
+
         async function saveMusicLibrary(audioFiles, lyricRaw) {
             const stamp = Date.now().toString(36);
-            await filesDeleteKind('music');
-            await filesDeleteKind('lyric');
+            // 旧的先留着：新的要是全没存下，至少别把原来能用的弄丢了
+            const previousTracks = await filesGetByKind('music');
+            const previousLyrics = await filesGetByKind('lyric');
 
             const tracks = [];
+            const lyrics = [];
             let bytes = 0;
             let failed = 0;
+            let error = '';
+
             for (let i = 0; i < audioFiles.length; i += 1) {
                 const file = audioFiles[i];
                 const path = file.webkitRelativePath || file.name;
@@ -5384,12 +5513,17 @@
                 if (ok) {
                     tracks.push({ id, name: file.name });
                     bytes += file.size;
+                    writeMusicManifest(tracks, lyrics);
                 } else {
                     failed += 1;
+                    error = error || filesLastError;
+                }
+                if (audioFiles.length > 1) {
+                    setMusicSaveHint(`正在存到本机：${i + 1}/${audioFiles.length} 首`
+                        + `${failed ? `（${failed} 首没存下）` : ''}…`);
                 }
             }
 
-            const lyrics = [];
             for (let i = 0; i < lyricRaw.length; i += 1) {
                 const file = lyricRaw[i];
                 const path = file.webkitRelativePath || file.name;
@@ -5405,41 +5539,49 @@
                     savedAt: Date.now(),
                     blob: file
                 });
-                if (ok) lyrics.push({ id, name: file.name });
+                if (ok) {
+                    lyrics.push({ id, name: file.name });
+                    writeMusicManifest(tracks, lyrics);
+                }
             }
 
-            try {
-                if (tracks.length) {
-                    localStorage.setItem(MUSIC_LIB_KEY, JSON.stringify({
-                        savedAt: Date.now(),
-                        tracks,
-                        lyrics
-                    }));
-                } else {
-                    localStorage.removeItem(MUSIC_LIB_KEY);
-                }
-            } catch (error) {}
+            // 新的都写好了，再清掉不属于这一批的旧记录
+            const keep = new Set(tracks.map(track => track.id).concat(lyrics.map(item => item.id)));
+            const stale = previousTracks.concat(previousLyrics).filter(record => record && !keep.has(record.id));
+            for (const record of stale) await filesDelete(record.id);
 
-            return { saved: tracks.length, failed, bytes, lyrics: lyrics.length };
+            if (!tracks.length) writeMusicManifest(tracks, lyrics);
+            return { saved: tracks.length, failed, bytes, lyrics: lyrics.length, error };
         }
 
         /** 打开网页时把上次的音乐找回来（不自动播放，等用户点） */
         async function restoreMusicLibrary() {
+            // 真正的数据在文件库里（每条记录自带名字/目录/顺序），
+            // localStorage 的清单只是缓存：浏览器禁掉 localStorage 也能恢复。
             let saved = null;
-            try { saved = JSON.parse(localStorage.getItem(MUSIC_LIB_KEY) || 'null'); } catch (error) { saved = null; }
-            if (!saved || !Array.isArray(saved.tracks) || !saved.tracks.length) return false;
+            try { saved = JSON.parse(safeLocalGet(MUSIC_LIB_KEY) || 'null'); } catch (error) { saved = null; }
 
-            const records = await filesGetByKind('music');
-            const tracks = records
+            let records = [];
+            try {
+                records = await filesGetByKind('music');
+            } catch (error) {
+                setMusicSaveHint(`恢复上次的音乐失败：${(error && error.message) || error}`);
+                return false;
+            }
+            const ordered = records
                 .filter(record => record && record.blob)
-                .map(record => ({
-                    name: record.name,
-                    base: record.base || baseName(record.name).toLowerCase(),
-                    dir: typeof record.dir === 'string' ? record.dir : '',
-                    blob: record.blob
-                }));
+                .sort((a, b) => (Number(a.savedAt) || 0) - (Number(b.savedAt) || 0)
+                    || (Number(a.order) || 0) - (Number(b.order) || 0));
+            const tracks = ordered.map(record => ({
+                name: record.name,
+                base: record.base || baseName(record.name).toLowerCase(),
+                dir: typeof record.dir === 'string' ? record.dir : '',
+                blob: record.blob
+            }));
             if (!tracks.length) {
-                setMusicSaveHint('上次存的音乐文件已经不在了，需要重新选一次文件夹。');
+                if (saved && Array.isArray(saved.tracks) && saved.tracks.length) {
+                    setMusicSaveHint('上次存的音乐文件已经不在了（多半被浏览器清掉了），需要重新选一次文件夹。');
+                }
                 return false;
             }
 
@@ -5451,7 +5593,7 @@
             })));
 
             buildPlaylistFrom(tracks);
-            const storedIndex = Number(localStorage.getItem(MUSIC_INDEX_KEY));
+            const storedIndex = Number(safeLocalGet(MUSIC_INDEX_KEY));
             const index = Number.isFinite(storedIndex) && storedIndex >= 0
                 ? Math.min(storedIndex, tracks.length - 1) : 0;
             restoreTrackSelection(index);
@@ -5477,7 +5619,7 @@
             lyrics = [];
             activeLyricIndex = -1;
             lyricsPanel.textContent = '已恢复上次的列表，点 ▶️ 继续播放。';
-            progressBar.style.width = '0%';
+            progressBar.style.setProperty('--progress', '0');
             currentTimeEl.textContent = '00:00';
             durationTimeEl.textContent = '00:00';
             renderFloatingLyrics();
@@ -5516,7 +5658,7 @@
             activeLyricIndex = -1;
             lyricsPanel.textContent = '正在查找同名歌词…';
             document.getElementById('lyricsFile').value = '';
-            progressBar.style.width = '0%';
+            progressBar.style.setProperty('--progress', '0');
             currentTimeEl.textContent = '00:00';
             durationTimeEl.textContent = '00:00';
             renderFloatingLyrics();
@@ -5545,7 +5687,7 @@
             const ratio = Number.isFinite(audio.duration) && audio.duration > 0
                 ? audio.currentTime / audio.duration
                 : 0;
-            bar.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+            bar.style.setProperty('--progress', String(Math.max(0, Math.min(1, ratio))));
             const current = document.getElementById('lwCurrent');
             if (current) current.textContent = formatTime(audio.currentTime);
             const duration = document.getElementById('lwDuration');
@@ -5653,7 +5795,7 @@
             const rect = progressContainer.getBoundingClientRect();
             const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
             audio.currentTime = ratio * audio.duration;
-            progressBar.style.width = `${ratio * 100}%`;
+            progressBar.style.setProperty('--progress', String(ratio));
             currentTimeEl.textContent = formatTime(audio.currentTime);
             progressContainer.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
         }
@@ -5723,9 +5865,9 @@
 
         audio.addEventListener('timeupdate', () => {
             if (!isSeeking && Number.isFinite(audio.duration) && audio.duration > 0) {
-                const progress = audio.currentTime / audio.duration * 100;
-                progressBar.style.width = `${progress}%`;
-                progressContainer.setAttribute('aria-valuenow', String(Math.round(progress)));
+                const progress = audio.currentTime / audio.duration;
+                progressBar.style.setProperty('--progress', String(progress));
+                progressContainer.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
             }
             currentTimeEl.textContent = formatTime(audio.currentTime);
             if (Number.isFinite(audio.duration)) durationTimeEl.textContent = formatTime(audio.duration);
@@ -5906,20 +6048,29 @@
                 - (lyricsPanel.clientHeight - nodeRect.height) / 2;
             lyricsPanel.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
         }
-        initTheme();
-        initCards();
-        initFolders();
-        initLyricsWidget();
-        restoreMusicLibrary();
-        initMascot();
-        initUpdateChecker();
-        initMenuPanels();
-        initMenuHints();
-        initTransparencyToggle();
-        initAntiCrawl();
-        initUiPrefs();
-        initBackgroundPool();
-        initPrecache();
+        // 一步一步来，哪一步炸了都只影响它自己，不会连累后面的（尤其是音乐恢复）
+        [
+            initTheme, initCards, initFolders, initLyricsWidget, restoreMusicLibrary,
+            initMascot, initUpdateChecker, initMenuPanels, initMenuHints,
+            initTransparencyToggle, initAntiCrawl, initUiPrefs, initBackgroundPool, initPrecache
+        ].forEach((step) => {
+            try {
+                const result = step();
+                if (result && typeof result.catch === 'function') {
+                    result.catch(error => {
+                        console.warn('[init]', step.name, error);
+                        if (step === restoreMusicLibrary) {
+                            setMusicSaveHint(`恢复上次的音乐失败：${(error && error.message) || error}`);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('[init]', step.name, error);
+                if (step === restoreMusicLibrary) {
+                    setMusicSaveHint(`恢复上次的音乐失败：${(error && error.message) || error}`);
+                }
+            }
+        });
     </script>
 
     <div class="folder-overlay" id="folderOverlay" hidden>
