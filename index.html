@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261026-1830">
+    <meta name="app-version" content="20261026-1900">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -2204,12 +2204,12 @@
         .wvn {
             position: fixed; inset: 0; z-index: 21; flex-direction: column;
             --sw: min(80vw, 360px);
-            touch-action: pan-x;
+            touch-action: none; user-select: none; -webkit-user-select: none;
         }
         .wvn-track {
             position: absolute; inset: 0;
             display: flex; overflow-x: auto; overflow-y: hidden;
-            scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+            scroll-snap-type: none; overscroll-behavior: contain;
             scrollbar-width: none; -webkit-overflow-scrolling: touch;
             padding: 0 calc((100% - var(--sw)) / 2);
             perspective: 1200px; perspective-origin: 50% 46%;
@@ -2223,14 +2223,9 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             gap: 3px; padding: 74px 20px 108px;
             text-decoration: none; color: inherit; border: 0; background: none; font: inherit;
-            transform:
-                translate3d(0, calc(var(--d, 0) * 20px), 0)
-                rotateY(calc(var(--s, 0) * var(--d, 0) * 32deg))
-                scale(calc(1 - var(--d, 0) * .26));
+            transform: translate3d(0, calc(var(--d, 0) * 20px), 0) scale(calc(1 - var(--d, 0) * .2));
             opacity: calc(1 - var(--d, 0) * .72);
             transform-origin: 50% 50%;
-            backface-visibility: hidden;
-            will-change: transform, opacity;
         }
         /* 非当前这颗压暗（用一层渐变冒充模糊，省掉逐帧 blur 的性能开销） */
         .wvn-slide::after {
@@ -2243,22 +2238,61 @@
             transform: translateZ(0) scale(calc(.93 + var(--a, 0) * .07));
             transition: transform .42s var(--wuwa-ease);
         }
-        .wvn-gem-in { position: absolute; inset: 0; animation: wvn-float 6.5s ease-in-out infinite alternate; }
-        @keyframes wvn-float { from { translate: 0 5px; } to { translate: 0 -8px; } }
+        /* 三层各司其职：漂浮(translate) / 缓慢转身(rotate) / 掠过的高光 & 绕行光弧，每颗都有自己的节奏 */
+        .wvn-gem-in {
+            position: absolute; inset: 0;
+            animation:
+                wvn-float calc(5.4s + var(--k, 0) * 2.8s) ease-in-out infinite alternate,
+                wvn-turn calc(8.5s + var(--k, 0) * 6s) ease-in-out infinite;
+            animation-delay: calc(var(--k, 0) * -4.6s), calc(var(--k, 0) * -3.2s);
+            will-change: translate, rotate;
+            transform: rotateY(calc(var(--s, 0) * var(--d, 0) * 34deg));
+        }
+        @keyframes wvn-float { from { translate: 0 5px; } to { translate: 0 -9px; } }
+        @keyframes wvn-turn { 0%, 100% { rotate: -2.4deg; } 50% { rotate: 2.4deg; } }
         .wvn-gem svg { position: absolute; inset: 0; }
+        /* 晶体上掠过的一道高光 */
+        .wvn-gem-in::before {
+            content: ""; position: absolute; inset: -2%; pointer-events: none; border-radius: 50%;
+            background: linear-gradient(112deg, transparent 40%, rgba(255, 255, 255, 0) 46%, rgba(255, 255, 255, .7) 51%, rgba(255, 255, 255, 0) 56%, transparent 62%);
+            -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 34%, rgba(0, 0, 0, .5) 52%, transparent 66%);
+            mask-image: radial-gradient(circle at 50% 50%, #000 34%, rgba(0, 0, 0, .5) 52%, transparent 66%);
+            opacity: 0;
+            animation: wvn-glint calc(6.4s + var(--k, 0) * 4s) ease-in-out infinite;
+            animation-delay: calc(var(--k, 0) * -5.6s);
+            will-change: opacity, translate;
+        }
+        @keyframes wvn-glint {
+            0%, 74% { opacity: 0; translate: -34% 0; }
+            82% { opacity: .9; }
+            92% { opacity: 0; translate: 34% 0; }
+            100% { opacity: 0; translate: 34% 0; }
+        }
+        /* 绕着晶体转的一小段星光轨道 */
+        .wvn-gem-in::after {
+            content: ""; position: absolute; inset: -9%; border-radius: 50%; pointer-events: none;
+            background:
+                radial-gradient(circle at 50% 1.5%, rgba(var(--wuwa-glow), .95) 0 2.5px, transparent 7px),
+                radial-gradient(circle at 12% 78%, rgba(var(--wuwa-gold), .8) 0 1.8px, transparent 6px);
+            opacity: calc(.25 + var(--a, 0) * .75);
+            animation: wvn-orbit calc(9s + var(--k, 0) * 7s) linear infinite;
+            will-change: rotate;
+        }
+        @keyframes wvn-orbit { to { rotate: 360deg; } }
         .wvn-gem::before {
             content: ""; position: absolute; inset: -26%; border-radius: 50%; pointer-events: none;
             background: radial-gradient(circle, rgba(var(--wuwa-glow), .5), rgba(var(--wuwa-gold), .18) 46%, transparent 72%);
             opacity: calc(.22 + var(--a, 0) * .78);
             transform: scale(calc(.9 + var(--a, 0) * .12));
-            animation: wvn-halo 3.6s ease-in-out infinite;
+            animation: wvn-halo calc(3.2s + var(--k, 0) * 2.2s) ease-in-out infinite;
+            animation-delay: calc(var(--k, 0) * -2.4s);
         }
         @keyframes wvn-halo { 0%, 100% { opacity: calc(.22 + var(--a, 0) * .5); } 50% { opacity: calc(.34 + var(--a, 0) * .66); } }
         .wvn-gem::after {
             content: ""; position: absolute; left: 14%; right: 14%; bottom: -8%; height: 15%;
             border-radius: 50%; pointer-events: none;
             background: radial-gradient(ellipse at center, rgba(var(--wuwa-glow), .55), transparent 72%);
-            filter: blur(7px); opacity: calc(.15 + var(--a, 0) * .85);
+            opacity: calc(.14 + var(--a, 0) * .86);
         }
         .wvn-info {
             display: flex; flex-direction: column; align-items: center; gap: 4px;
@@ -2377,7 +2411,10 @@
         }
         @media (prefers-reduced-motion: reduce) {
             .wv-shard, .wv-shard-3d, .wv-brand-name, .wv-mark { animation: none; }
-            .wvn-gem, .wvn-gem::before { animation: none; }
+            .wvn-gem, .wvn-gem::before, .wvn-gem::after,
+            .wvn-gem-in, .wvn-gem-in::before, .wvn-gem-in::after,
+            .wvn-info { animation: none; }
+            .wvn-gem-in::before { opacity: 0; }
             .wv-shard.wv-pager, .wv-shard.wv-pager::after, .wv-shard.wv-pager::before { animation: none !important; }
             .wv-shard.wv-pager::after { opacity: .4; transform: none; }
             .wv-shard.wv-pager::before { opacity: 0; }
@@ -4390,13 +4427,37 @@
             }
         }
 
-        /** 竖屏 / 窄比例的星轨轮盘：滑动 / 两侧箭头 / 底部刻度 三种方式切换 */
-        let wvnIndex = 0;
-        let wvnSlides = [];
+        /** 竖屏 / 窄比例的星轨轮盘：首尾各放一个复制品，可以一直往同一方向扒（无缝绕圈） */
+        let wvnIndex = 0;      // 当前真实站点序号（0 起）
+        let wvnSlot = 1;       // 当前停在的格位（0 与末位是复制品）
+        let wvnSlots = [];     // 轮盘上的所有格位元素
+        let wvnReal = 0;       // 真实站点数量
         let wvnTicks = [];
-        let wvnLock = false;
         let wvnRaf = 0;
+        let wvnTween = 0;
+        let wvnLock = false;   // 拖动刻度尺时不让滚动位置反写序号
+        let wvnSwallow = false;
         let wvnWheelAt = 0;
+        let wvnSettleTimer = 0;
+
+        function wvnStride(track) {
+            if (wvnSlots.length > 1) return Math.max(1, wvnSlots[1].offsetLeft - wvnSlots[0].offsetLeft);
+            if (wvnSlots.length) return Math.max(1, wvnSlots[0].offsetWidth);
+            return Math.max(1, track.clientWidth);
+        }
+
+        function wvnSlideHtml(card, index) {
+            const folder = isFolder(card);
+            const seed = wvSeed(card.id || card.title || String(index));
+            const gem = wvShardSvg('c' + (seed * 11 + index), wvCrystal(seed, index % 2 === 0));
+            return `<span class="wvn-gem"><span class="wvn-gem-in">${gem}</span></span>`
+                + `<span class="wvn-info">`
+                + `<span class="wvn-name">${wvEscape(card.title || '未命名')}</span>`
+                + `<span class="wvn-host">${wvEscape(folder ? '文件夹 · 点开看里面' : wvHost(card.url))}</span>`
+                + (card.desc ? `<span class="wvn-desc">${wvEscape(card.desc)}</span>` : '')
+                + `<span class="wvn-go">${folder ? '打开文件夹' : '进入站点'} <b>↗</b></span>`
+                + `</span>`;
+        }
 
         function renderWuwaRail() {
             const track = document.getElementById('wvnTrack');
@@ -4404,53 +4465,64 @@
             const list = cards.filter(card => !card.hidden);
             const keep = Math.min(wvnIndex, Math.max(0, list.length - 1));
             track.innerHTML = '';
-            wvnSlides = [];
-            list.forEach((card, index) => {
-                const folder = isFolder(card);
+            wvnSlots = [];
+            wvnReal = list.length;
+            if (!list.length) {
+                wvnIndex = 0;
+                wvnSlot = 1;
+                wvnBuildRuler(0);
+                wvnSync();
+                return;
+            }
+            const order = [{ card: list[list.length - 1], real: list.length - 1, clone: true }];
+            list.forEach((card, i) => order.push({ card, real: i, clone: false }));
+            order.push({ card: list[0], real: 0, clone: true });
+            order.forEach((item, slot) => {
+                const folder = isFolder(item.card);
                 const el = document.createElement(folder ? 'button' : 'a');
-                el.className = 'wvn-slide';
-                el.dataset.index = String(index);
-                el.dataset.d = index === keep ? '0' : '1';
-                el.style.setProperty('--d', index === keep ? '0' : '1');
-                el.style.setProperty('--a', index === keep ? '1' : '0');
-                el.style.setProperty('--s', index < keep ? '-1' : '1');
-                el.style.setProperty('--i', String(Math.min(index, 6)));
+                el.className = 'wvn-slide' + (item.clone ? ' is-clone' : '');
+                el.dataset.slot = String(slot);
+                el.dataset.real = String(item.real);
+                el.dataset.d = '1';
+                const k = ((wvSeed(item.card.id || item.card.title || String(item.real)) % 100) / 100).toFixed(2);
+                el.style.setProperty('--d', '1');
+                el.style.setProperty('--a', '0');
+                el.style.setProperty('--s', '1');
+                el.style.setProperty('--k', k);
+                el.style.setProperty('--i', String(Math.min(item.real, 6)));
                 if (folder) {
                     el.type = 'button';
-                    el.setAttribute('aria-label', `打开文件夹 ${card.title}`);
+                    el.setAttribute('aria-label', `打开文件夹 ${item.card.title}`);
                 } else {
-                    el.href = card.url || '#';
+                    el.href = item.card.url || '#';
                     el.target = '_blank';
                     el.rel = 'noopener';
                 }
-                const seed = wvSeed(card.id || card.title || String(index));
-                const gem = wvShardSvg('c' + (seed * 11 + index), wvCrystal(seed, index % 2 === 0));
-                el.innerHTML = `<span class="wvn-gem"><span class="wvn-gem-in">${gem}</span></span>`
-                    + `<span class="wvn-info">`
-                    + `<span class="wvn-name">${wvEscape(card.title || '未命名')}</span>`
-                    + `<span class="wvn-host">${wvEscape(folder ? '文件夹 · 点开看里面' : wvHost(card.url))}</span>`
-                    + (card.desc ? `<span class="wvn-desc">${wvEscape(card.desc)}</span>` : '')
-                    + `<span class="wvn-go">${folder ? '打开文件夹' : '进入站点'} <b>↗</b></span>`
-                    + `</span>`;
+                el.innerHTML = wvnSlideHtml(item.card, item.real);
                 // 没对准的那颗先「转过来」，对准了才「进去」
                 el.addEventListener('click', (event) => {
-                    const target = Number(el.dataset.index);
-                    if (target !== wvnIndex) {
+                    if (wvnSwallow) {
                         event.preventDefault();
-                        wvnGo(target);
+                        return;
+                    }
+                    const real = Number(el.dataset.real);
+                    if (real !== wvnIndex) {
+                        event.preventDefault();
+                        wvnGo(real);
                         return;
                     }
                     if (folder) {
                         event.preventDefault();
-                        openFolder(card.id);
+                        openFolder(item.card.id);
                     }
                 });
                 track.appendChild(el);
-                wvnSlides.push(el);
+                wvnSlots.push(el);
             });
-            wvnBuildRuler(wvnSlides.length);
-            if (track.clientWidth) track.scrollLeft = keep * wvnStride(track);
+            wvnBuildRuler(list.length);
             wvnIndex = keep;
+            wvnSlot = keep + 1;
+            track.scrollLeft = wvnSlot * wvnStride(track);
             wvnSync();
         }
 
@@ -4469,19 +4541,13 @@
             if (thumb) box.appendChild(thumb);
         }
 
-        function wvnStride(track) {
-            if (wvnSlides.length > 1) return Math.max(1, wvnSlides[1].offsetLeft - wvnSlides[0].offsetLeft);
-            if (wvnSlides.length) return Math.max(1, wvnSlides[0].offsetWidth);
-            return Math.max(1, track.clientWidth);
-        }
-
         /** 写 --d（0 = 正中）与 --a（1 = 正中），CSS 用它们做 3D 轮转 / 压暗 / 发光 */
         function wvnSync() {
             const track = document.getElementById('wvnTrack');
             if (!track) return;
             const stride = wvnStride(track);
             const mid = track.scrollLeft + track.clientWidth / 2;
-            wvnSlides.forEach((el) => {
+            wvnSlots.forEach((el) => {
                 const delta = (el.offsetLeft + el.offsetWidth / 2) - mid;
                 const d = Math.min(1, Math.abs(delta) / stride);
                 if (Math.abs(Number(el.dataset.d || -1) - d) > 0.004) {
@@ -4491,28 +4557,41 @@
                     el.style.setProperty('--s', delta < 0 ? '-1' : '1');
                 }
             });
+            const slot = Math.max(0, Math.min(Math.max(0, wvnSlots.length - 1), Math.round(track.scrollLeft / stride)));
+            wvnSlot = slot;
             if (!wvnLock) {
-                const next = Math.max(0, Math.min(wvnSlides.length - 1, Math.round(track.scrollLeft / stride)));
-                if (next !== wvnIndex) {
-                    wvnIndex = next;
+                const real = wvnSlots[slot] ? Number(wvnSlots[slot].dataset.real) : 0;
+                if (real !== wvnIndex) {
+                    wvnIndex = real;
                     if (navigator.vibrate) { try { navigator.vibrate(8); } catch (error) {} }
                 }
             }
             const count = document.getElementById('wvnCount');
-            if (count) count.textContent = `${String(wvnIndex + 1).padStart(2, '0')} / ${String(wvnSlides.length || 1).padStart(2, '0')}`;
-            const total = Math.max(1, wvnSlides.length - 1);
+            if (count) count.textContent = `${String(wvnIndex + 1).padStart(2, '0')} / ${String(wvnReal || 1).padStart(2, '0')}`;
+            const total = Math.max(1, wvnReal - 1);
+            const frac = Math.max(0, Math.min(1, wvnIndex / total));
             const thumb = document.getElementById('wvnThumb');
-            if (thumb) thumb.style.left = `calc(${((wvnIndex / total) * 100).toFixed(3)}% + ${(4 - (wvnIndex / total) * 8).toFixed(2)}px)`;
+            if (thumb) thumb.style.left = `calc(${(frac * 100).toFixed(3)}% + ${(4 - frac * 8).toFixed(2)}px)`;
             wvnTicks.forEach((tick, i) => tick.classList.toggle('past', i <= wvnIndex));
             const prev = document.getElementById('wvnPrev');
             const nxt = document.getElementById('wvnNext');
-            if (prev) prev.disabled = wvnIndex <= 0;
-            if (nxt) nxt.disabled = wvnIndex >= wvnSlides.length - 1;
+            if (prev) prev.disabled = wvnReal <= 1;
+            if (nxt) nxt.disabled = wvnReal <= 1;
         }
 
-        /** 自己算缓动：比原生 smooth 更快更跟手，跳到任意一颗都在 ~0.5s 内停稳 */
-        let wvnTween = 0;
+        /** 停在复制品上时悄悄跳回等价的那颗，视觉完全一样（这就是无缝绕圈） */
+        function wvnNormalize() {
+            const track = document.getElementById('wvnTrack');
+            if (!track || wvnReal < 2) return;
+            const stride = wvnStride(track);
+            const slot = Math.round(track.scrollLeft / stride);
+            if (slot <= 0) track.scrollLeft = wvnReal * stride;
+            else if (slot >= wvnReal + 1) track.scrollLeft = stride;
+            wvnSlot = Math.round(track.scrollLeft / stride);
+            wvnSync();
+        }
 
+        /** 自己算缓动：比原生 smooth 更快更跟手 */
         function wvnAnimateTo(left, ms) {
             const track = document.getElementById('wvnTrack');
             const rail = document.getElementById('wvnRail');
@@ -4523,9 +4602,10 @@
             if (Math.abs(delta) < 1.5) {
                 track.scrollLeft = left;
                 wvnSync();
+                wvnNormalize();
                 return;
             }
-            const dur = ms || Math.min(460, 230 + Math.abs(delta) / 2.6);
+            const dur = ms || Math.min(460, 210 + Math.abs(delta) / 3.2);
             const start = performance.now();
             if (rail) rail.classList.add('is-drag');
             const step = (now) => {
@@ -4535,19 +4615,42 @@
                 wvnSync();
                 if (t < 1) {
                     wvnTween = requestAnimationFrame(step);
-                } else if (rail) {
-                    rail.classList.remove('is-drag');
+                    return;
                 }
+                if (rail) rail.classList.remove('is-drag');
+                wvnNormalize();
             };
             wvnTween = requestAnimationFrame(step);
         }
 
-        function wvnGo(target) {
+        /** 翻一颗（首尾自动绕到另一端） */
+        function wvnStep(dir) {
             const track = document.getElementById('wvnTrack');
-            if (!track || !wvnSlides.length) return;
-            const next = Math.max(0, Math.min(wvnSlides.length - 1, target));
-            wvnIndex = next;
-            wvnAnimateTo(next * wvnStride(track));
+            if (!track || wvnSlots.length < 2) return;
+            const stride = wvnStride(track);
+            const slot = Math.round(track.scrollLeft / stride);
+            const maxSlot = wvnSlots.length - 1;
+            const nextSlot = Math.max(0, Math.min(maxSlot, slot + dir));
+            if (nextSlot === slot) {
+                wvnNormalize();
+                return;
+            }
+            wvnAnimateTo(nextSlot * stride);
+        }
+
+        /** 跳到指定站点（尽量走最近那一侧，跨首尾不会绕一大圈） */
+        function wvnGo(real) {
+            const track = document.getElementById('wvnTrack');
+            if (!track || !wvnSlots.length || wvnReal < 1) return;
+            const target = Math.max(0, Math.min(wvnReal - 1, real));
+            const stride = wvnStride(track);
+            const current = Math.round(track.scrollLeft / stride);
+            const candidates = [target + 1];
+            if (target === 0) candidates.push(wvnReal + 1);
+            if (target === wvnReal - 1) candidates.push(0);
+            const best = candidates.reduce((a, b) => (Math.abs(b - current) < Math.abs(a - current) ? b : a), candidates[0]);
+            wvnIndex = target;
+            wvnAnimateTo(best * stride);
         }
 
         function wvnVisible() {
@@ -4627,64 +4730,101 @@
                 });
             }
             const wvnTrack = document.getElementById('wvnTrack');
+            const wvnShell = document.getElementById('wvnRail');
             if (wvnTrack) {
                 wvnTrack.addEventListener('scroll', () => {
                     if (wvnRaf) return;
-                    wvnRaf = requestAnimationFrame(() => { wvnRaf = 0; wvnSync(); });
+                    wvnRaf = requestAnimationFrame(() => {
+                        wvnRaf = 0;
+                        wvnSync();
+                        clearTimeout(wvnSettleTimer);
+                        wvnSettleTimer = setTimeout(() => { wvnNormalize(); wvnSwallow = false; }, 150);
+                    });
                 }, { passive: true });
                 // 鼠标滚轮 / 触控板横滑也能翻
                 wvnTrack.addEventListener('wheel', (event) => {
                     if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
                     event.preventDefault();
                     const now = Date.now();
-                    if (now - wvnWheelAt < 320) return;
+                    if (now - wvnWheelAt < 300) return;
                     wvnWheelAt = now;
-                    wvnGo(wvnIndex + (event.deltaY > 0 ? 1 : -1));
+                    wvnStep(event.deltaY > 0 ? 1 : -1);
                 }, { passive: false });
-                // 鼠标拖拽（手机上交给原生惯性）
-                const rail = document.getElementById('wvnRail');
-                let dragFrom = 0, dragLeft = 0, dragging = false;
-                wvnTrack.addEventListener('pointerdown', (event) => {
-                    if (event.pointerType !== 'mouse') return;
+            }
+            // 整屏都能扒：手指/鼠标从任意位置（含左边缘、两侧箭头、晶体上）按下都能拖动轮盘
+            if (wvnShell && wvnTrack) {
+                let dragging = false;
+                let pointerId = null;
+                let downAt = 0, startX = 0, startLeft = 0, lastX = 0, lastT = 0, vel = 0, moved = 0;
+                const onDown = (event) => {
+                    if (event.pointerType === 'mouse' && event.button !== 0) return;
+                    if (event.target && event.target.closest && event.target.closest('.wvn-ruler')) return;
                     dragging = true;
-                    dragFrom = event.clientX;
-                    dragLeft = wvnTrack.scrollLeft;
-                    if (rail) rail.classList.add('is-drag');
-                });
-                window.addEventListener('pointermove', (event) => {
-                    if (!dragging) return;
-                    wvnTrack.scrollLeft = dragLeft - (event.clientX - dragFrom);
-                });
-                window.addEventListener('pointerup', () => {
+                    pointerId = event.pointerId;
+                    downAt = performance.now();
+                    startX = event.clientX;
+                    lastX = startX;
+                    startLeft = wvnTrack.scrollLeft;
+                    lastT = downAt;
+                    vel = 0;
+                    moved = 0;
+                    cancelAnimationFrame(wvnTween);
+                    if (wvnShell) wvnShell.classList.add('is-scrub');
+                };
+                const onMove = (event) => {
+                    if (!dragging || event.pointerId !== pointerId) return;
+                    const dx = event.clientX - startX;
+                    moved = Math.max(moved, Math.abs(dx));
+                    wvnTrack.scrollLeft = startLeft - dx;
+                    const now = performance.now();
+                    const dt = Math.max(1, now - lastT);
+                    vel = vel * 0.65 + ((event.clientX - lastX) / dt) * 0.35;
+                    lastX = event.clientX;
+                    lastT = now;
+                    wvnSync();
+                };
+                const onUp = () => {
                     if (!dragging) return;
                     dragging = false;
-                    if (rail) rail.classList.remove('is-drag');
-                    wvnGo(Math.round(wvnTrack.scrollLeft / wvnStride(wvnTrack)));
-                });
+                    if (wvnShell) wvnShell.classList.remove('is-scrub');
+                    const stride = wvnStride(wvnTrack);
+                    const fast = Math.min(1, performance.now() - downAt < 260 ? 1 : 0.45);
+                    const projected = wvnTrack.scrollLeft - vel * 240 * fast;
+                    const maxSlot = Math.max(0, wvnSlots.length - 1);
+                    const slot = Math.max(0, Math.min(maxSlot, Math.round(projected / stride)));
+                    wvnAnimateTo(slot * stride, moved > 20 ? 280 : 200);
+                    if (moved > 10) {
+                        wvnSwallow = true;
+                        setTimeout(() => { wvnSwallow = false; }, 260);
+                    }
+                    pointerId = null;
+                };
+                // 不抢指针捕获，否则按钮和晶体的 click 会被接管走
+                wvnShell.addEventListener('pointerdown', onDown);
+                window.addEventListener('pointermove', onMove);
+                window.addEventListener('pointerup', onUp);
+                window.addEventListener('pointercancel', onUp);
             }
             const wvnPrev = document.getElementById('wvnPrev');
-            if (wvnPrev) wvnPrev.addEventListener('click', () => wvnGo(wvnIndex - 1));
+            if (wvnPrev) wvnPrev.addEventListener('click', () => { if (!wvnSwallow) wvnStep(-1); });
             const wvnNext = document.getElementById('wvnNext');
-            if (wvnNext) wvnNext.addEventListener('click', () => wvnGo(wvnIndex + 1));
+            if (wvnNext) wvnNext.addEventListener('click', () => { if (!wvnSwallow) wvnStep(1); });
             // 底部刻度尺：点哪儿跳哪儿，按住拖动可以一路扫过去
             const wvnRuler = document.getElementById('wvnRuler');
             if (wvnRuler) {
                 let scrubbing = false;
-                const shell = document.getElementById('wvnRail');
                 const pickIndex = (event) => {
                     const box = wvnRuler.getBoundingClientRect();
                     const frac = Math.max(0, Math.min(1, (event.clientX - box.left - 4) / Math.max(1, box.width - 8)));
-                    return Math.round(frac * Math.max(0, wvnSlides.length - 1));
+                    return Math.round(frac * Math.max(0, wvnReal - 1));
                 };
                 const scale = (event) => {
+                    if (!wvnTrack) return;
                     const index = pickIndex(event);
-                    const strip = document.getElementById('wvnTrack');
-                    if (!strip) return;
                     if (index !== wvnIndex) {
                         wvnIndex = index;
-                        const left = index * wvnStride(strip);
                         cancelAnimationFrame(wvnTween);
-                        strip.scrollLeft = left;
+                        wvnTrack.scrollLeft = (index + 1) * wvnStride(wvnTrack);
                     }
                     wvnSync();
                 };
@@ -4692,7 +4832,7 @@
                     if (event.pointerType === 'mouse' && event.button !== 0) return;
                     scrubbing = true;
                     wvnLock = true;
-                    if (shell) shell.classList.add('is-scrub');
+                    if (wvnShell) wvnShell.classList.add('is-scrub');
                     try { wvnRuler.setPointerCapture(event.pointerId); } catch (error) {}
                     scale(event);
                 });
@@ -4701,7 +4841,7 @@
                     if (!scrubbing) return;
                     scrubbing = false;
                     wvnLock = false;
-                    if (shell) shell.classList.remove('is-scrub');
+                    if (wvnShell) wvnShell.classList.remove('is-scrub');
                     if (event && typeof event.clientX === 'number') scale(event);
                 };
                 wvnRuler.addEventListener('pointerup', endScrub);
@@ -4748,8 +4888,8 @@
                 if (typing) return;
                 if (wvnVisible()) {
                     // 窄屏是轮盘：方向键直接切换当前晶体
-                    if (event.key === 'ArrowLeft') { event.preventDefault(); wvnGo(wvnIndex - 1); }
-                    if (event.key === 'ArrowRight') { event.preventDefault(); wvnGo(wvnIndex + 1); }
+                    if (event.key === 'ArrowLeft') { event.preventDefault(); wvnStep(-1); }
+                    if (event.key === 'ArrowRight') { event.preventDefault(); wvnStep(1); }
                     return;
                 }
                 if (event.key === 'ArrowLeft') { event.preventDefault(); setWuwaPage(wvPage - 1); }
@@ -4783,8 +4923,8 @@
                     renderWuwaShards();
                     // 轮盘按新宽度重新对齐到当前这颗，并重算 --d
                     const track = document.getElementById('wvnTrack');
-                    if (track && track.clientWidth && wvnSlides.length) {
-                        track.scrollLeft = wvnIndex * wvnStride(track);
+                    if (track && track.clientWidth && wvnSlots.length) {
+                        track.scrollLeft = wvnSlot * wvnStride(track);
                         wvnSync();
                     }
                 }, 160);
