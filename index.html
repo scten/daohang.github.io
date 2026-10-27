@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261027-1553">
+    <meta name="app-version" content="20261027-1828">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -591,6 +591,7 @@
             flex: 1 1 auto; min-width: 40px; height: 4px; margin: 0;
             -webkit-appearance: none; appearance: none;
             border-radius: 99px; outline: 0; cursor: pointer;
+            background-color: transparent; background-repeat: no-repeat; background-size: 100% 100%;
             --vol: 80%;
             background-image: linear-gradient(90deg,
                 var(--primary-color) 0 var(--vol),
@@ -983,7 +984,21 @@
             text-shadow: 0 0 12px rgba(var(--lw-key-rgb), .45);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             padding: 0 6px;
+            /* 现在是个按钮：点它跳去主菜单的歌词列表 */
+            background: none; border: 0; margin: 0;
+            font-family: inherit; line-height: 1.6;
+            cursor: pointer;
+            transition: color .2s var(--lw-ease), background .2s var(--lw-ease);
         }
+        .lw-head-folder:hover {
+            color: #fff;
+            text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
+        }
+        .lw-head-folder:focus-visible {
+            outline: 1px solid rgba(var(--lw-key-rgb), .75); outline-offset: 2px;
+            border-radius: 6px;
+        }
+        .lw-head-folder.is-empty { color: var(--lw-ink2); text-shadow: none; cursor: default; }
         .lw-head-folder:empty { display: none; }
         .lw-tools { display: flex; align-items: center; gap: 2px; }
         .lw-tools button {
@@ -1069,7 +1084,13 @@
             background-image: linear-gradient(140deg, rgb(var(--lw-key-rgb)), rgba(74, 34, 110, .92));
             background-size: cover; background-position: center;
             box-shadow: 0 0 0 1px rgba(255, 255, 255, .2), 0 4px 12px rgba(0, 0, 0, .55);
+            /* 播放时转，暂停就停在当前角度 */
+            animation: lwDiscSpin 12s linear infinite;
+            animation-play-state: paused;
         }
+        #lyricsWidget.is-playing .lw-disc-art { animation-play-state: running; }
+        @keyframes lwDiscSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .lw-disc-art { animation: none; } }
         .lw-disc-hole {
             position: absolute; left: 50%; top: 50%;
             width: 13px; height: 13px; margin: -6.5px 0 0 -6.5px; border-radius: 50%;
@@ -1092,7 +1113,7 @@
             position: relative;
             display: block;
             max-width: 100%;
-            font-size: .98rem; font-weight: 800; line-height: 1.34;
+            font-size: calc(.98rem * var(--lw-user-scale, 1) * var(--lw-fit, 1)); font-weight: 800; line-height: 1.34;
             color: rgba(236, 242, 255, .5);
             /* overflow:hidden 会把 text-shadow 裁成方块，这里改用不会被裁的 drop-shadow */
             filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .8));
@@ -1104,12 +1125,12 @@
             position: absolute; left: 0; top: 0;
             width: calc(var(--lw-lrc-progress, 0) * 100%);
             overflow: hidden;
-            color: rgb(var(--lw-key-rgb));
+            color: var(--lw-lyrics-color, rgb(var(--lw-key-rgb)));
             pointer-events: none;
             white-space: nowrap;
         }
         .lw-lrc-fill span { display: block; width: max-content; }
-        .lw-lrc-cur.is-empty { color: var(--lw-ink2); font-weight: 600; font-size: .8rem; }
+        .lw-lrc-cur.is-empty { color: var(--lw-ink2); font-weight: 600; font-size: calc(.8rem * var(--lw-user-scale, 1) * var(--lw-fit, 1)); }
         .lw-lrc-cur.is-empty .lw-lrc-fill { display: none; }
         .lw-lrc-cur.is-swap { animation: lwLrcSwap .3s ease; }
         @keyframes lwLrcSwap {
@@ -1117,7 +1138,7 @@
             to { opacity: 1; transform: none; }
         }
         .lw-lrc-next {
-            font-size: .74rem; line-height: 1.45;
+            font-size: calc(.74rem * var(--lw-user-scale, 1) * var(--lw-fit, 1)); line-height: 1.45;
             color: rgba(226, 234, 255, .42);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             text-shadow: 0 1px 8px rgba(0, 0, 0, .6);
@@ -1225,6 +1246,7 @@
             -webkit-appearance: none; appearance: none;
             border-radius: 99px; outline: 0; cursor: pointer;
             --vol: 80%;
+            background-color: transparent; background-repeat: no-repeat; background-size: 100% 100%;
             background-image: linear-gradient(90deg,
                 rgb(var(--lw-key-rgb)) 0 var(--vol),
                 rgba(255, 255, 255, .16) var(--vol) 100%);
@@ -1305,16 +1327,31 @@
             transition: opacity .26s var(--lw-ease);
             pointer-events: none;
         }
-        /* 透明模式：只剩歌词，背板/边框/按钮都收起来，鼠标移上来再显出来 */
-        .lrc-bar.is-clear { --lrcb-veil: 0; }
+        /* 透明模式：身上一点底都不留，只有歌词飘着；悬停才出细边框 + 按钮排自己的小玻璃 */
+        .lrc-bar.is-clear {
+            background: none;
+            box-shadow: none;
+            -webkit-backdrop-filter: none;
+            backdrop-filter: none;
+        }
+        .lrc-bar.is-clear::after,
+        .lrc-bar.is-clear::before { opacity: 0; }
         .lrc-bar.is-clear:hover,
-        .lrc-bar.is-clear:focus-within { --lrcb-veil: 1; }
+        .lrc-bar.is-clear:focus-within { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); }
         .lrc-bar.is-clear .lrcb-tools {
             opacity: 0; pointer-events: none;
-            transition: opacity .2s var(--lw-ease);
+            border-radius: 13px;
+            transition: opacity .2s var(--lw-ease), background .22s var(--lw-ease), box-shadow .22s var(--lw-ease);
         }
         .lrc-bar.is-clear:hover .lrcb-tools,
-        .lrc-bar.is-clear:focus-within .lrcb-tools { opacity: 1; pointer-events: auto; }
+        .lrc-bar.is-clear:focus-within .lrcb-tools {
+            opacity: 1; pointer-events: auto;
+            background: linear-gradient(180deg,
+                rgba(16, 20, 36, calc(var(--lrcb-alpha, .82) * .78)),
+                rgba(6, 8, 16, calc(var(--lrcb-alpha, .82) * .72)));
+            box-shadow: 0 8px 22px rgba(0, 0, 0, .34), inset 0 0 0 1px rgba(255, 255, 255, .1);
+            -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+        }
         /* 没有背板托底：补一圈暗影压住浅底（不能用 text-shadow，会被裁成方块） */
         .lrc-bar.is-clear .lrcb-cur,
         .lrc-bar.is-clear .lrcb-next {
@@ -1370,7 +1407,7 @@
         .lrcb-cur {
             position: relative;
             max-width: 100%;
-            font-size: var(--lrcb-size, 26px);
+            font-size: calc(var(--lrcb-size, 26px) * var(--lrcb-fit, 1));
             font-weight: 800; line-height: 1.32;
             letter-spacing: .01em;
             text-align: center;
@@ -1390,14 +1427,14 @@
         }
         .lrcb-fill span { display: block; width: max-content; }
         .lrcb-cur.is-empty {
-            font-size: calc(var(--lrcb-size, 26px) * .6);
+            font-size: calc(var(--lrcb-size, 26px) * .6 * var(--lrcb-fit, 1));
             font-weight: 600;
             color: rgba(226, 234, 255, .5);
         }
         .lrcb-cur.is-empty .lrcb-fill { display: none; }
         .lrcb-next {
             max-width: 100%;
-            font-size: calc(var(--lrcb-size, 26px) * .5);
+            font-size: calc(var(--lrcb-size, 26px) * .5 * var(--lrcb-fit, 1));
             line-height: 1.4;
             color: rgba(226, 234, 255, .4);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1458,9 +1495,16 @@
         html[data-skin="wuwa"] .lrc-bar {
             --lrcb-key: rgb(var(--wuwa-accent));
             --lrcb-key-rgb: var(--wuwa-accent);
+        }
+        /* 背板走 ::after 那一层，透明模式才压得掉；别画在 .lrc-bar 自己身上 */
+        html[data-skin="wuwa"] .lrc-bar::after {
             background-image:
                 radial-gradient(120% 160% at 50% 0%, rgba(var(--wuwa-accent), .18), transparent 62%),
                 linear-gradient(170deg, rgba(6, 10, 22, var(--lrcb-alpha, .82)), rgba(3, 5, 12, var(--lrcb-alpha, .82)));
+        }
+        html[data-skin="wuwa"] .lrc-bar.is-clear:hover .lrcb-tools,
+        html[data-skin="wuwa"] .lrc-bar.is-clear:focus-within .lrcb-tools {
+            background: linear-gradient(180deg, rgba(10, 16, 34, calc(var(--lrcb-alpha, .82) * .82)), rgba(4, 7, 16, calc(var(--lrcb-alpha, .82) * .76)));
         }
         html[data-skin="wuwa"] .lrcb-cur {
             filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .9)) drop-shadow(0 0 14px rgba(var(--wuwa-glow), .25));
@@ -3429,7 +3473,7 @@
     <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="音乐播放器">
         <header class="lyrics-widget-head" id="lwHead">
             <span class="lw-title">播放器</span>
-            <span class="lw-head-folder" id="lwFolder">未选择文件夹</span>
+            <button type="button" class="lw-head-folder" id="lwFolder" title="查看歌词列表" aria-label="查看歌词列表" onclick="event.stopPropagation(); openLyricsFromWidget()">未选择文件夹</button>
             <div class="lw-tools">
                 <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-label="固定位置" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -6653,6 +6697,8 @@
         function applyLyricsWidget() {
             const widget = document.getElementById('lyricsWidget');
             widget.style.setProperty('--lw-font-size', `${lwState.fontSize}px`);
+            // 顶栏那颗 A 的倍率：22px 是基准，歌词字号跟着它整体变
+            widget.style.setProperty('--lw-user-scale', String(Math.round((Number(lwState.fontSize) || 22) / 22 * 1000) / 1000));
             widget.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
             widget.style.setProperty('--lw-alpha', String(lwState.alpha));
             // 播放器窗口透明度：只由挂件设置条里那条「透明」管
@@ -6709,6 +6755,7 @@
                     || '#ff8c94';
             }
             applyWidgetScale();
+            if (!widget.hidden) requestAnimationFrame(fitWidgetLyricLines);
         }
 
         function toggleLyricsWidget(force) {
@@ -6809,6 +6856,33 @@
         /* ───────── 歌词行：播放器里那块 + 桌面歌词条，共用一套取数 ───────── */
 
         /** 当前该唱哪一句、下一句是什么、这一句唱了多少（0~1） */
+        /** 一行歌词塞不下就按比例缩字号，最多缩到 62%（再小就看不清，宁可省略号） */
+        function fitLyricLine(el, prop) {
+            if (!el) return;
+            el.style.setProperty(prop, '1');
+            const avail = el.clientWidth;
+            const need = el.scrollWidth;
+            if (!avail || need <= avail + 1) return;
+            const ratio = Math.max(.62, avail / need);
+            el.style.setProperty(prop, String(Math.round(ratio * 1000) / 1000));
+            if (el.scrollWidth > el.clientWidth + 1) {
+                const again = Math.max(.62, (el.clientWidth / el.scrollWidth) * ratio);
+                el.style.setProperty(prop, String(Math.round(again * 1000) / 1000));
+            }
+        }
+        function fitLyricBarLines() {
+            const bar = document.getElementById('lrcBar');
+            if (!bar || bar.hidden) return;
+            fitLyricLine(document.getElementById('lrcbCur'), '--lrcb-fit');
+            fitLyricLine(document.getElementById('lrcbNext'), '--lrcb-fit');
+        }
+        function fitWidgetLyricLines() {
+            const widget = document.getElementById('lyricsWidget');
+            if (!widget || widget.hidden) return;
+            fitLyricLine(document.getElementById('lwLrcCur'), '--lw-fit');
+            fitLyricLine(document.getElementById('lwLrcNext'), '--lw-fit');
+        }
+
         /** 只算进度、不动文字 */
         function currentLyricProgress() {
             if (!lyrics.length) return null;
@@ -6913,6 +6987,7 @@
                 cur: 'lwLrcCur', base: 'lwLrcBase', fill: 'lwLrcFill',
                 fillText: 'lwLrcFillText', next: 'lwLrcNext'
             }, '--lw-lrc-progress');
+            fitWidgetLyricLines();
             if (changed && !document.getElementById('lwLrcCur').classList.contains('is-empty')) {
                 const cur = document.getElementById('lwLrcCur');
                 cur.classList.remove('is-swap');
@@ -6929,9 +7004,18 @@
                 cur: 'lrcbCur', base: 'lrcbBase', fill: 'lrcbFill',
                 fillText: 'lrcbFillText', next: 'lrcbNext'
             }, '--lrcb-progress');
+            fitLyricBarLines();
         }
 
         /* ───────── 桌面歌词条：开关 / 拖动 / 锁定 / 设置 ───────── */
+
+        /** #rrggbb → "r, g, b"：CSS 里 rgba(var(--x), .5) 要的是三元组 */
+        function hexToRgbTriplet(hex) {
+            const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+            if (!m) return null;
+            const n = parseInt(m[1], 16);
+            return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+        }
 
         function applyLyricBar() {
             const bar = document.getElementById('lrcBar');
@@ -6939,8 +7023,14 @@
             bar.style.setProperty('--lrcb-size', `${lwState.lrcbSize}px`);
             bar.style.setProperty('--lrcb-alpha', String(lwState.lrcbAlpha));
             bar.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
-            if (lwState.lrcbColor) bar.style.setProperty('--lrcb-key', lwState.lrcbColor);
-            else bar.style.removeProperty('--lrcb-key');
+            const keyTriplet = hexToRgbTriplet(lwState.lrcbColor);
+            if (keyTriplet) {
+                bar.style.setProperty('--lrcb-key', lwState.lrcbColor);
+                bar.style.setProperty('--lrcb-key-rgb', keyTriplet);
+            } else {
+                bar.style.removeProperty('--lrcb-key');
+                bar.style.removeProperty('--lrcb-key-rgb');
+            }
             bar.classList.toggle('pinned', lwState.lrcbPinned);
             bar.classList.toggle('is-clear', lwState.lrcbClear);
             applyLyricBarScale();
@@ -6990,6 +7080,7 @@
             const inc = document.getElementById('lrcbFontInc');
             if (dec) dec.disabled = lwState.lrcbSize <= 16;
             if (inc) inc.disabled = lwState.lrcbSize >= 56;
+            if (!bar.hidden) requestAnimationFrame(fitLyricBarLines);
         }
 
         function toggleLyricBar(force) {
@@ -7111,7 +7202,7 @@
                 if (event.target.closest('.lrcb-stage')) startLyricBarDrag(event);
             });
             applyLyricBarScale();
-            window.addEventListener('resize', applyLyricBarScale);
+            window.addEventListener('resize', () => { applyLyricBarScale(); fitLyricBarLines(); fitWidgetLyricLines(); });
             if (window.ResizeObserver) new ResizeObserver(applyLyricBarScale).observe(bar);
             audio.addEventListener('play', startLyricFrame);
             audio.addEventListener('playing', startLyricFrame);
@@ -7175,6 +7266,7 @@
                 widget.style.width = `${width}px`;
                 widget.style.height = `${height}px`;
                 applyWidgetScale(width, height);
+                fitWidgetLyricLines();
 
                 if (corner.indexOf('w') >= 0) {
                     const left = Math.min(Math.max(0, startLeft + (startW - width)), window.innerWidth - width);
@@ -8914,6 +9006,7 @@
             const widget = document.getElementById('lwVolume');
             if (widget && Math.abs(Number(widget.value) - value) > 0.001) widget.value = String(value);
             if (widget) widget.style.setProperty('--vol', percent);
+            if (main) main.style.setProperty('--vol', percent);
             const percentEl = document.getElementById('volumePercent');
             if (percentEl) percentEl.textContent = percent;
             const muteBtn = document.getElementById('lwMuteBtn');
@@ -9235,6 +9328,8 @@
                 widgetPlay.classList.toggle('is-playing', !!isPlaying);
                 widgetPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
             }
+            const widgetEl = document.getElementById('lyricsWidget');
+            if (widgetEl) widgetEl.classList.toggle('is-playing', !!isPlaying);
             const barPlay = document.getElementById('lrcbPlay');
             if (barPlay) {
                 barPlay.classList.toggle('is-playing', !!isPlaying);
@@ -9416,6 +9511,24 @@
             }
         });
 
+        /** 点悬浮播放器的文件夹名：主菜单 → 音乐 → 展开歌词列表并滚到正在唱的那句 */
+        function openLyricsFromWidget() {
+            if (!lyrics || !lyrics.length) {
+                const hasList = playlist && playlist.length;
+                if (!hasList) return;
+            }
+            toggleMenu(true);
+            openMenuPanel('music');
+            lyricsHiddenByUser = false;
+            if (lyricsPanel) lyricsPanel.classList.add('show');
+            requestAnimationFrame(() => {
+                if (lyrics && lyrics.length) updateLyricLine(true);
+                const nodes = lyricsPanel ? lyricsPanel.querySelectorAll('.lyric-line') : [];
+                const node = nodes[Math.max(0, Math.min(nodes.length - 1, activeLyricIndex))] || nodes[0];
+                if (node && node.scrollIntoView) node.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                else if (lyricsPanel && lyricsPanel.scrollIntoView) lyricsPanel.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            });
+        }
         function toggleLyrics() {
             lyricsPanel.classList.toggle('show');
             lyricsHiddenByUser = !lyricsPanel.classList.contains('show');
