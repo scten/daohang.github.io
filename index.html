@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261027-0520">
+    <meta name="app-version" content="20261027-1553">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -150,24 +150,27 @@
         .playback-btns button:active { transform: scale(0.9); }
 
         .time-display {
-            font-size: 0.7rem;
-            color: #888;
             display: flex;
             justify-content: space-between;
+            font-size: .66rem;
+            color: var(--text-sub);
+            font-variant-numeric: tabular-nums;
+            letter-spacing: .02em;
         }
 
-        /* 音量和模式 */
 
         /* 播放列表 */
         .playlist-item {
-            padding: 4px 8px;
-            border-radius: 5px;
+            padding: 6px 9px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: .72rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            transition: background .18s, color .18s;
         }
-        .playlist-item:hover { background: var(--primary-color); }
+        .playlist-item:hover { background: rgba(var(--primary-rgb), .16); color: var(--primary-strong); }
         .playlist-item.active { color: white; background: var(--primary-color); }
 
         /* --- 搜索框修复 --- */
@@ -254,26 +257,42 @@
         .engine-option img { width: 22px; height: 22px; display: block; pointer-events: none; }
 
         /* 可拖动、平滑的播放进度条（已并入原「进度条样式」的全部属性） */
+        /* 进度条：底板 + 菱形滑块 */
         .progress-container {
             position: relative;
             width: 100%;
-            height: 8px;
-            margin-bottom: 10px;
-            background: #ddd;
-            border-radius: 3px;
-            overflow: visible;
+            height: 14px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            border-radius: 99px;
             cursor: pointer;
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
         }
+        .progress-container::before {
+            content: "";
+            position: absolute; left: 0; right: 0; top: 50%; height: 4px; margin-top: -2px;
+            border-radius: 99px;
+            background: rgba(var(--primary-rgb), .2);
+        }
         #progress-bar {
+            position: relative; z-index: 1;
             width: calc(var(--progress, 0) * 100%);
-            height: 100%;
-            background: var(--primary-color);
-            border-radius: 8px;
+            height: 4px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, rgba(var(--primary-rgb), .55), var(--primary-color));
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), .45);
             pointer-events: none;
             will-change: width;
+        }
+        #progress-bar::after {
+            content: "";
+            position: absolute; right: -5px; top: 50%; width: 10px; height: 10px; margin-top: -5px;
+            background: linear-gradient(150deg, #fff, var(--primary-color));
+            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+            filter: drop-shadow(0 0 5px rgba(var(--primary-rgb), .85));
         }
         .progress-container::after {
             content: "";
@@ -284,13 +303,14 @@
             display: none;
             max-height: 110px;
             overflow-y: auto;
-            margin-top: 9px;
-            padding: 10px 8px;
-            border-radius: 10px;
-            background: rgba(255,255,255,.55);
-            font-size: .78rem;
-            line-height: 1.8;
-            color: #888;
+            margin-top: 10px;
+            padding: 10px 11px;
+            border-radius: 12px;
+            background: rgba(var(--primary-rgb), .08);
+            box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), .13);
+            font-size: .76rem;
+            line-height: 1.75;
+            color: var(--text-sub);
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
@@ -475,93 +495,120 @@
         }
         .menu-section h4 { font-size: 0.9rem; color: var(--primary-strong); margin-bottom: 8px; }
         .input-group { margin-bottom: 9px; text-align: left; }
+        /* 菜单播放器：与悬浮播放器同一套语言 */
         .music-player {
             margin-top: 12px;
-            padding: 11px;
-            background: rgba(255,248,248,.82);
-            border: 1px solid rgba(var(--primary-rgb),.25);
-            border-radius: 16px;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            box-shadow: 0 5px 16px rgba(90,60,60,.06);
+            padding: 13px 13px 12px;
+            border-radius: 18px;
+            background:
+                radial-gradient(120% 150% at 18% 0%, rgba(var(--primary-rgb), .2), transparent 62%),
+                rgba(255, 250, 250, .9);
+            border: 1px solid rgba(var(--primary-rgb), .3);
+            box-shadow: 0 10px 26px rgba(120, 80, 80, .1), inset 0 1px 0 #fff;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             min-width: 0;
             width: 100%;
+        }
+        .mp-head { display: flex; align-items: center; gap: 9px; min-width: 0; margin-bottom: 9px; }
+        .mp-disc {
+            flex: none; width: 24px; height: 24px; border-radius: 50%;
+            background:
+                radial-gradient(circle at 50% 50%, #fff 0 2.4px, transparent 3px),
+                repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .34) 0 1px, transparent 1px 3px),
+                linear-gradient(150deg, color-mix(in srgb, var(--primary-color) 62%, #fff), var(--primary-color));
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), .42), inset 0 0 6px rgba(0, 0, 0, .18);
         }
         .music-info {
-            font-size: .8rem;
-            font-weight: bold;
-            margin-bottom: 8px;
+            flex: 1 1 auto; min-width: 0;
+            font-size: .9rem; font-weight: 700; letter-spacing: .01em;
             color: var(--text-main);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .music-controls-main {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            justify-content: space-between;
-            gap: 8px;
-            margin: 8px 0;
-            min-width: 0;
+            display: flex; flex-direction: column; align-items: stretch;
+            gap: 9px; margin: 9px 0 0; min-width: 0;
         }
-        .playback-btns {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 22px;
-        }
-        .music-extra-controls {
-            width: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-            font-size: 0.7rem;
-        }
-        .volume-ctrl {
-            display: flex;
-            align-items: center;
-            flex: 1 1 125px;
-            min-width: 0;
-            gap: 5px;
-        }
-        .volume-ctrl input {
-            width: auto;
-            min-width: 35px;
-            flex: 1 1 auto;
-            -webkit-appearance: none;
-        }
-        #volumePercent { min-width: 30px; font-size: .68rem; text-align: right; color: #777; }
-        .mode-btns {
-            display: flex;
-            align-items: center;
-            flex: 0 0 auto;
-            gap: 4px;
-            max-width: 100%;
-        }
-        .mode-btns button {
-            padding: 5px 7px;
-            min-height: 26px;
-            max-width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 13px;
-            background: #fcfcfc;
-            color: var(--text-main);
-            font-size: .66rem;
-            line-height: 1;
-            white-space: nowrap;
+        .playback-btns { display: flex; align-items: center; justify-content: center; gap: 7px; }
+        .playback-btns button {
+            flex: none; width: 32px; height: 32px; padding: 0;
+            display: inline-grid; place-items: center;
+            border: 1px solid rgba(var(--primary-rgb), .3);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, .78);
+            color: var(--primary-strong);
             cursor: pointer;
-            transition: background .2s, border-color .2s;
+            transition: background .2s, color .2s, border-color .2s, transform .2s var(--lw-ease);
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
-        .mode-btns button.active {
+        .playback-btns button:hover {
+            background: rgba(var(--primary-rgb), .16);
+            border-color: rgba(var(--primary-rgb), .5);
+            transform: translateY(-1px);
+        }
+        .playback-btns button svg {
+            width: 15px; height: 15px;
+            fill: none; stroke: currentColor; stroke-width: 1.9;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .playback-btns button.active {
             background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 0 14px rgba(var(--primary-rgb), .5);
+        }
+        /* 播放键：横椭圆 */
+        #playBtn {
+            width: 56px; height: 36px; border: 0; border-radius: 999px;
+            background: linear-gradient(150deg, color-mix(in srgb, var(--primary-color) 46%, #fff), var(--primary-color) 62%);
+            color: #fff;
+            box-shadow: 0 7px 18px rgba(var(--primary-rgb), .42), inset 0 1px 0 rgba(255, 255, 255, .8);
+        }
+        #playBtn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        #playBtn svg {
+            width: 16px; height: 16px;
+            fill: currentColor; stroke: none;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+        }
+        #playBtn .mp-ico-pause { display: none; }
+        #playBtn.is-playing .mp-ico-play { display: none; }
+        #playBtn.is-playing .mp-ico-pause { display: block; }
+        #loopBtn .mp-ico-loop-one { display: none; }
+        #loopBtn.active .mp-ico-loop-list { display: none; }
+        #loopBtn.active .mp-ico-loop-one { display: block; }
+        .music-extra-controls {
+            width: 100%; display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: space-between; gap: 8px; min-width: 0;
+        }
+        .volume-ctrl { display: flex; align-items: center; flex: 1 1 auto; min-width: 0; gap: 8px; }
+        .volume-ctrl .mp-ico-vol {
+            flex: none; width: 16px; height: 16px;
+            fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round;
+            color: var(--primary-strong);
+        }
+        #volumeSlider {
+            flex: 1 1 auto; min-width: 40px; height: 4px; margin: 0;
+            -webkit-appearance: none; appearance: none;
+            border-radius: 99px; outline: 0; cursor: pointer;
+            --vol: 80%;
+            background-image: linear-gradient(90deg,
+                var(--primary-color) 0 var(--vol),
+                rgba(var(--primary-rgb), .22) var(--vol) 100%);
+        }
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 11px; height: 11px; border-radius: 50%;
+            background: #fff; border: 2px solid var(--primary-color);
+            box-shadow: 0 1px 5px rgba(var(--primary-rgb), .55);
+        }
+        #volumeSlider::-moz-range-thumb {
+            width: 9px; height: 9px; border: 2px solid var(--primary-color); border-radius: 50%;
+            background: #fff;
+        }
+        #volumePercent {
+            flex: none; min-width: 32px; font-size: .66rem; text-align: right;
+            color: var(--text-sub); font-variant-numeric: tabular-nums;
         }
         .playlist-container {
             margin-top: 8px;
@@ -572,14 +619,19 @@
             padding: 5px;
             font-size: 0.75rem;
         }
-        .lyrics-tools { display: flex; gap: 5px; margin-top: 6px; }
+        .lyrics-tools { display: flex; gap: 6px; margin-top: 8px; }
         .lyrics-tools button {
-            flex: 1; border: 1px solid #eee; border-radius: 8px;
-            padding: 6px 4px; background: rgba(255,255,255,.75);
-            color: #777; font-size: .66rem; cursor: pointer;
+            flex: 1; padding: 7px 6px;
+            border: 1px solid rgba(var(--primary-rgb), .28);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .72);
+            color: var(--primary-strong);
+            font-size: .66rem; cursor: pointer;
+            transition: background .2s, border-color .2s;
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
+        .lyrics-tools button:hover { background: rgba(var(--primary-rgb), .16); }
         .apply-btn {
             width: 100%;
             padding: 10px;
@@ -597,7 +649,6 @@
             .nav-menu { padding-left: 12px; padding-right: 12px; }
             .music-extra-controls { justify-content: center; }
             .volume-ctrl { flex-basis: 100%; }
-            .mode-btns { justify-content: center; }
         }
 
         /* 移动端菜单按钮和透明度按钮增强可点击性 */
@@ -831,7 +882,7 @@
         img[src$="yandex.svg"] {
             filter: brightness(0) saturate(100%) invert(36%) sepia(93%) saturate(3374%) hue-rotate(352deg) brightness(98%) contrast(96%);
         }
-        .apply-btn, .mode-btns button.active, .playlist-item.active, .playlist-item:hover {
+        .apply-btn, .playback-btns button.active, .playlist-item.active, .playlist-item:hover {
             color: var(--primary-contrast);
         }
 
@@ -880,6 +931,10 @@
             --lw-ink: #f2f5ff;
             --lw-ink-dim: rgba(226, 232, 250, .62);
             --lw-ease: cubic-bezier(.22, .8, .24, 1);
+            /* 主题色收在挂件这一层：顶栏的文件夹名和播放区都要用 */
+            --lw-key: var(--primary-strong);
+            --lw-key-rgb: var(--primary-rgb);
+            --lw-ink2: rgba(236, 240, 255, .58);
             position: fixed; right: 20px; bottom: 92px; z-index: 1005;
             width: 340px; max-width: calc(100vw - 24px);
             display: flex; flex-direction: column;
@@ -919,6 +974,17 @@
             animation: lwPulse 2.6s ease-in-out infinite;
         }
         @keyframes lwPulse { 50% { opacity: .3; transform: scale(.8); } }
+        /* 顶栏中间的文件夹名（参考图黑圈的位置）：当前歌从哪个文件夹来 */
+        .lw-head-folder {
+            flex: 1 1 auto; min-width: 0;
+            text-align: center;
+            font-size: .66rem; font-weight: 700; letter-spacing: .12em;
+            color: var(--lw-key);
+            text-shadow: 0 0 12px rgba(var(--lw-key-rgb), .45);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding: 0 6px;
+        }
+        .lw-head-folder:empty { display: none; }
         .lw-tools { display: flex; align-items: center; gap: 2px; }
         .lw-tools button {
             min-width: 26px; height: 26px; padding: 0 6px;
@@ -933,37 +999,46 @@
         .lw-tools button:hover { background: rgba(255, 255, 255, .12); color: #fff; transform: translateY(-1px); }
         .lw-tools button.on { background: rgba(var(--primary-rgb), .92); color: #17110f; }
 
-        /* 播放区：唱片封面 + 曲目 + 进度 + 控制 + 音量（仿鸣潮播放器布局） */
+        /* 顶栏图标：描边 SVG，不带框 */
+        .lw-tools button svg {
+            width: 15px; height: 15px;
+            fill: none; stroke: currentColor;
+            stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+        }
+        #lwPin svg { stroke-width: 1.6; }
+
+        /* 播放区：唱片封面 + 歌词 + 进度 + 控制 + 音量（仿鸣潮播放器布局） */
         .lw-player {
             display: flex; flex-direction: column; gap: 12px;
             padding: 0 14px 12px;
-            --lw-key: var(--primary-strong);
-            --lw-key-rgb: var(--primary-rgb);
-            --lw-ink2: rgba(236, 240, 255, .58);
+            flex: 1 1 auto; min-height: 0; justify-content: flex-start;
         }
 
-        /* 顶行：当前序号 / 总数 ◆ 文件夹名 */
+        /* 顶行：当前序号 / 总数 ◆ 当前歌曲名（参考图红圈的位置） */
         .lw-now {
-            display: flex; align-items: center; justify-content: center; gap: 7px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
             min-width: 0;
-            font-size: .62rem; line-height: 1;
+            font-size: .62rem; line-height: 1.2;
             letter-spacing: .2em;
             color: rgb(var(--lw-key-rgb));
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
         }
-        .lw-now .lw-total { color: var(--lw-ink2); letter-spacing: .18em; }
+        .lw-now .lw-total { flex: none; color: var(--lw-ink2); letter-spacing: .18em; }
         .lw-now .lw-dia {
             flex: none; width: 7px; height: 7px;
             background: linear-gradient(140deg, #fff, rgb(var(--lw-key-rgb)));
             clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
             box-shadow: 0 0 9px rgba(var(--lw-key-rgb), .95);
         }
-        .lw-now .lw-folder {
-            max-width: 60%; overflow: hidden; text-overflow: ellipsis;
-            letter-spacing: .16em; font-weight: 700;
-            color: rgb(var(--lw-key-rgb));
-            text-shadow: 0 0 12px rgba(var(--lw-key-rgb), .45);
+        /* 曲名挪到这一行：跟序号同一基线，像标题一样压在顶部 */
+        .lw-now .lw-track {
+            flex: 0 1 auto; min-width: 0;
+            overflow: hidden; text-overflow: ellipsis;
+            font-size: .92rem; font-weight: 800; line-height: 1.25;
+            letter-spacing: .02em;
+            color: #fff;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, .62), 0 0 18px rgba(var(--lw-key-rgb), .3);
         }
 
         /* 唱片 + 曲名 */
@@ -1001,19 +1076,58 @@
             background: radial-gradient(circle at 38% 32%, #33203c, #07050b 72%);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), 0 0 7px rgba(0, 0, 0, .7);
         }
-        .lw-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+        .lw-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+        /* 曲名的基础样式（它现在住在顶行）。这里只留排版，颜色交给 .lw-now .lw-track */
         .lw-track {
-            font-size: 1.04rem; font-weight: 800; line-height: 1.3; letter-spacing: .01em;
-            color: #fff;
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            font-weight: 800; letter-spacing: .01em;
             overflow: hidden; overflow-wrap: anywhere;
             text-shadow: 0 2px 12px rgba(0, 0, 0, .62);
         }
+        /* 唱片旁边这块改成歌词（参考图黄圈的位置） */
+        .lw-lrc {
+            display: flex; flex-direction: column; gap: 5px;
+            min-width: 0;
+        }
+        .lw-lrc-cur {
+            position: relative;
+            display: block;
+            max-width: 100%;
+            font-size: .98rem; font-weight: 800; line-height: 1.34;
+            color: rgba(236, 242, 255, .5);
+            /* overflow:hidden 会把 text-shadow 裁成方块，这里改用不会被裁的 drop-shadow */
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .8));
+            overflow: hidden;
+            white-space: nowrap; text-overflow: ellipsis;
+            transition: color .25s;
+        }
+        .lw-lrc-fill {
+            position: absolute; left: 0; top: 0;
+            width: calc(var(--lw-lrc-progress, 0) * 100%);
+            overflow: hidden;
+            color: rgb(var(--lw-key-rgb));
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .lw-lrc-fill span { display: block; width: max-content; }
+        .lw-lrc-cur.is-empty { color: var(--lw-ink2); font-weight: 600; font-size: .8rem; }
+        .lw-lrc-cur.is-empty .lw-lrc-fill { display: none; }
+        .lw-lrc-cur.is-swap { animation: lwLrcSwap .3s ease; }
+        @keyframes lwLrcSwap {
+            from { opacity: .25; transform: translateY(5px); }
+            to { opacity: 1; transform: none; }
+        }
+        .lw-lrc-next {
+            font-size: .74rem; line-height: 1.45;
+            color: rgba(226, 234, 255, .42);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 8px rgba(0, 0, 0, .6);
+        }
+        .lw-lrc-next:empty { display: none; }
         .lw-sub {
-            font-size: .64rem; line-height: 1.5; letter-spacing: .04em;
+            font-size: .6rem; line-height: 1.5; letter-spacing: .04em;
             color: var(--lw-ink2);
-            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-            overflow: hidden; overflow-wrap: anywhere;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            opacity: .75;
         }
 
         /* 进度：时间 - 条 - 时间 */
@@ -1047,11 +1161,11 @@
         }
         .lw-progress:hover > div::after { transform: scale(1.06); }
 
-        /* 控制键 */
-        .lw-controls { display: flex; align-items: center; justify-content: center; gap: 13px; }
+        /* 控制键（音量条也在这排里，所以间距收紧一点） */
+        .lw-controls { display: flex; align-items: center; justify-content: center; gap: 6px; }
         .lw-controls button {
             position: relative; flex: 0 0 auto;
-            width: 32px; height: 32px;
+            width: 30px; height: 30px;
             display: inline-grid; place-items: center;
             border: 0; border-radius: 50%;
             background: transparent; color: rgba(242, 245, 255, .82);
@@ -1069,49 +1183,45 @@
         .lw-controls button.on { color: rgb(var(--lw-key-rgb)); background: rgba(var(--lw-key-rgb), .16); }
         .lw-controls button.on svg { stroke-width: 2.2; }
 
-        /* 主按钮：菱形晶体 + 细边方框（参考图中间那颗） */
+        /* 主按钮：横着的椭圆药丸，去掉外框和菱形，直接用整块渐变当鍵面 */
         #lwPlayBtn {
-            width: 48px; height: 48px; border-radius: 14px;
-            border: 1px solid rgba(var(--lw-key-rgb), .5);
-            background: linear-gradient(155deg, rgba(var(--lw-key-rgb), .26), rgba(16, 9, 24, .6));
+            width: 52px; height: 34px; border-radius: 999px;
+            border: 0;
+            background: linear-gradient(150deg, #fff4f8, var(--lw-key) 46%,
+                        color-mix(in srgb, var(--lw-key) 54%, #40102f));
             color: #fff;
-            box-shadow: 0 9px 22px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .22),
-                        0 0 18px rgba(var(--lw-key-rgb), .22);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .42), 0 0 20px rgba(var(--lw-key-rgb), .42);
         }
-        #lwPlayBtn .lw-dia {
-            position: absolute; left: 7px; top: 7px; right: 7px; bottom: 7px;
-            background: linear-gradient(150deg, #fff4f8, var(--lw-key) 44%,
-                        color-mix(in srgb, var(--lw-key) 52%, #40102f));
-            clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-            box-shadow: 0 0 16px rgba(var(--lw-key-rgb), .6);
-        }
-        #lwPlayBtn svg { position: relative; width: 17px; height: 17px; fill: currentColor; stroke: none; }
+        #lwPlayBtn svg { position: relative; width: 16px; height: 16px; fill: currentColor; stroke: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45)); }
         #lwPlayBtn .lw-ico-pause { display: none; }
         #lwPlayBtn.is-playing .lw-ico-play { display: none; }
         #lwPlayBtn.is-playing .lw-ico-pause { display: block; }
         #lwPlayBtn:hover {
             transform: translateY(-1px) scale(1.04);
-            box-shadow: 0 13px 26px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255, 255, 255, .3),
-                        0 0 24px rgba(var(--lw-key-rgb), .38);
+            box-shadow: 0 11px 24px rgba(0, 0, 0, .46), 0 0 26px rgba(var(--lw-key-rgb), .55);
         }
 
         /* 音量 */
-        .lw-volume { display: flex; align-items: center; gap: 9px; }
-        .lw-volume button {
-            flex: none; width: 26px; height: 26px; padding: 0;
+        /* 音量：并进控制排，滑条自己撑开吃掉多余宽度 */
+        .lw-volume {
+            display: flex; align-items: center; gap: 5px;
+            flex: 1 1 44px; min-width: 40px;
+        }
+        .lw-controls .lw-volume button {
+            flex: none; width: 24px; height: 24px; padding: 0;
             display: inline-grid; place-items: center;
             border: 0; border-radius: 8px; background: transparent;
             color: rgba(242, 245, 255, .72); cursor: pointer;
             transition: background .25s, color .25s;
             -webkit-tap-highlight-color: transparent;
         }
-        .lw-volume button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-        .lw-volume button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        .lw-volume button .lw-ico-mute { display: none; }
-        .lw-volume button.is-muted .lw-ico-vol { display: none; }
-        .lw-volume button.is-muted .lw-ico-mute { display: block; }
+        .lw-controls .lw-volume button:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+        .lw-controls .lw-volume button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+        .lw-controls .lw-volume button .lw-ico-mute { display: none; }
+        .lw-controls .lw-volume button.is-muted .lw-ico-vol { display: none; }
+        .lw-controls .lw-volume button.is-muted .lw-ico-mute { display: block; }
         .lw-volume input[type="range"] {
-            flex: 1 1 auto; min-width: 0; height: 4px; margin: 0;
+            flex: 1 1 0; width: 0; min-width: 22px; height: 4px; margin: 0;
             -webkit-appearance: none; appearance: none;
             border-radius: 99px; outline: 0; cursor: pointer;
             --vol: 80%;
@@ -1122,23 +1232,243 @@
         }
         .lw-volume input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; appearance: none;
-            width: 11px; height: 11px; border: 0; border-radius: 0;
+            width: 9px; height: 9px; border: 0; border-radius: 0;
             background: linear-gradient(150deg, #fff, rgb(var(--lw-key-rgb)));
             clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-            filter: drop-shadow(0 0 6px rgba(var(--lw-key-rgb), .9));
+            filter: drop-shadow(0 0 5px rgba(var(--lw-key-rgb), .9));
         }
         .lw-volume input[type="range"]::-moz-range-thumb {
-            width: 11px; height: 11px; border: 0; border-radius: 0;
+            width: 9px; height: 9px; border: 0; border-radius: 0;
             background: linear-gradient(150deg, #fff, rgb(var(--lw-key-rgb)));
             clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
         }
         .lw-volume input[type="range"]::-moz-range-track { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .16); }
-        .lw-vol-pct {
-            flex: none; min-width: 30px; text-align: right;
-            font-size: .58rem; color: var(--lw-ink2); font-variant-numeric: tabular-nums;
+
+        /* 控制行最右边那颗：叫出桌面歌词条（参考图蓝圈的位置） */
+        #lwBarBtn {
+            width: 30px; height: 30px;
+            border: 1px solid rgba(var(--lw-key-rgb), .38);
+            background: rgba(var(--lw-key-rgb), .12);
+            color: rgb(var(--lw-key-rgb));
+        }
+        #lwBarBtn:hover { background: rgba(var(--lw-key-rgb), .24); color: #fff; }
+        #lwBarBtn.on {
+            background: rgb(var(--lw-key-rgb));
+            color: #17110f;
+            border-color: transparent;
+            box-shadow: 0 0 16px rgba(var(--lw-key-rgb), .6);
+        }
+        #lwBarBtn svg { width: 18px; height: 18px; }
+
+        /* ── 桌面歌词条（仿 QQ 音乐那条悬在屏幕下方的歌词条）── */
+        .lrc-bar {
+            /* 稍微偏左一点：播放器常驻右下角，居中的话会正好压住它的设置条 */
+            position: fixed; left: calc(50% - 70px); bottom: 16px;
+            transform: translateX(-50%);
+            z-index: 1006;
+            width: min(600px, calc(100vw - 28px));
+            display: flex; flex-direction: column; gap: 6px;
+            padding: 9px 16px 13px;
+            border-radius: 20px;
+            --lrcb-key: var(--primary-strong);
+            --lrcb-key-rgb: var(--primary-rgb);
+            --lrcb-ink: rgba(238, 244, 255, .96);
+            --lrcb-veil: 1;   /* 背板浓度：透明模式下为 0，鼠标移上来才亮 */
+            isolation: isolate;
+            color: var(--lrcb-ink);
+            font-family: var(--lw-font, 'Segoe UI', 'Microsoft YaHei', sans-serif);
+            user-select: none; -webkit-user-select: none;
+            transition: opacity .3s;
+        }
+        .lrc-bar[hidden] { display: none; }
+        .lrc-bar.dragging { cursor: grabbing; }
+        /* 背板单独一层：透明模式能渐隐渐显，不用硬切背景 */
+        .lrc-bar::after {
+            content: ""; position: absolute; inset: 0; z-index: -1;
+            border-radius: inherit;
+            background-image:
+                radial-gradient(120% 160% at 50% 0%, rgba(var(--lrcb-key-rgb), .16), transparent 62%),
+                linear-gradient(170deg, rgba(16, 20, 36, var(--lrcb-alpha, .82)), rgba(6, 8, 16, var(--lrcb-alpha, .82)));
+            border: 1px solid rgba(255, 255, 255, .14);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, .46), inset 0 1px 0 rgba(255, 255, 255, .12);
+            backdrop-filter: blur(22px) saturate(1.6);
+            -webkit-backdrop-filter: blur(22px) saturate(1.6);
+            opacity: var(--lrcb-veil, 1);
+            transition: opacity .26s var(--lw-ease);
+            pointer-events: none;
+        }
+        .lrc-bar::before {
+            /* 顶上那条细高光，跟参考图一样 */
+            content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent);
+            opacity: var(--lrcb-veil, 1);
+            transition: opacity .26s var(--lw-ease);
+            pointer-events: none;
+        }
+        /* 透明模式：只剩歌词，背板/边框/按钮都收起来，鼠标移上来再显出来 */
+        .lrc-bar.is-clear { --lrcb-veil: 0; }
+        .lrc-bar.is-clear:hover,
+        .lrc-bar.is-clear:focus-within { --lrcb-veil: 1; }
+        .lrc-bar.is-clear .lrcb-tools {
+            opacity: 0; pointer-events: none;
+            transition: opacity .2s var(--lw-ease);
+        }
+        .lrc-bar.is-clear:hover .lrcb-tools,
+        .lrc-bar.is-clear:focus-within .lrcb-tools { opacity: 1; pointer-events: auto; }
+        /* 没有背板托底：补一圈暗影压住浅底（不能用 text-shadow，会被裁成方块） */
+        .lrc-bar.is-clear .lrcb-cur,
+        .lrc-bar.is-clear .lrcb-next {
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .92)) drop-shadow(0 0 10px rgba(0, 0, 0, .72));
+        }
+        /* 按宽度自适应缩放：窄屏把工具排、歌词、设置面板一起缩一点 */
+        .lrcb-tools, .lrcb-stage, .lrcb-panel { zoom: var(--lrcb-scale, 1); }
+
+        .lrcb-tools {
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            cursor: grab; touch-action: none;
+        }
+        .lrc-bar.dragging .lrcb-tools { cursor: grabbing; }
+        .lrc-bar.pinned .lrcb-tools { cursor: default; }
+        .lrcb-tools button {
+            flex: none; width: 30px; height: 30px; padding: 0;
+            display: inline-grid; place-items: center;
+            border: 0; border-radius: 9px; background: transparent;
+            color: rgba(238, 244, 255, .78);
+            cursor: pointer;
+            transition: background .22s, color .22s, transform .22s var(--lw-ease);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .lrcb-tools button svg {
+            width: 17px; height: 17px;
+            fill: none; stroke: currentColor; stroke-width: 1.8;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .lrcb-tools button:hover { background: rgba(255, 255, 255, .14); color: #fff; transform: translateY(-1px); }
+        .lrcb-tools button.on { color: rgb(var(--lrcb-key-rgb)); }
+        .lrcb-tools button:disabled { opacity: .3; cursor: default; transform: none; background: transparent; }
+        /* 播放键实心三角，跟参考图一致 */
+        #lrcbPlay svg { fill: currentColor; stroke: none; width: 18px; height: 18px; }
+        #lrcbPlay .lrcb-ico-pause { display: none; }
+        #lrcbPlay.is-playing .lrcb-ico-play { display: none; }
+        #lrcbPlay.is-playing .lrcb-ico-pause { display: block; }
+        /* 锁：没锁时画开着的锁，锁上才画合上的 */
+        #lrcbLock .lrcb-ico-lock { display: none; }
+        #lrcbLock.on .lrcb-ico-unlock { display: none; }
+        #lrcbLock.on .lrcb-ico-lock { display: block; }
+        .lrcb-sep {
+            flex: none; width: 1px; height: 16px; margin: 0 5px;
+            background: rgba(255, 255, 255, .2);
         }
 
+        /* 歌词本体：底色一层 + 跟着进度涨的一层 */
+        .lrcb-stage {
+            position: relative;
+            min-height: 34px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 2px;
+        }
+        .lrcb-cur {
+            position: relative;
+            max-width: 100%;
+            font-size: var(--lrcb-size, 26px);
+            font-weight: 800; line-height: 1.32;
+            letter-spacing: .01em;
+            text-align: center;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: rgba(232, 240, 255, .42);
+            /* 这里不能用 text-shadow：overflow:hidden 会把大模糊投影裁成一块方底 */
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .85));
+        }
+        .lrcb-fill {
+            position: absolute; left: 0; top: 0;
+            width: calc(var(--lrcb-progress, 0) * 100%);
+            overflow: hidden;
+            color: rgb(var(--lrcb-key-rgb));
+            /* 填充层只靠颜色区分，投影交给外层的 drop-shadow，否则会被裁成灰底方块 */
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .lrcb-fill span { display: block; width: max-content; }
+        .lrcb-cur.is-empty {
+            font-size: calc(var(--lrcb-size, 26px) * .6);
+            font-weight: 600;
+            color: rgba(226, 234, 255, .5);
+        }
+        .lrcb-cur.is-empty .lrcb-fill { display: none; }
+        .lrcb-next {
+            max-width: 100%;
+            font-size: calc(var(--lrcb-size, 26px) * .5);
+            line-height: 1.4;
+            color: rgba(226, 234, 255, .4);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .8));
+        }
+        .lrcb-next:empty { display: none; }
+
+        /* 设置面板：字号 / 颜色 / 不透明度 */
+        .lrcb-panel {
+            display: flex; align-items: center; justify-content: center;
+            flex-wrap: wrap; gap: 8px 12px;
+            padding: 8px 10px 2px;
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            font-size: .6rem; color: rgba(226, 234, 255, .62);
+        }
+        .lrcb-panel[hidden] { display: none; }
+        .lrcb-panel label { display: inline-flex; align-items: center; gap: 6px; }
+        .lrcb-panel input[type="range"] {
+            width: 84px; height: 4px; margin: 0;
+            -webkit-appearance: none; appearance: none;
+            border-radius: 99px; outline: 0; cursor: pointer;
+            --lrcb-vol: 50%;
+            background-image: linear-gradient(90deg,
+                rgb(var(--lrcb-key-rgb)) 0 var(--lrcb-vol),
+                rgba(255, 255, 255, .18) var(--lrcb-vol) 100%);
+        }
+        .lrcb-panel input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 10px; height: 10px; border: 0; border-radius: 50%;
+            background: #fff; box-shadow: 0 0 8px rgba(var(--lrcb-key-rgb), .8);
+        }
+        .lrcb-panel input[type="range"]::-moz-range-thumb {
+            width: 10px; height: 10px; border: 0; border-radius: 50%;
+            background: #fff;
+        }
+        .lrcb-panel input[type="color"] {
+            width: 26px; height: 20px; padding: 0;
+            border: 1px solid rgba(255, 255, 255, .22); border-radius: 6px;
+            background: transparent; cursor: pointer;
+        }
+        .lrcb-panel select {
+            font: inherit; font-size: .6rem;
+            padding: 2px 4px; border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, .2);
+            background: rgba(255, 255, 255, .08); color: inherit;
+        }
+        .lrcb-panel option { background: #14182a; color: #eef2ff; }
+        .lrcb-panel button {
+            width: 22px; height: 22px; padding: 0;
+            border: 0; border-radius: 6px;
+            background: rgba(255, 255, 255, .1); color: inherit;
+            font: inherit; font-size: .62rem; cursor: pointer;
+        }
+        .lrcb-panel button:hover { background: rgba(255, 255, 255, .22); }
+        .lrcb-panel .lrcb-val { min-width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* 星轨肤色 */
+        html[data-skin="wuwa"] .lrc-bar {
+            --lrcb-key: rgb(var(--wuwa-accent));
+            --lrcb-key-rgb: var(--wuwa-accent);
+            background-image:
+                radial-gradient(120% 160% at 50% 0%, rgba(var(--wuwa-accent), .18), transparent 62%),
+                linear-gradient(170deg, rgba(6, 10, 22, var(--lrcb-alpha, .82)), rgba(3, 5, 12, var(--lrcb-alpha, .82)));
+        }
+        html[data-skin="wuwa"] .lrcb-cur {
+            filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .9)) drop-shadow(0 0 14px rgba(var(--wuwa-glow), .25));
+        }
+        html[data-skin="wuwa"] #lwBarBtn { border-color: rgba(var(--wuwa-accent), .42); }
+
         /* 星轨皮肤：换成星轨那套蓝金调 */
+        html[data-skin="wuwa"] .lyrics-widget,
         html[data-skin="wuwa"] .lw-player {
             --lw-key: rgb(var(--wuwa-accent));
             --lw-key-rgb: var(--wuwa-accent);
@@ -1155,11 +1485,9 @@
             background-image: linear-gradient(140deg, rgb(var(--wuwa-accent)), rgba(24, 40, 92, .94));
         }
         html[data-skin="wuwa"] #lwPlayBtn {
-            background: linear-gradient(155deg, rgba(var(--wuwa-accent), .26), rgba(4, 8, 20, .62));
-        }
-        html[data-skin="wuwa"] #lwPlayBtn .lw-dia {
             background: linear-gradient(150deg, #f2f8ff, rgb(var(--wuwa-glow)) 26%,
                         rgb(var(--wuwa-accent)) 62%, rgb(var(--wuwa-gold)));
+            color: #0a1024;
         }
 
         /* 循环键：列表循环 / 单曲循环两个图标按状态互换 */
@@ -1247,46 +1575,11 @@
         }
         .qq-cur.qq-pop { animation: qqPop .28s ease; }
 
-        /* 歌词模式：整块变歌词看板 */
-        .lyrics-widget.lyrics-mode {
-            background-image:
-                radial-gradient(130% 90% at 18% 0%, rgba(var(--primary-rgb), calc(.5 * var(--lw-lyrics-alpha, .35))), transparent 60%),
-                linear-gradient(166deg, rgba(16, 20, 36, var(--lw-lyrics-alpha, .35)), rgba(4, 6, 14, var(--lw-lyrics-alpha, .35)) 74%);
-        }
-        .lyrics-widget.lyrics-mode .lw-player { display: none; }
-        .lyrics-widget.lyrics-mode .lw-body { max-height: none; }
 
-        /* 只看歌词：外壳只留一层可调的深色底 */
-        .lyrics-widget.clean-mode {
-            background-image: none !important;
-            background-color: rgba(6, 8, 16, var(--lw-lyrics-alpha, .35)) !important;
-            border-color: transparent;
-            box-shadow: none;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
-        }
-        .lyrics-widget.clean-mode .lyrics-widget-head,
-        .lyrics-widget.clean-mode .lw-settings { display: none; }
-        .lyrics-widget.clean-mode .lw-body { padding: 2px 6px; max-height: none; }
-        .lyrics-widget.clean-mode .qq-base { opacity: .5; }
-        .lyrics-widget.clean-mode .qq-base,
-        .lyrics-widget.clean-mode .qq-next { text-shadow: 0 1px 6px rgba(0, 0, 0, .85); }
-        .lw-clean-exit {
-            position: absolute; top: 6px; right: 6px; z-index: 3;
-            width: 22px; height: 22px;
-            display: grid; place-items: center;
-            border: 0; border-radius: 50%;
-            background: rgba(255, 255, 255, .14);
-            color: rgba(238, 242, 255, .9);
-            font-size: .66rem; cursor: pointer; opacity: 0;
-            transition: opacity .2s, background .2s;
-        }
-        .lyrics-widget:hover .lw-clean-exit { opacity: .6; }
-        .lw-clean-exit:hover { opacity: 1; background: rgba(255, 255, 255, .26); }
-
-        /* 底部设置条 */
+        /* 底部设置条：透明 / 字体靠右下角摆（参考图棕圈的位置） */
         .lw-settings {
-            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 10px; flex-wrap: wrap;
             padding: 9px 14px 11px;
             border-top: 1px solid rgba(255, 255, 255, .09);
             font-size: .62rem; letter-spacing: .04em; color: var(--lw-ink-dim);
@@ -1325,6 +1618,18 @@
         }
         .lw-settings select option { background: #14182a; color: #eef3ff; }
 
+        /* 自适应缩放：整块按比例收放，字号、图标、间距、滑条一起跟着变 */
+        .lyrics-widget-head, .lw-player, .lw-settings { zoom: var(--lw-scale, 1); }
+
+        /* 兜底：比例已经缩到最小可读还不下，才按这个顺序收，收到刚好够就停。
+           0 级 = 一个都不收（绝大多数尺寸都停在这里）。 */
+        .lyrics-widget[data-lw-compact="1"] .lw-settings { display: none; }
+        .lyrics-widget[data-lw-compact="2"] .lw-settings,
+        .lyrics-widget[data-lw-compact="2"] .lw-seek { display: none; }
+        .lyrics-widget[data-lw-compact="3"] .lw-settings,
+        .lyrics-widget[data-lw-compact="3"] .lw-seek,
+        .lyrics-widget[data-lw-compact="3"] .lw-controls { display: none; }
+
         /* 四角拖拽调整大小 */
         .lw-resize {
             position: absolute;
@@ -1341,7 +1646,19 @@
         @media (max-width: 480px) {
             .lyrics-widget { width: calc(100vw - 28px); right: 14px; bottom: 84px; border-radius: 20px; }
             .lw-body { max-height: 26vh; }
-            #lwPlayBtn { width: 46px; height: 46px; }
+            #lwPlayBtn { width: 50px; height: 33px; }
+            /* 手机上歌词条往上一格，别压住右下角那颗音乐按钮 */
+            .lrc-bar {
+                left: 50%;
+                bottom: 84px;
+                width: calc(100vw - 20px);
+                padding: 7px 10px 10px;
+            }
+            .lrcb-tools { gap: 1px; }
+            .lrcb-tools button { width: 28px; height: 28px; }
+            .lrcb-sep { margin: 0 2px; }
+            .lrcb-panel { gap: 6px 9px; }
+            .lrcb-panel input[type="range"] { width: 64px; }
         }
 
         /* --- 卡片系统：尺寸 / 编辑 / 拖拽 --- */
@@ -2312,13 +2629,38 @@
             box-shadow: 0 14px 34px rgba(0, 0, 0, .5);
         }
         /* 菜单里那块音乐库面板沿用深色玻璃（浮动播放器现在自带独立配色） */
+        html[data-skin="wuwa"] .music-player {
+            background:
+                radial-gradient(120% 150% at 18% 0%, rgba(var(--wuwa-accent), .22), transparent 62%),
+                linear-gradient(170deg, rgba(var(--wuwa-glow), .07), rgba(var(--wuwa-deep), .62));
+            border-color: rgba(var(--wuwa-glow), .22);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+        }
         html[data-skin="wuwa"] .music-info { color: #fff; }
-        html[data-skin="wuwa"] .lyrics-panel { background: rgba(var(--wuwa-glow), .06); color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .time-display { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .playback-btns button {
+            background: rgba(var(--wuwa-glow), .08);
+            border-color: rgba(var(--wuwa-glow), .26);
+            color: rgb(var(--wuwa-glow));
+        }
+        html[data-skin="wuwa"] .playback-btns button:hover {
+            background: rgba(var(--wuwa-accent), .24);
+            border-color: rgba(var(--wuwa-accent), .6);
+        }
+        html[data-skin="wuwa"] .playback-btns button.active {
+            background: rgba(var(--primary-rgb), .9);
+            border-color: transparent;
+            color: var(--primary-contrast);
+            box-shadow: 0 0 16px rgba(var(--primary-rgb), .5);
+        }
+        html[data-skin="wuwa"] .progress-container::before { background: rgba(var(--wuwa-glow), .18); }
+        html[data-skin="wuwa"] #volumePercent { color: var(--wuwa-ink-dim); }
+        html[data-skin="wuwa"] .volume-ctrl .mp-ico-vol { color: rgb(var(--wuwa-glow)); }
+        html[data-skin="wuwa"] .lyrics-panel { background: rgba(var(--wuwa-glow), .06); box-shadow: inset 0 0 0 1px rgba(var(--wuwa-glow), .14); color: var(--wuwa-ink-dim); }
         html[data-skin="wuwa"] .playlist-container { background: rgba(var(--wuwa-glow), .06); }
         html[data-skin="wuwa"] .playlist-item.active,
         html[data-skin="wuwa"] .playlist-item:hover { background: rgba(var(--primary-rgb), .85); color: var(--primary-contrast); }
         html[data-skin="wuwa"] .lyrics-tools button { background: rgba(var(--wuwa-glow), .08); border-color: rgba(var(--wuwa-glow), .18); color: var(--wuwa-ink-dim); }
-        html[data-skin="wuwa"] .mode-btns button { background: rgba(var(--wuwa-deep), .5); border-color: rgba(var(--wuwa-glow), .2); color: var(--wuwa-ink-dim); }
         html[data-skin="wuwa"] .folder-panel {
             background: linear-gradient(170deg, rgba(var(--wuwa-accent), .2), rgba(var(--wuwa-deep), .96) 42%);
             border: 1px solid rgba(var(--wuwa-glow), .26);
@@ -2781,9 +3123,12 @@
         </section>
 
         <section class="menu-section" data-panel="music">
-            <h4>🎵 音乐</h4>
+            <h4>音乐</h4>
             <div class="music-player">
-                <div class="music-info" id="musicName">暂无音乐</div>
+                <div class="mp-head">
+                    <span class="mp-disc" aria-hidden="true"></span>
+                    <span class="music-info" id="musicName">暂无音乐</span>
+                </div>
 
                 <div class="progress-container" id="progressContainer" role="slider" tabindex="0"
                      aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -2796,20 +3141,30 @@
 
                 <div class="music-controls-main">
                     <div class="playback-btns">
-                        <button type="button" onclick="prevTrack()" aria-label="上一首" title="上一首">⏮</button>
-                        <button type="button" id="playBtn" onclick="togglePlay()" aria-label="播放或暂停">▶️</button>
-                        <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">⏭</button>
+                        <button type="button" id="shuffleBtn" onclick="toggleShuffle()" aria-label="随机播放" aria-pressed="false" title="随机播放：关">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h4.2l9.6 10H21"/><path d="M3 17h4.2l9.6-10H21"/><path d="M17.6 3.6L21 6.5l-3.4 2.9"/><path d="M17.6 14.6L21 17.5l-3.4 2.9"/></svg>
+                        </button>
+                        <button type="button" onclick="prevTrack()" aria-label="上一首" title="上一首">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 5.2v13.6L8.4 12z"/><path d="M5.6 5v14"/></svg>
+                        </button>
+                        <button type="button" id="playBtn" onclick="togglePlay()" aria-label="播放或暂停" title="播放 / 暂停">
+                            <svg class="mp-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 5.4l10.2 6.6-10.2 6.6z"/></svg>
+                            <svg class="mp-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.6" y="5.6" width="3.4" height="12.8" rx="1.1"/><rect x="13" y="5.6" width="3.4" height="12.8" rx="1.1"/></svg>
+                        </button>
+                        <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.2v13.6L15.6 12z"/><path d="M18.4 5v14"/></svg>
+                        </button>
+                        <button type="button" id="loopBtn" onclick="toggleLoop()" aria-label="循环模式" aria-pressed="true" title="单曲循环">
+                            <svg class="mp-ico-loop-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/></svg>
+                            <svg class="mp-ico-loop-one" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/><text x="12" y="15.4" text-anchor="middle" font-size="9" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">1</text></svg>
+                        </button>
                     </div>
                     <div class="music-extra-controls">
                         <div class="volume-ctrl">
-                            <span>🔊</span>
+                            <svg class="mp-ico-vol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.6 9.2a4 4 0 010 5.6"/><path d="M18.3 6.6a7.6 7.6 0 010 10.8"/></svg>
                             <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.8"
-                                   oninput="updateVolume(this.value)">
+                                   aria-label="音量" oninput="updateVolume(this.value)">
                             <span id="volumePercent">80%</span>
-                        </div>
-                        <div class="mode-btns">
-                            <button id="shuffleBtn" onclick="toggleShuffle()" aria-label="随机播放">🔀 随机</button>
-                            <button id="loopBtn" onclick="toggleLoop()" aria-label="切换循环模式" title="当前：单曲循环">🔂 单曲</button>
                         </div>
                     </div>
                 </div>
@@ -3074,12 +3429,20 @@
     <section class="lyrics-widget" id="lyricsWidget" hidden aria-label="音乐播放器">
         <header class="lyrics-widget-head" id="lwHead">
             <span class="lw-title">播放器</span>
+            <span class="lw-head-folder" id="lwFolder">未选择文件夹</span>
             <div class="lw-tools">
-                <button type="button" id="lwBackBtn" hidden title="返回播放器" onclick="toggleWidgetLyrics()">返</button>
-                <button type="button" id="lwHideBtn" hidden title="隐藏界面，只显示歌词" onclick="toggleCleanLyrics()">隐</button>
-                <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-pressed="false">钉</button>
-                <button type="button" data-lw="font-dec" title="字号减小">A−</button>
-                <button type="button" data-lw="font-inc" title="字号增大">A+</button>
+                <button type="button" id="lwPin" title="固定位置（禁止拖动）" aria-label="固定位置" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 16.9v4.6"/>
+                        <path d="M9.1 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2v.8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V7.4a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+                    </svg>
+                </button>
+                <button type="button" id="lwFontBtn" data-lw="font-cycle" title="歌词字号" aria-label="歌词字号（点击切换）">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5.4 18.6 12 5.4l6.6 13.2"/>
+                        <path d="M8.3 13.9h7.4"/>
+                    </svg>
+                </button>
                 <button type="button" data-lw="close" title="关闭">✕</button>
             </div>
         </header>
@@ -3088,7 +3451,7 @@
                 <span id="lwIndex">00</span>
                 <span class="lw-total" id="lwTotal">/ 00</span>
                 <span class="lw-dia" aria-hidden="true"></span>
-                <span class="lw-folder" id="lwFolder">未选择文件夹</span>
+                <span class="lw-track" id="lwTrack">暂无音乐</span>
             </div>
             <div class="lw-hero">
                 <div class="lw-disc" aria-hidden="true">
@@ -3096,7 +3459,13 @@
                     <span class="lw-disc-hole"></span>
                 </div>
                 <div class="lw-meta">
-                    <div class="lw-track" id="lwTrack">暂无音乐</div>
+                    <div class="lw-lrc">
+                        <div class="lw-lrc-cur" id="lwLrcCur">
+                            <span class="lw-lrc-base" id="lwLrcBase">载入歌曲后这里跟着唱</span>
+                            <span class="lw-lrc-fill" id="lwLrcFill"><span id="lwLrcFillText">载入歌曲后这里跟着唱</span></span>
+                        </div>
+                        <div class="lw-lrc-next" id="lwLrcNext"></div>
+                    </div>
                     <div class="lw-sub" id="lwSub">选择音乐文件夹后开始播放</div>
                 </div>
             </div>
@@ -3115,9 +3484,8 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 5.2v13.6L8.4 12z"/><path d="M5.6 5v14"/></svg>
                 </button>
                 <button type="button" id="lwPlayBtn" onclick="togglePlay()" aria-label="播放或暂停">
-                    <span class="lw-dia" aria-hidden="true"></span>
-                    <svg class="lw-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.4 5.2l11 6.8-11 6.8z"/></svg>
-                    <svg class="lw-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.2" y="5.4" width="3.6" height="13.2" rx="1.1"/><rect x="13.2" y="5.4" width="3.6" height="13.2" rx="1.1"/></svg>
+                    <svg class="lw-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.2 5.4l10.2 6.6-10.2 6.6z"/></svg>
+                    <svg class="lw-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.6" y="5.6" width="3.4" height="12.8" rx="1.1"/><rect x="13" y="5.6" width="3.4" height="12.8" rx="1.1"/></svg>
                 </button>
                 <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.2v13.6L15.6 12z"/><path d="M18.4 5v14"/></svg>
@@ -3126,19 +3494,17 @@
                     <svg class="lw-ico-loop-list" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/></svg>
                     <svg class="lw-ico-loop-one" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.4V8.2A2.6 2.6 0 015.6 5.6H19"/><path d="M16.6 3.1L19.4 5.6l-2.8 2.5"/><path d="M21 14.6v1.2a2.6 2.6 0 01-2.6 2.6H5"/><path d="M7.4 20.9L4.6 18.4l2.8-2.5"/><text x="12" y="15.2" text-anchor="middle" font-size="8.6" font-family="system-ui, sans-serif" fill="currentColor" stroke="none">1</text></svg>
                 </button>
-            </div>
-            <div class="lw-volume">
-                <button type="button" id="lwMuteBtn" onclick="toggleMute()" aria-label="静音" title="静音">
-                    <svg class="lw-ico-vol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.6 9.2a4 4 0 010 5.6"/><path d="M18.3 6.6a7.6 7.6 0 010 10.8"/></svg>
-                    <svg class="lw-ico-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.8 10l4 4"/><path d="M19.8 10l-4 4"/></svg>
-                </button>
-                <input type="range" id="lwVolume" min="0" max="1" step="0.01" value="0.8"
-                       oninput="updateVolume(this.value)" aria-label="音量">
-                <span class="lw-vol-pct" id="lwVolPct">80%</span>
-                <!-- LYRICS_BTN_MOVED -->
-                <button type="button" id="lwLyricsBtn" onclick="toggleWidgetLyrics()"
-                        aria-label="歌词模式" aria-pressed="false" title="只看歌词">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.4 6.6h13"/><path d="M5.4 11h9.4"/><path d="M5.4 15.4h11.2"/><path d="M5.4 19.8h6.6"/></svg>
+                <!-- 音量并进控制排：静音键 + 短滑条，滑条自己吃掉多余宽度 -->
+                <div class="lw-volume">
+                    <button type="button" id="lwMuteBtn" onclick="toggleMute()" aria-label="静音" title="静音">
+                        <svg class="lw-ico-vol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.6 9.2a4 4 0 010 5.6"/><path d="M18.3 6.6a7.6 7.6 0 010 10.8"/></svg>
+                        <svg class="lw-ico-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 9.4h3.1l4.2-3.6v12.4l-4.2-3.6H4.6z"/><path d="M15.8 10l4 4"/><path d="M19.8 10l-4 4"/></svg>
+                    </button>
+                    <input type="range" id="lwVolume" min="0" max="1" step="0.01" value="0.8"
+                           oninput="updateVolume(this.value)" aria-label="音量">
+                </div>
+                <button type="button" id="lwBarBtn" onclick="toggleLyricBar()" aria-label="桌面歌词条" aria-pressed="false" title="桌面歌词条（仿 QQ 音乐）">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.4" width="18" height="15.2" rx="3.2"/><path d="M7.4 10.2h9.2"/><path d="M7.4 14h5.6"/></svg>
                 </button>
             </div>
         </div>
@@ -3161,8 +3527,65 @@
         <div class="lw-resize is-sw" data-resize="sw" title="拖动左下角调整大小"></div>
         <div class="lw-resize is-ne" data-resize="ne" title="拖动右上角调整大小"></div>
         <div class="lw-resize is-nw" data-resize="nw" title="拖动左上角调整大小"></div>
+    </section>
 
-        <button type="button" class="lw-clean-exit" id="lwCleanExit" hidden onclick="toggleCleanLyrics(false)" title="显示界面">▣</button>
+    <!-- 桌面歌词条：仿 QQ 音乐悬在屏幕下方那条（按钮排 + 逐字变色的歌词） -->
+    <section class="lrc-bar" id="lrcBar" hidden aria-label="桌面歌词条">
+        <div class="lrcb-tools" id="lrcbTools">
+            <button type="button" onclick="lrcbSeek(-5)" aria-label="后退 5 秒" title="后退 5 秒">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.6 12a7.4 7.4 0 107.4-7.4"/><path d="M12 1.9v5.4l-4.2-2.7z" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <button type="button" onclick="prevTrack()" aria-label="上一首" title="上一首">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.5 5.2v13.6L8.4 12z" fill="currentColor" stroke="none"/><path d="M5.6 5v14"/></svg>
+            </button>
+            <button type="button" id="lrcbPlay" onclick="togglePlay()" aria-label="播放或暂停" title="播放 / 暂停">
+                <svg class="lrcb-ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.4 5.2l11 6.8-11 6.8z"/></svg>
+                <svg class="lrcb-ico-pause" viewBox="0 0 24 24" aria-hidden="true"><rect x="7.2" y="5.4" width="3.6" height="13.2" rx="1.1"/><rect x="13.2" y="5.4" width="3.6" height="13.2" rx="1.1"/></svg>
+            </button>
+            <button type="button" onclick="nextTrack()" aria-label="下一首" title="下一首">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.2v13.6L15.6 12z" fill="currentColor" stroke="none"/><path d="M18.4 5v14"/></svg>
+            </button>
+            <button type="button" onclick="lrcbSeek(5)" aria-label="前进 5 秒" title="前进 5 秒">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 12A7.4 7.4 0 1112 4.6"/><path d="M12 1.9v5.4l4.2-2.7z" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <span class="lrcb-sep" aria-hidden="true"></span>
+            <button type="button" id="lrcbClearBtn" onclick="toggleLrcbClear()" aria-label="背景透明，只显示歌词" aria-pressed="false" title="背景透明（只显示歌词，移上来才出按钮）">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.4"/><path d="M12 3.6a8.4 8.4 0 000 16.8z" fill="currentColor" stroke="none"/></svg>
+            </button>
+            <button type="button" id="lrcbLock" onclick="toggleLrcbLock()" aria-label="锁定位置" aria-pressed="false" title="锁定位置">
+                <svg class="lrcb-ico-unlock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.6" width="14" height="9.4" rx="2.4"/><path d="M8.2 10.6V8a3.8 3.8 0 017.6 0"/></svg>
+                <svg class="lrcb-ico-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.6" width="14" height="9.4" rx="2.4"/><path d="M8.2 10.6V8a3.8 3.8 0 017.6 0v2.6"/></svg>
+            </button>
+            <button type="button" id="lrcbSetBtn" onclick="toggleLrcbPanel()" aria-label="歌词设置" aria-expanded="false" title="歌词设置">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.1"/><path d="M19.4 13.4a7.6 7.6 0 000-2.8l1.8-1.3-1.8-3.1-2.1.8a7.6 7.6 0 00-2.4-1.4L14.5 3.4h-3.6l-.4 2.2a7.6 7.6 0 00-2.4 1.4l-2.1-.8-1.8 3.1 1.8 1.3a7.6 7.6 0 000 2.8l-1.8 1.3 1.8 3.1 2.1-.8a7.6 7.6 0 002.4 1.4l.4 2.2h3.6l.4-2.2a7.6 7.6 0 002.4-1.4l2.1.8 1.8-3.1z"/></svg>
+            </button>
+            <button type="button" onclick="toggleLyricBar(false)" aria-label="关闭歌词条" title="关闭">✕</button>
+        </div>
+        <div class="lrcb-stage">
+            <div class="lrcb-cur" id="lrcbCur">
+                <span id="lrcbBase">载入歌曲后这里跟着唱</span>
+                <span class="lrcb-fill" id="lrcbFill"><span id="lrcbFillText">载入歌曲后这里跟着唱</span></span>
+            </div>
+            <div class="lrcb-next" id="lrcbNext"></div>
+        </div>
+        <div class="lrcb-panel" id="lrcbPanel" hidden>
+            <label>字号
+                <button type="button" id="lrcbFontDec" onclick="lrcbFont(-2)" aria-label="字号减小">A−</button>
+                <button type="button" id="lrcbFontInc" onclick="lrcbFont(2)" aria-label="字号增大">A+</button>
+                <span class="lrcb-val" id="lrcbSizeVal">26px</span>
+            </label>
+            <label>底色 <input type="range" id="lrcbAlpha" min="0" max="1" step="0.05" value="0.82"></label>
+            <label>字色 <input type="color" id="lrcbColor" value="#ff8c94"></label>
+            <label>字体
+                <select id="lrcbFont">
+                    <option value="system">默认</option>
+                    <option value="yahei">雅黑</option>
+                    <option value="kai">楷体</option>
+                    <option value="song">宋体</option>
+                    <option value="mono">等宽</option>
+                </select>
+            </label>
+        </div>
     </section>
 
 
@@ -6158,7 +6581,16 @@
             cleanWidth: null,
             cleanHeight: null,
             lyricsAlpha: 0.35,
-            lyricsColor: null
+            lyricsColor: null,
+            /* 桌面歌词条（仿 QQ 音乐）自己的状态 */
+            lrcbOpen: false,
+            lrcbPinned: false,
+            lrcbClear: false,
+            lrcbAlpha: 0.8,
+            lrcbSize: 26,
+            lrcbColor: null,
+            lrcbLeft: null,
+            lrcbTop: null
         };
 
         /* 播放器和「只看歌词」各记一套尺寸：纯歌词只有几行字，可以缩得很小 */
@@ -6166,6 +6598,22 @@
             player: { width: 260, height: 180 },
             clean: { width: 120, height: 54 }
         };
+        /* 顶栏那颗 A 点一下换一档字号，点到头回到最小 */
+        const LW_FONT_STEPS = [16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36];
+        function cycleWidgetFontSize() {
+            const cur = Number(lwState.fontSize) || 22;
+            const next = LW_FONT_STEPS.find(v => v > cur + .5);
+            lwState.fontSize = next == null ? LW_FONT_STEPS[0] : next;
+            applyLyricsWidget();
+            saveLyricsWidgetState();
+        }
+        function syncWidgetFontBtn() {
+            const btn = document.getElementById('lwFontBtn');
+            if (!btn) return;
+            const size = Math.round(Number(lwState.fontSize) || 22);
+            btn.title = `歌词字号 ${size}px（点击切换）`;
+            btn.setAttribute('aria-label', `歌词字号 ${size}px，点击切换`);
+        }
 
         function loadLyricsWidgetState() {
             try {
@@ -6185,6 +6633,16 @@
                 if (typeof saved.lyricsColor === 'string' && /^#[0-9a-f]{6}$/i.test(saved.lyricsColor)) {
                     lwState.lyricsColor = saved.lyricsColor;
                 }
+                /* 歌词条那套 */
+                if (typeof saved.lrcbPinned === 'boolean') lwState.lrcbPinned = saved.lrcbPinned;
+                if (typeof saved.lrcbClear === 'boolean') lwState.lrcbClear = saved.lrcbClear;
+                if (Number.isFinite(saved.lrcbAlpha)) lwState.lrcbAlpha = Math.min(1, Math.max(0, saved.lrcbAlpha));
+                if (Number.isFinite(saved.lrcbSize)) lwState.lrcbSize = Math.min(56, Math.max(16, saved.lrcbSize));
+                if (typeof saved.lrcbColor === 'string' && /^#[0-9a-f]{6}$/i.test(saved.lrcbColor)) {
+                    lwState.lrcbColor = saved.lrcbColor;
+                }
+                if (Number.isFinite(saved.lrcbLeft)) lwState.lrcbLeft = saved.lrcbLeft;
+                if (Number.isFinite(saved.lrcbTop)) lwState.lrcbTop = saved.lrcbTop;
             } catch (error) {}
         }
 
@@ -6205,6 +6663,7 @@
             pin.setAttribute('aria-pressed', String(lwState.pinned));
             pin.classList.toggle('on', lwState.pinned);
             widget.classList.toggle('pinned', lwState.pinned);
+            syncWidgetFontBtn();
 
             if (lwState.left != null && lwState.top != null) {
                 const width = Math.min(320, window.innerWidth - 24);
@@ -6215,11 +6674,10 @@
                 widget.style.right = 'auto';
                 widget.style.bottom = 'auto';
             }
-            // 播放器 / 歌词模式各用各的尺寸；歌词模式最小可以缩到 120×54
-            const cleanMode = widget.classList.contains('clean-mode');
-            const minSize = cleanMode ? LW_MIN_SIZE.clean : LW_MIN_SIZE.player;
-            const wantWidth = cleanMode ? lwState.cleanWidth : lwState.width;
-            const wantHeight = cleanMode ? lwState.cleanHeight : lwState.height;
+            // 播放器尺寸：最小可以缩到 260×180
+            const minSize = LW_MIN_SIZE.player;
+            const wantWidth = lwState.width;
+            const wantHeight = lwState.height;
             if (Number.isFinite(wantWidth)) {
                 widget.style.width = `${Math.max(minSize.width, Math.min(wantWidth, Math.max(minSize.width, window.innerWidth - 8)))}px`;
             } else {
@@ -6250,21 +6708,15 @@
                     || getComputedStyle(widget).getPropertyValue('--primary-strong').trim()
                     || '#ff8c94';
             }
+            applyWidgetScale();
         }
 
         function toggleLyricsWidget(force) {
             const widget = document.getElementById('lyricsWidget');
 
-            // 点主页按钮：关着 -> 打开播放器；在歌词模式 -> 回到播放器；在播放器 -> 收起
+            // 点主页那颗按钮：关着就打开，开着就收起
             if (typeof force !== 'boolean') {
-                if (widget.hidden) {
-                    toggleLyricsWidget(true);
-                    toggleWidgetLyrics(false);
-                } else if (widget.classList.contains('lyrics-mode')) {
-                    toggleWidgetLyrics(false);
-                } else {
-                    toggleLyricsWidget(false);
-                }
+                toggleLyricsWidget(widget.hidden);
                 return;
             }
 
@@ -6280,6 +6732,10 @@
                 updateWidgetPlayer();
                 syncVolumeControls(audio.volume);
                 syncModeButtons();
+                // 手机上一边只留一块：重新打开播放器就把歌词条收掉
+                if (window.innerWidth <= 480) toggleLyricBar(false);
+                applyLyricBar();
+                if (lwState.lrcbOpen) toggleLyricBar(true);
             }
         }
 
@@ -6305,6 +6761,9 @@
             next.className = 'qq-line qq-next';
             next.id = 'qqNext';
             body.append(current, next);
+            // 播放器里那块和桌面歌词条一起刷，省得两处各写一遍
+            syncPlayerLyric();
+            syncLyricBar();
             if (!lyrics.length) {
                 base.textContent = '选好音乐并载入歌词后，这里会显示双行歌词。';
                 return;
@@ -6347,6 +6806,340 @@
             if (fill) fill.style.setProperty('--progress', String(progress));
         }
 
+        /* ───────── 歌词行：播放器里那块 + 桌面歌词条，共用一套取数 ───────── */
+
+        /** 当前该唱哪一句、下一句是什么、这一句唱了多少（0~1） */
+        /** 只算进度、不动文字 */
+        function currentLyricProgress() {
+            if (!lyrics.length) return null;
+            const index = activeLyricIndex < 0 ? 0 : activeLyricIndex;
+            const current = lyrics[index];
+            if (!current) return null;
+            const next = lyrics[index + 1] || null;
+            const start = current.time || 0;
+            const end = next ? next.time : (Number.isFinite(audio.duration) ? audio.duration : start + 4);
+            const span = Math.max(0.2, end - start);
+            return Math.max(0, Math.min(1, (audio.currentTime - start) / span));
+        }
+
+        /* timeupdate 每 250ms 才来一次，拿它画逐字填充是一格一格跳的；播放时改成每帧推一次进度 */
+        let lyricFrame = 0;
+        function stopLyricFrame() {
+            if (lyricFrame) {
+                cancelAnimationFrame(lyricFrame);
+                lyricFrame = 0;
+            }
+        }
+        function startLyricFrame() {
+            stopLyricFrame();
+            const tick = () => {
+                lyricFrame = 0;
+                if (audio.paused || audio.ended) return;
+                const progress = currentLyricProgress();
+                if (progress != null) {
+                    const widget = document.getElementById('lyricsWidget');
+                    const widgetFill = widget && !widget.hidden ? document.getElementById('lwLrcFill') : null;
+                    if (widgetFill) widgetFill.style.setProperty('--lw-lrc-progress', String(progress));
+                    const bar = document.getElementById('lrcBar');
+                    const barFill = bar && !bar.hidden ? document.getElementById('lrcbFill') : null;
+                    if (barFill) barFill.style.setProperty('--lrcb-progress', String(progress));
+                }
+                lyricFrame = requestAnimationFrame(tick);
+            };
+            lyricFrame = requestAnimationFrame(tick);
+        }
+
+        function lyricSnapshot() {
+            if (!lyrics.length) return null;
+            const index = activeLyricIndex < 0 ? 0 : activeLyricIndex;
+            const current = lyrics[index] || { text: '', time: 0 };
+            const next = lyrics[index + 1] || null;
+            return {
+                text: current.text || '♪',
+                next: next ? (next.text || '♪') : '',
+                progress: currentLyricProgress() || 0
+            };
+        }
+
+        /** 没歌词时说什么：有歌就说这首歌没歌词，没歌就提示去选 */
+        function lyricPlaceholder() {
+            if (!playlist.length) return '选好音乐后，这里跟着唱';
+            return '这首歌还没有歌词';
+        }
+
+        /**
+         * 一把梭：把某一组歌词元素刷成当前状态。
+         * ids = { cur, base, fill, fillText, next }，progressVar 是给哪条 CSS 变量设进度。
+         */
+        function paintLyricRow(ids, progressVar) {
+            const cur = document.getElementById(ids.cur);
+            const base = document.getElementById(ids.base);
+            if (!cur || !base) return false;
+            const fill = document.getElementById(ids.fill);
+            const fillText = document.getElementById(ids.fillText);
+            const nextEl = document.getElementById(ids.next);
+
+            const snap = lyricSnapshot();
+            if (!snap) {
+                const tip = lyricPlaceholder();
+                const changed = base.textContent !== tip;
+                cur.classList.add('is-empty');
+                if (changed) base.textContent = tip;
+                if (fillText) fillText.textContent = tip;
+                if (nextEl) nextEl.textContent = '';
+                if (fill) fill.style.setProperty(progressVar, '0');
+                return changed;
+            }
+
+            cur.classList.remove('is-empty');
+            const changed = base.textContent !== snap.text;
+            if (changed) {
+                base.textContent = snap.text;
+                if (fillText) fillText.textContent = snap.text;   // 填充层要和底色一模一样宽才对齐
+            }
+            if (nextEl) {
+                const nextText = snap.next;
+                if (nextEl.textContent !== nextText) nextEl.textContent = nextText;
+            }
+            if (fill) fill.style.setProperty(progressVar, String(snap.progress));
+            return changed;
+        }
+
+        /** 播放器唱片右边那块歌词 */
+        function syncPlayerLyric() {
+            const widget = document.getElementById('lyricsWidget');
+            if (!widget || widget.hidden) return;
+            const changed = paintLyricRow({
+                cur: 'lwLrcCur', base: 'lwLrcBase', fill: 'lwLrcFill',
+                fillText: 'lwLrcFillText', next: 'lwLrcNext'
+            }, '--lw-lrc-progress');
+            if (changed && !document.getElementById('lwLrcCur').classList.contains('is-empty')) {
+                const cur = document.getElementById('lwLrcCur');
+                cur.classList.remove('is-swap');
+                void cur.offsetWidth;
+                cur.classList.add('is-swap');
+            }
+        }
+
+        /** 桌面歌词条那行大歌词 */
+        function syncLyricBar() {
+            const bar = document.getElementById('lrcBar');
+            if (!bar || bar.hidden) return;
+            paintLyricRow({
+                cur: 'lrcbCur', base: 'lrcbBase', fill: 'lrcbFill',
+                fillText: 'lrcbFillText', next: 'lrcbNext'
+            }, '--lrcb-progress');
+        }
+
+        /* ───────── 桌面歌词条：开关 / 拖动 / 锁定 / 设置 ───────── */
+
+        function applyLyricBar() {
+            const bar = document.getElementById('lrcBar');
+            if (!bar) return;
+            bar.style.setProperty('--lrcb-size', `${lwState.lrcbSize}px`);
+            bar.style.setProperty('--lrcb-alpha', String(lwState.lrcbAlpha));
+            bar.style.setProperty('--lw-font', LW_FONTS[lwState.font] || LW_FONTS.system);
+            if (lwState.lrcbColor) bar.style.setProperty('--lrcb-key', lwState.lrcbColor);
+            else bar.style.removeProperty('--lrcb-key');
+            bar.classList.toggle('pinned', lwState.lrcbPinned);
+            bar.classList.toggle('is-clear', lwState.lrcbClear);
+            applyLyricBarScale();
+
+            const clearBtn = document.getElementById('lrcbClearBtn');
+            if (clearBtn) {
+                clearBtn.classList.toggle('on', lwState.lrcbClear);
+                clearBtn.setAttribute('aria-pressed', String(lwState.lrcbClear));
+                clearBtn.title = lwState.lrcbClear ? '恢复背景' : '背景透明（只显示歌词，移上来才出按钮）';
+            }
+
+            const lock = document.getElementById('lrcbLock');
+            if (lock) {
+                lock.classList.toggle('on', lwState.lrcbPinned);
+                lock.setAttribute('aria-pressed', String(lwState.lrcbPinned));
+                lock.title = lwState.lrcbPinned ? '解锁位置' : '锁定位置';
+            }
+            if (lwState.lrcbLeft != null && lwState.lrcbTop != null) {
+                // 拖过就按记下的位置摆，不再居中
+                const box = bar.getBoundingClientRect();
+                const maxLeft = Math.max(4, window.innerWidth - box.width - 4);
+                const maxTop = Math.max(4, window.innerHeight - box.height - 4);
+                bar.style.left = `${Math.min(Math.max(4, lwState.lrcbLeft), maxLeft)}px`;
+                bar.style.top = `${Math.min(Math.max(4, lwState.lrcbTop), maxTop)}px`;
+                bar.style.bottom = 'auto';
+                bar.style.transform = 'none';
+            } else {
+                bar.style.left = '';
+                bar.style.top = '';
+                bar.style.bottom = '';
+                bar.style.transform = '';
+            }
+
+            const alpha = document.getElementById('lrcbAlpha');
+            if (alpha) {
+                alpha.value = String(lwState.lrcbAlpha);
+                alpha.style.setProperty('--lrcb-vol', `${Math.round(lwState.lrcbAlpha * 100)}%`);
+            }
+            const color = document.getElementById('lrcbColor');
+            if (color) color.value = lwState.lrcbColor || lwState.lyricsColor || '#ff8c94';
+            const fontSel = document.getElementById('lrcbFont');
+            if (fontSel) fontSel.value = LW_FONTS[lwState.font] ? lwState.font : 'system';
+            const panelSize = document.getElementById('lrcbSizeVal');
+            if (panelSize) panelSize.textContent = `${lwState.lrcbSize}px`;
+            // 字号按钮到边界就别再点了
+            const dec = document.getElementById('lrcbFontDec');
+            const inc = document.getElementById('lrcbFontInc');
+            if (dec) dec.disabled = lwState.lrcbSize <= 16;
+            if (inc) inc.disabled = lwState.lrcbSize >= 56;
+        }
+
+        function toggleLyricBar(force) {
+            const bar = document.getElementById('lrcBar');
+            if (!bar) return;
+            const on = typeof force === 'boolean' ? force : bar.hidden;
+            bar.hidden = !on;
+            lwState.lrcbOpen = on;
+            const btn = document.getElementById('lwBarBtn');
+            if (btn) {
+                btn.classList.toggle('on', on);
+                btn.setAttribute('aria-pressed', String(on));
+            }
+            if (on) {
+                // 手机上就一块地方：开了歌词条就把播放器收起来，别叠在一起
+                if (window.innerWidth <= 480) toggleLyricsWidget(false);
+                applyLyricBar();
+                syncLyricBar();
+            } else {
+                const panel = document.getElementById('lrcbPanel');
+                if (panel) panel.hidden = true;
+                const setBtn = document.getElementById('lrcbSetBtn');
+                if (setBtn) setBtn.setAttribute('aria-expanded', 'false');
+            }
+            saveLyricsWidgetState();
+        }
+
+        /** 歌词条上的快进快退：一次 ±5 秒 */
+        function lrcbSeek(seconds) {
+            if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+            audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + Number(seconds || 0)));
+            updateWidgetPlayer();
+            updateLyricLine();
+            syncLyricBar();
+            syncPlayerLyric();
+        }
+
+        function toggleLrcbLock() {
+            lwState.lrcbPinned = !lwState.lrcbPinned;
+            applyLyricBar();
+            saveLyricsWidgetState();
+        }
+
+        /* 透明模式：只留歌词，背板/边框/按钮悬停再出现 */
+        function toggleLrcbClear() {
+            lwState.lrcbClear = !lwState.lrcbClear;
+            applyLyricBar();
+            saveLyricsWidgetState();
+        }
+
+        /* 歌词条按宽度自适应缩放 */
+        function applyLyricBarScale() {
+            const bar = document.getElementById('lrcBar');
+            if (!bar) return;
+            const width = bar.clientWidth || Math.min(600, window.innerWidth - 28);
+            const scale = Math.max(.82, Math.min(1.15, width / 600));
+            bar.style.setProperty('--lrcb-scale', String(Math.round(scale * 1000) / 1000));
+        }
+
+        function toggleLrcbPanel() {
+            const panel = document.getElementById('lrcbPanel');
+            if (!panel) return;
+            const on = panel.hidden;
+            panel.hidden = !on;
+            const btn = document.getElementById('lrcbSetBtn');
+            if (btn) btn.setAttribute('aria-expanded', String(on));
+            if (on) applyLyricBar();
+        }
+
+        function lrcbFont(delta) {
+            lwState.lrcbSize = Math.min(56, Math.max(16, lwState.lrcbSize + Number(delta || 0)));
+            applyLyricBar();
+            saveLyricsWidgetState();
+        }
+
+        function startLyricBarDrag(event) {
+            if (lwState.lrcbPinned) return;
+            if (event.target.closest('button, input, select')) return;
+            const bar = document.getElementById('lrcBar');
+            if (!bar) return;
+            const rect = bar.getBoundingClientRect();
+            const offsetX = event.clientX - rect.left;
+            const offsetY = event.clientY - rect.top;
+            event.preventDefault();
+            bar.classList.add('dragging');
+
+            const move = (e) => {
+                const maxLeft = Math.max(4, window.innerWidth - bar.offsetWidth - 4);
+                const maxTop = Math.max(4, window.innerHeight - bar.offsetHeight - 4);
+                const left = Math.min(Math.max(4, e.clientX - offsetX), maxLeft);
+                const top = Math.min(Math.max(4, e.clientY - offsetY), maxTop);
+                bar.style.left = `${left}px`;
+                bar.style.top = `${top}px`;
+                bar.style.bottom = 'auto';
+                bar.style.transform = 'none';
+            };
+            const end = () => {
+                document.removeEventListener('pointermove', move);
+                document.removeEventListener('pointerup', end);
+                document.removeEventListener('pointercancel', end);
+                bar.classList.remove('dragging');
+                const box = bar.getBoundingClientRect();
+                lwState.lrcbLeft = Math.round(box.left);
+                lwState.lrcbTop = Math.round(box.top);
+                saveLyricsWidgetState();
+            };
+            document.addEventListener('pointermove', move);
+            document.addEventListener('pointerup', end);
+            document.addEventListener('pointercancel', end);
+        }
+
+        function initLyricBar() {
+            const bar = document.getElementById('lrcBar');
+            if (!bar) return;
+            const tools = document.getElementById('lrcbTools');
+            if (tools) tools.addEventListener('pointerdown', startLyricBarDrag);
+            bar.addEventListener('pointerdown', (event) => {
+                // 歌词本体也能拖着走，跟 QQ 那条一样
+                if (event.target.closest('.lrcb-stage')) startLyricBarDrag(event);
+            });
+            applyLyricBarScale();
+            window.addEventListener('resize', applyLyricBarScale);
+            if (window.ResizeObserver) new ResizeObserver(applyLyricBarScale).observe(bar);
+            audio.addEventListener('play', startLyricFrame);
+            audio.addEventListener('playing', startLyricFrame);
+            audio.addEventListener('seeked', startLyricFrame);
+            audio.addEventListener('pause', stopLyricFrame);
+            audio.addEventListener('ended', stopLyricFrame);
+
+            const alpha = document.getElementById('lrcbAlpha');
+            if (alpha) alpha.addEventListener('input', function () {
+                lwState.lrcbAlpha = Math.min(1, Math.max(0, Number(this.value)));
+                applyLyricBar();
+                saveLyricsWidgetState();
+            });
+            const color = document.getElementById('lrcbColor');
+            if (color) color.addEventListener('input', function () {
+                lwState.lrcbColor = this.value;
+                applyLyricBar();
+                saveLyricsWidgetState();
+            });
+            const fontSel = document.getElementById('lrcbFont');
+            if (fontSel) fontSel.addEventListener('change', function () {
+                lwState.font = LW_FONTS[this.value] ? this.value : 'system';
+                applyLyricsWidget();
+                applyLyricBar();
+                saveLyricsWidgetState();
+            });
+        }
+
         function scrollFloatingLine(node) {
             const body = document.getElementById('lwBody');
             const bodyRect = body.getBoundingClientRect();
@@ -6370,8 +7163,7 @@
             const startH = rect.height;
             const startLeft = rect.left;
             const startTop = rect.top;
-            const cleanMode = widget.classList.contains('clean-mode');
-            const minSize = cleanMode ? LW_MIN_SIZE.clean : LW_MIN_SIZE.player;
+            const minSize = LW_MIN_SIZE.player;
             const maxWidth = Math.max(minSize.width, window.innerWidth - 8);
             const maxHeight = Math.max(minSize.height, window.innerHeight - 8);
 
@@ -6382,6 +7174,7 @@
                 const height = Math.min(maxHeight, Math.max(minSize.height, startH + (corner.indexOf('s') >= 0 ? dy : -dy)));
                 widget.style.width = `${width}px`;
                 widget.style.height = `${height}px`;
+                applyWidgetScale(width, height);
 
                 if (corner.indexOf('w') >= 0) {
                     const left = Math.min(Math.max(0, startLeft + (startW - width)), window.innerWidth - width);
@@ -6399,13 +7192,8 @@
                 document.removeEventListener('pointerup', end);
                 document.removeEventListener('pointercancel', end);
                 const box = widget.getBoundingClientRect();
-                if (cleanMode) {
-                    lwState.cleanWidth = Math.round(box.width);
-                    lwState.cleanHeight = Math.round(box.height);
-                } else {
-                    lwState.width = Math.round(box.width);
-                    lwState.height = Math.round(box.height);
-                }
+                lwState.width = Math.round(box.width);
+                lwState.height = Math.round(box.height);
                 lwState.left = Math.round(box.left);
                 lwState.top = Math.round(box.top);
                 saveLyricsWidgetState();
@@ -6466,6 +7254,51 @@
             saveLyricsWidgetState();
         }
 
+        /* 先整体缩放，缩到可读下限还塞不下才逐层收；收一层量一次，塞得下立刻停 */
+        const LW_BASE_WIDTH = 340;    // 默认宽度，scale = 1 的基准
+        const LW_BASE_HEIGHT = 288;   // 全部控件都在时大约多高（scale = 1）
+        const LW_MIN_SCALE = .72;     // 缩放下限：再小字就看不清了，往下才考虑收
+        /* 量内容自然高度：临时放开高度，同一帧内还原，不会闪 */
+        function measureWidgetNatural(widget) {
+            const keep = widget.style.height;
+            widget.style.height = 'auto';
+            const natural = widget.getBoundingClientRect().height;
+            widget.style.height = keep;
+            return natural;
+        }
+        function applyWidgetScale(liveWidth, liveHeight) {
+            const widget = document.getElementById('lyricsWidget');
+            if (!widget) return;
+            const width = Number.isFinite(liveWidth) ? liveWidth
+                : (Number.isFinite(lwState.width) ? lwState.width : (widget.clientWidth || LW_BASE_WIDTH));
+            // 高度只有手动拖过大小才是准的；自动撑开时不能拿它算比例，否则会自己越缩越小
+            const height = Number.isFinite(liveHeight) ? liveHeight : lwState.height;
+            let scale = (width || LW_BASE_WIDTH) / LW_BASE_WIDTH;
+            if (Number.isFinite(height) && height > 0) {
+                scale = Math.min(scale, height / LW_BASE_HEIGHT);
+            }
+            scale = Math.max(LW_MIN_SCALE, Math.min(1.4, scale));
+            widget.dataset.lwCompact = '0';
+            widget.style.setProperty('--lw-scale', String(Math.round(scale * 1000) / 1000));
+            if (!Number.isFinite(height) || height <= 0) return;
+
+            // 1) 先靠缩放把事情解决（按超出多少回缩，缩到可读下限为止）
+            let natural = measureWidgetNatural(widget);
+            if (natural > height + 1 && scale > LW_MIN_SCALE) {
+                const want = Math.max(LW_MIN_SCALE, Math.min(scale, scale * (height / natural)));
+                if (want < scale - .002) {
+                    scale = want;
+                    widget.style.setProperty('--lw-scale', String(Math.round(scale * 1000) / 1000));
+                    natural = measureWidgetNatural(widget);
+                }
+            }
+            // 2) 缩到底还塞不下，才一层层收，收一层量一次，塞得下立刻停
+            for (let level = 1; level <= 3 && natural > height + 1; level += 1) {
+                widget.dataset.lwCompact = String(level);
+                natural = measureWidgetNatural(widget);
+            }
+        }
+
         function initLyricsWidget() {
             loadLyricsWidgetState();
             applyLyricsWidget();
@@ -6493,10 +7326,8 @@
                 if (!btn) return;
                 if (btn.id === 'lwPin') {
                     lwState.pinned = !lwState.pinned;
-                } else if (btn.dataset.lw === 'font-dec') {
-                    lwState.fontSize = Math.max(14, lwState.fontSize - 2);
-                } else if (btn.dataset.lw === 'font-inc') {
-                    lwState.fontSize = Math.min(36, lwState.fontSize + 2);
+                } else if (btn.dataset.lw === 'font-cycle') {
+                    cycleWidgetFontSize();
                 } else if (btn.dataset.lw === 'close') {
                     toggleLyricsWidget(false);
                     return;
@@ -6518,18 +7349,6 @@
                 lwState.lyricsColor = this.value;
                 applyLyricsWidget();
                 saveLyricsWidgetState();
-            });
-
-            const body = document.getElementById('lwBody');
-            body.addEventListener('pointerdown', (event) => {
-                const widget = document.getElementById('lyricsWidget');
-                if (!widget.classList.contains('clean-mode')) return;
-                if (event.target.closest('button')) return;
-                startLyricsWidgetDrag(event);
-            });
-            body.addEventListener('dblclick', () => {
-                const widget = document.getElementById('lyricsWidget');
-                if (widget.classList.contains('clean-mode')) toggleCleanLyrics(false);
             });
         }
 
@@ -8097,8 +8916,6 @@
             if (widget) widget.style.setProperty('--vol', percent);
             const percentEl = document.getElementById('volumePercent');
             if (percentEl) percentEl.textContent = percent;
-            const pctEl = document.getElementById('lwVolPct');
-            if (pctEl) pctEl.textContent = percent;
             const muteBtn = document.getElementById('lwMuteBtn');
             if (muteBtn) {
                 const muted = value <= 0.001;
@@ -8119,7 +8936,8 @@
             const shuffleMain = document.getElementById('shuffleBtn');
             if (shuffleMain) {
                 shuffleMain.classList.toggle('active', isShuffle);
-                shuffleMain.textContent = isShuffle ? '🔀 随机开' : '🔀 随机';
+                shuffleMain.setAttribute('aria-pressed', String(isShuffle));
+                shuffleMain.title = isShuffle ? '随机播放：开' : '随机播放：关';
             }
             const button = document.getElementById('lwShuffleBtn');
             if (button) {
@@ -8130,8 +8948,8 @@
             const loopMain = document.getElementById('loopBtn');
             if (loopMain) {
                 loopMain.classList.toggle('active', isLoop);
-                loopMain.textContent = isLoop ? '🔂 单曲' : '🔁 列表';
-                loopMain.title = isLoop ? '当前：单曲循环，点击切换为列表循环' : '当前：列表循环，点击切换为单曲循环';
+                loopMain.setAttribute('aria-pressed', String(isLoop));
+                loopMain.title = isLoop ? '单曲循环，点击切换为列表循环' : '列表循环，点击切换为单曲循环';
             }
             const loopBtn = document.getElementById('lwLoopBtn');
             if (loopBtn) {
@@ -8308,14 +9126,14 @@
                 return false;
             }
 
-            const lyricRecords = await filesGetByKind('lyric');
+            const lyricRecords = (await filesGetByKind('lyric')).filter(record => record && record.blob);
             setTrackLyricFiles(lyricRecords.map(record => ({
                 name: record.name,
                 dir: typeof record.dir === 'string' ? record.dir : '',
                 blob: record.blob
             })));
 
-            const coverRecords = await filesGetByKind('cover');
+            const coverRecords = (await filesGetByKind('cover')).filter(record => record && record.blob);
             setTrackCoverFiles(coverRecords.map(record => ({
                 name: record.name,
                 dir: typeof record.dir === 'string' ? record.dir : '',
@@ -8332,7 +9150,9 @@
             records.forEach(record => { bytes += Number(record.size || 0); });
             setMusicSaveHint(`已恢复上次的播放列表：${tracks.length} 首`
                 + `${lyricRecords.length ? `、${lyricRecords.length} 个歌词` : ''}`
-                + ` · ${formatPrecacheBytes(bytes)}，点 ▶️ 继续。`);
+                + ` · ${formatPrecacheBytes(bytes)}，点 ▶️ 继续。`
+                // 老版本存库时还没把歌词一起存下来，这里说清楚，别让人以为是歌词坏了
+                + (lyricRecords.length ? '' : '（这次没恢复出歌词：当时存库还没连歌词一起存，重新选一次同一个文件夹就会一起存下来）'));
             return true;
         }
 
@@ -8404,12 +9224,21 @@
         }
 
         function updatePlayBtn(isPlaying) {
-            document.getElementById('playBtn').textContent = isPlaying ? '⏸️' : '▶️';
+            const menuPlay = document.getElementById('playBtn');
+            if (menuPlay) {
+                menuPlay.classList.toggle('is-playing', !!isPlaying);
+                menuPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+            }
             const widgetPlay = document.getElementById('lwPlayBtn');
             if (widgetPlay) {
                 // 图标由 CSS 画，这里只切状态类
                 widgetPlay.classList.toggle('is-playing', !!isPlaying);
                 widgetPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
+            }
+            const barPlay = document.getElementById('lrcbPlay');
+            if (barPlay) {
+                barPlay.classList.toggle('is-playing', !!isPlaying);
+                barPlay.setAttribute('aria-label', isPlaying ? '暂停' : '播放');
             }
         }
 
@@ -8429,48 +9258,11 @@
                 play.classList.toggle('is-playing', !audio.paused);
                 play.setAttribute('aria-label', audio.paused ? '播放' : '暂停');
             }
-        }
-
-        function toggleWidgetLyrics(force) {
-            const widget = document.getElementById('lyricsWidget');
-            const body = document.getElementById('lwBody');
-            if (!widget || !body) return;
-            const on = typeof force === 'boolean' ? force : !widget.classList.contains('lyrics-mode');
-            widget.classList.toggle('lyrics-mode', on);
-            body.hidden = !on;
-            const button = document.getElementById('lwLyricsBtn');
-            if (button) button.classList.toggle('on', on);
-            const back = document.getElementById('lwBackBtn');
-            if (back) back.hidden = !on;
-            const title = widget.querySelector('.lw-title');
-            if (title) title.textContent = on ? '桌面歌词' : '播放器';
-            const alphaRow = document.getElementById('lwAlphaRow');
-            const bgRow = document.getElementById('lwBgRow');
-            const colorRow = document.getElementById('lwColorRow');
-            if (alphaRow) alphaRow.hidden = on;
-            if (bgRow) bgRow.hidden = !on;
-            if (colorRow) colorRow.hidden = !on;
-            const hideBtn = document.getElementById('lwHideBtn');
-            if (hideBtn) hideBtn.hidden = !on;
-            if (!on) toggleCleanLyrics(false);
-            if (on) {
-                renderFloatingLyrics();
-                syncFloatingLyric();
+            const barPlay = document.getElementById('lrcbPlay');
+            if (barPlay) {
+                barPlay.classList.toggle('is-playing', !audio.paused);
+                barPlay.setAttribute('aria-label', audio.paused ? '播放' : '暂停');
             }
-        }
-
-        function toggleCleanLyrics(force) {
-            const widget = document.getElementById('lyricsWidget');
-            if (!widget) return;
-            if (!widget.classList.contains('lyrics-mode') && force !== false) return;
-            const on = typeof force === 'boolean' ? force : !widget.classList.contains('clean-mode');
-            widget.classList.toggle('clean-mode', on);
-            const exit = document.getElementById('lwCleanExit');
-            if (exit) exit.hidden = !on;
-            const hideBtn = document.getElementById('lwHideBtn');
-            if (hideBtn) hideBtn.classList.toggle('on', on);
-            // 换了模式就套用那一套尺寸（歌词模式能小很多）
-            applyLyricsWidget();
         }
 
         function nextTrack() {
@@ -8606,6 +9398,8 @@
             updateWidgetPlayer();
             updateLyricLine();
             syncFloatingLyric();
+            syncPlayerLyric();
+            syncLyricBar();
         });
         audio.addEventListener('loadedmetadata', () => {
             durationTimeEl.textContent = formatTime(audio.duration);
@@ -8642,14 +9436,20 @@
         /**
          * 自动匹配歌词：歌曲所在目录下找 song.lrc、song.mp3.lrc、song.txt，
          * 同目录没有就退一步在整个文件夹（含子目录）里找同名文件。
+         * 名字不完全一样也尽量认：`01 song.lrc`、`song - 副本.lrc`、`song(1).lrc` 都算。
          */
+        function lyricNameCandidates(track) {
+            const base = String(track.base || baseName(track.name) || '').toLowerCase();
+            const name = String(track.name || '').toLowerCase();
+            return [`${base}.lrc`, `${name}.lrc`, `${base}.txt`, `${name}.txt`];
+        }
+
         function findLyricFile(track) {
-            const wanted = [
-                `${track.base}.lrc`,
-                `${track.name.toLowerCase()}.lrc`,
-                `${track.base}.txt`
-            ];
+            const base = String(track.base || baseName(track.name) || '').toLowerCase();
+            const wanted = lyricNameCandidates(track);
             const sameDir = lyricFiles.filter(item => item.dir === track.dir);
+
+            // ① 同名（忽略大小写），同目录优先
             for (const name of wanted) {
                 const hit = sameDir.find(item => item.lowerName === name);
                 if (hit) return hit;
@@ -8658,6 +9458,22 @@
                 const hit = lyricFiles.find(item => item.lowerName === name);
                 if (hit) return hit;
             }
+
+            // ② 名字里带着歌名也算（加了序号、括号副本的那种），取最短最贴近的
+            if (base.length >= 2) {
+                for (const pool of [sameDir, lyricFiles]) {
+                    const hits = pool
+                        .filter(item => /\.(lrc|txt)$/.test(item.lowerName) && item.lowerName.includes(base))
+                        .sort((a, b) => a.lowerName.length - b.lowerName.length);
+                    if (hits.length) return hits[0];
+                }
+            }
+
+            // ③ 这个目录里只有一首歌、只有一份歌词，那就只能是它了
+            const tracksHere = playlist.filter(item => item.dir === track.dir).length;
+            const lyricsHere = sameDir.filter(item => /\.(lrc|txt)$/.test(item.lowerName));
+            if (tracksHere <= 1 && lyricsHere.length === 1) return lyricsHere[0];
+
             return null;
         }
 
@@ -8665,7 +9481,12 @@
             if (!track) return;
             const hit = findLyricFile(track);
             if (!hit) {
-                lyricsPanel.textContent = '没有找到同名歌词（.lrc / .txt），可用下方按钮手动载入。';
+                const wanted = lyricNameCandidates(track).slice(0, 2).join(' 或 ');
+                const total = lyricFiles.length;
+                lyricsPanel.textContent = total
+                    ? `没有找到这首的歌词（找过「${wanted}」；这次一共载入 ${total} 份歌词文件），可用下方按钮手动载入。`
+                    : '这次没有载入到 .lrc / .txt 歌词文件（选文件夹时要把歌词一起选中；如果是打开网页自动恢复的列表，重新选一次同一个文件夹就会把歌词一起存下来）。';
+                lyricsPanel.classList.toggle('show', !lyricsHiddenByUser);
                 return;
             }
             const reader = new FileReader();
@@ -8764,6 +9585,8 @@
                 scrollLyricLineIntoPanel(nodes[activeIndex]);
             }
             syncFloatingLyric();
+            syncPlayerLyric();
+            syncLyricBar();
         }
 
         /**
@@ -8782,7 +9605,8 @@
         }
         // 一步一步来，哪一步炸了都只影响它自己，不会连累后面的（尤其是音乐恢复）
         [
-            initTheme, initSkin, initCards, initWuwaView, initFolders, initLyricsWidget, restoreMusicLibrary,
+            initTheme, initSkin, initCards, initWuwaView, initFolders, initLyricsWidget, initLyricBar,
+            restoreMusicLibrary,
             initMascot, initUpdateChecker, initMenuPanels, initMenuHints,
             initTransparencyToggle, initAntiCrawl, initUiPrefs, initBackgroundPool, initPrecache
         ].forEach((step) => {
