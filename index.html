@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="app-version" content="20261027-1828">
+    <meta name="app-version" content="20261030-1512">
     <meta name="description" content="我的灵感导航站：把常用链接收进一页的个人导航面板。">
     <meta name="theme-color" content="#ffb7b2">
     <link rel="icon" href="C/favicon.svg" type="image/svg+xml">
@@ -559,13 +559,41 @@
             box-shadow: 0 0 14px rgba(var(--primary-rgb), .5);
         }
         /* 播放键：横椭圆 */
+        /* 跟主页标题同一套光带，但改用 transform 推，交给合成层，不占主线程（原来 animating background-position 会卡） */
+        @keyframes playBtnFlow {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #playBtn::before, #lwPlayBtn::before { animation: none; }
+        }
         #playBtn {
             width: 56px; height: 36px; border: 0; border-radius: 999px;
-            background: linear-gradient(150deg, color-mix(in srgb, var(--primary-color) 46%, #fff), var(--primary-color) 62%);
+            background: var(--primary-color);
+            position: relative; overflow: hidden;
             color: #fff;
-            box-shadow: 0 7px 18px rgba(var(--primary-rgb), .42), inset 0 1px 0 rgba(255, 255, 255, .8);
+            box-shadow: 0 7px 18px rgba(var(--primary-rgb), .42),
+                        inset 0 1px 0 rgba(255, 255, 255, .85),
+                        inset 0 -9px 14px rgba(122, 47, 56, .16);
+        }
+        #playBtn::before {
+            content: "";
+            position: absolute; top: 0; bottom: 0; left: 0;
+            width: 200%;
+            /* 只保留同色系明暗过渡，别做成彩色光带 */
+            /* 两个周期铺满 200% 宽；左移一半 = 正好一个周期，颜色回到起点，首尾无缝 */
+            background-image: linear-gradient(100deg,
+                var(--primary-color) 0%,
+                color-mix(in srgb, var(--primary-color) 62%, #fff) 25%,
+                var(--primary-color) 50%,
+                color-mix(in srgb, var(--primary-color) 62%, #fff) 75%,
+                var(--primary-color) 100%);
+            animation: playBtnFlow 9s linear infinite;
+            will-change: transform;
+            pointer-events: none;
         }
         #playBtn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        #playBtn svg, #lwPlayBtn svg { position: relative; z-index: 1; }
         #playBtn svg {
             width: 16px; height: 16px;
             fill: currentColor; stroke: none;
@@ -935,6 +963,7 @@
             /* 主题色收在挂件这一层：顶栏的文件夹名和播放区都要用 */
             --lw-key: var(--primary-strong);
             --lw-key-rgb: var(--primary-rgb);
+            --lw-play-dark: color-mix(in srgb, var(--lw-key) 58%, #40102f);
             --lw-ink2: rgba(236, 240, 255, .58);
             position: fixed; right: 20px; bottom: 92px; z-index: 1005;
             width: 340px; max-width: calc(100vw - 24px);
@@ -1208,10 +1237,25 @@
         #lwPlayBtn {
             width: 52px; height: 34px; border-radius: 999px;
             border: 0;
-            background: linear-gradient(150deg, #fff4f8, var(--lw-key) 46%,
-                        color-mix(in srgb, var(--lw-key) 54%, #40102f));
+            background: var(--lw-key);
+            position: relative; overflow: hidden;
             color: #fff;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, .42), 0 0 20px rgba(var(--lw-key-rgb), .42);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .42), 0 0 20px rgba(var(--lw-key-rgb), .42),
+                        inset 0 1px 0 rgba(255, 255, 255, .6);
+        }
+        #lwPlayBtn::before {
+            content: "";
+            position: absolute; top: 0; bottom: 0; left: 0;
+            width: 200%;
+            background-image: linear-gradient(100deg,
+                var(--lw-key) 0%,
+                color-mix(in srgb, var(--lw-key) 64%, #fff) 25%,
+                var(--lw-key) 50%,
+                color-mix(in srgb, var(--lw-key) 64%, #fff) 75%,
+                var(--lw-key) 100%);
+            animation: playBtnFlow 9s linear infinite;
+            will-change: transform;
+            pointer-events: none;
         }
         #lwPlayBtn svg { position: relative; width: 16px; height: 16px; fill: currentColor; stroke: none; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .45)); }
         #lwPlayBtn .lw-ico-pause { display: none; }
@@ -1529,9 +1573,17 @@
             background-image: linear-gradient(140deg, rgb(var(--wuwa-accent)), rgba(24, 40, 92, .94));
         }
         html[data-skin="wuwa"] #lwPlayBtn {
-            background: linear-gradient(150deg, #f2f8ff, rgb(var(--wuwa-glow)) 26%,
-                        rgb(var(--wuwa-accent)) 62%, rgb(var(--wuwa-gold)));
+            /* 只换配色：别用 background 简写，会把 ::before 的流动渐变盖掉 */
+            background: rgb(var(--wuwa-accent));
             color: #0a1024;
+        }
+        html[data-skin="wuwa"] #lwPlayBtn::before {
+            background-image: linear-gradient(100deg,
+                rgb(var(--wuwa-accent)) 0%,
+                color-mix(in srgb, rgb(var(--wuwa-glow)) 70%, #fff) 25%,
+                rgb(var(--wuwa-accent)) 50%,
+                color-mix(in srgb, rgb(var(--wuwa-glow)) 70%, #fff) 75%,
+                rgb(var(--wuwa-accent)) 100%);
         }
 
         /* 循环键：列表循环 / 单曲循环两个图标按状态互换 */
@@ -2222,15 +2274,20 @@
             /* 两个周期铺在 200% 宽的底图上，等于一个周期正好一个字宽；底图整体横向滑动 = 光带扫过且首尾无缝 */
             background: linear-gradient(100deg,
                 rgb(72, 104, 192) 0%,
-                rgb(var(--wuwa-accent)) 13%,
-                rgb(var(--wuwa-glow)) 25%,
-                rgb(var(--wuwa-accent)) 37%,
-                rgb(72, 104, 192) 50%,
-                rgb(var(--wuwa-accent)) 63%,
-                rgb(var(--wuwa-glow)) 75%,
-                rgb(var(--wuwa-accent)) 87%,
+                rgb(var(--wuwa-accent)) 8.67%,
+                rgb(var(--wuwa-glow)) 16.67%,
+                rgb(var(--wuwa-accent)) 24.67%,
+                rgb(72, 104, 192) 33.33%,
+                rgb(var(--wuwa-accent)) 42%,
+                rgb(var(--wuwa-glow)) 50%,
+                rgb(var(--wuwa-accent)) 58%,
+                rgb(72, 104, 192) 66.67%,
+                rgb(var(--wuwa-accent)) 75.33%,
+                rgb(var(--wuwa-glow)) 83.33%,
+                rgb(var(--wuwa-accent)) 91.33%,
                 rgb(72, 104, 192) 100%);
-            background-size: 200% 100%;
+            /* 底图比文字宽，一个周期在屏幕上更长、滑动才看得清；色标里三个周期，位移一个周期正好回到同色 */
+            background-size: 300% 100%;
             background-position: 0% 0;
             background-repeat: repeat-x;
             -webkit-background-clip: text; background-clip: text;
@@ -2249,8 +2306,10 @@
             to { -webkit-text-fill-color: transparent; }
         }
         @keyframes wv-name-sweep {
+            /* 底图 300% 宽、色标三个周期（每个占 1/3 = 一个元素宽）。
+               可位移余量 = 3W - W = 2W，走一个周期 1W 就是 1W/2W = 50%，落点与起点同色 → 无缝 */
             from { background-position: 0% 0; }
-            to { background-position: 100% 0; }
+            to { background-position: -50% 0; }
         }
         .wv-brand-sub {
             margin-top: 6px; font-style: normal; font-size: 10px; letter-spacing: .5em;
